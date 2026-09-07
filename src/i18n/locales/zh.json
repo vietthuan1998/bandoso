@@ -1,0 +1,123 @@
+{
+  "language": {
+    "label": "语言",
+    "vi": "Tiếng Việt",
+    "en": "English",
+    "fr": "Français",
+    "ja": "日本語",
+    "ko": "한국어",
+    "zh": "中文"
+  },
+  "common": {
+    "close": "关闭",
+    "openMenu": "打开地图图层",
+    "closeMenu": "关闭地图图层",
+    "loading": "正在加载数据...",
+    "originalVietnamese": "越南语原文",
+    "retry": "重试"
+  },
+  "header": {
+    "title": "顺化市数字地图系统",
+    "slogan": "信息公开 · 透明 · 互联 · 发展",
+    "toggleMenu": "切换地图图层菜单",
+    "searchPlaceholder": "搜索地点、项目、地块 ...",
+    "clearSearch": "清除搜索",
+    "searchResults": "搜索结果",
+    "resultCount": "{{count}}条结果",
+    "noResults": "未找到匹配数据",
+    "showingFirst": "显示前{{count}}条结果",
+    "share": "分享",
+    "fullscreen": "全屏",
+    "utilities": "工具",
+    "copied": "链接已复制",
+    "openSearch": "搜索"
+  },
+  "footer": {
+    "organization": "顺化智慧城市监控与运营中心",
+    "hotline": "热线：19001075"
+  },
+  "map": {
+    "ariaLabel": "顺化市行政地图",
+    "loading": "正在加载地图数据...",
+    "loadError": "无法加载地图数据",
+    "unnamedProject": "未命名项目"
+  },
+  "search": {
+    "administrativeLayer": "行政边界",
+    "unitCode": "行政代码：{{code}}",
+    "projectLayer": "项目 · {{category}}"
+  },
+  "menu": {
+    "title": "顺化市数字地图",
+    "administrative": "行政边界",
+    "city": "顺化市",
+    "wards": "坊、社",
+    "public": "公开信息",
+    "auction": "土地拍卖地图",
+    "investmentProjects": "招商引资项目",
+    "planning": "规划",
+    "generalPlanning": "总体规划",
+    "zoningPlanning": "分区规划",
+    "detailedPlanning": "详细规划",
+    "landUsePlanning": "土地利用规划",
+    "status": "现状",
+    "landUseStatus": "土地利用现状",
+    "populationStatus": "人口现状",
+    "infrastructure": "基础设施",
+    "transportInfrastructure": "交通基础设施",
+    "technicalInfrastructure": "技术基础设施",
+    "specialized": "专业数据",
+    "environment": "自然资源与环境",
+    "cultureTourism": "文化与旅游",
+    "updating": "数据正在更新中"
+  },
+  "city": {
+    "title": "顺化市概况",
+    "administrativeUnits": "行政单位",
+    "administrativeValue": "顺化市共有40个社级行政单位（21个坊和19个社）。",
+    "resolution": "根据2025年6月16日第1675/NQ-UBTVQH15号决议。",
+    "area": "面积",
+    "population": "人口",
+    "people": "人"
+  },
+  "ward": {
+    "code": "行政代码",
+    "area": "面积",
+    "population": "人口",
+    "people": "人",
+    "geographicPosition": "地理位置",
+    "committeeAddress": "人民委员会地址",
+    "note": "备注"
+  },
+  "project": {
+    "legendTitle": "投资项目分类",
+    "legendHint": "在地图上显示或隐藏各项目组",
+    "closeLayer": "关闭项目图层",
+    "defaultTitle": "项目信息",
+    "location": "地点",
+    "area": "面积",
+    "totalInvestment": "总投资",
+    "investor": "投资者",
+    "description": "说明",
+    "information": "信息",
+    "implementation": "实施情况",
+    "progress": "进度",
+    "issues": "问题",
+    "proposal": "建议",
+    "note": "备注"
+  },
+  "projectCategories": {
+    "calling": "正在招商的项目",
+    "selecting-investor": "已批准投资方针，正在选择投资者",
+    "constructing": "投资者已获批准，正在建设",
+    "operating": "已投入运营的项目"
+  },
+  "mvt": {
+    "sectionTitle": "MVT 图层（试验）",
+    "hint": "正在按技术规范测试 MVT 渲染流程，数据直接从 dcu.huecity.vn 加载。",
+    "thuaDat": "地块（地籍）",
+    "tramBts": "BTS 基站",
+    "detailsTitle": "MVT 要素详情",
+    "noAttributes": "该瓦片中没有属性。"
+  }
+}

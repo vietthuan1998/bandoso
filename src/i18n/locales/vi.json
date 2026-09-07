@@ -1,0 +1,123 @@
+{
+  "language": {
+    "label": "Ngôn ngữ",
+    "vi": "Tiếng Việt",
+    "en": "English",
+    "fr": "Français",
+    "ja": "日本語",
+    "ko": "한국어",
+    "zh": "中文"
+  },
+  "common": {
+    "close": "Đóng",
+    "openMenu": "Mở danh mục lớp bản đồ",
+    "closeMenu": "Đóng danh mục lớp bản đồ",
+    "loading": "Đang tải dữ liệu...",
+    "originalVietnamese": "Nội dung gốc tiếng Việt",
+    "retry": "Thử lại"
+  },
+  "header": {
+    "title": "Hệ thống bản đồ số thành phố Huế",
+    "slogan": "Công khai thông tin - Minh bạch - Kết nối - Phát triển",
+    "toggleMenu": "Đóng hoặc mở menu lớp bản đồ",
+    "searchPlaceholder": "Tìm địa điểm, dự án, khu đất ...",
+    "clearSearch": "Xóa tìm kiếm",
+    "searchResults": "Kết quả tìm kiếm",
+    "resultCount": "{{count}} kết quả",
+    "noResults": "Không tìm thấy dữ liệu phù hợp",
+    "showingFirst": "Hiển thị {{count}} kết quả đầu tiên",
+    "share": "Chia sẻ",
+    "fullscreen": "Toàn màn hình",
+    "utilities": "Tiện ích",
+    "copied": "Đã sao chép liên kết",
+    "openSearch": "Tìm kiếm"
+  },
+  "footer": {
+    "organization": "Trung tâm Giám sát, Điều hành Đô thị thông minh TP Huế",
+    "hotline": "Hotline: 19001075"
+  },
+  "map": {
+    "ariaLabel": "Bản đồ hành chính thành phố Huế",
+    "loading": "Đang tải dữ liệu bản đồ...",
+    "loadError": "Không thể tải dữ liệu bản đồ",
+    "unnamedProject": "Dự án chưa có tên"
+  },
+  "search": {
+    "administrativeLayer": "Lớp địa giới hành chính",
+    "unitCode": "Mã đơn vị: {{code}}",
+    "projectLayer": "Lớp dự án · {{category}}"
+  },
+  "menu": {
+    "title": "Bản đồ số thành phố Huế",
+    "administrative": "Lớp địa giới hành chính",
+    "city": "Lớp thành phố Huế",
+    "wards": "Lớp các phường, xã",
+    "public": "Lớp công khai thông tin",
+    "auction": "Bản đồ các khu đấu giá",
+    "investmentProjects": "Bản đồ dự án kêu gọi đầu tư",
+    "planning": "Lớp quy hoạch",
+    "generalPlanning": "Quy hoạch chung",
+    "zoningPlanning": "Quy hoạch phân khu",
+    "detailedPlanning": "Quy hoạch chi tiết",
+    "landUsePlanning": "Quy hoạch sử dụng đất",
+    "status": "Lớp hiện trạng",
+    "landUseStatus": "Hiện trạng sử dụng đất",
+    "populationStatus": "Hiện trạng dân cư",
+    "infrastructure": "Lớp hạ tầng",
+    "transportInfrastructure": "Hạ tầng giao thông",
+    "technicalInfrastructure": "Hạ tầng kỹ thuật",
+    "specialized": "Lớp chuyên ngành",
+    "environment": "Tài nguyên và môi trường",
+    "cultureTourism": "Văn hóa và du lịch",
+    "updating": "Dữ liệu đang được cập nhật"
+  },
+  "city": {
+    "title": "Thông tin tổng quan Thành phố Huế",
+    "administrativeUnits": "Đơn vị hành chính",
+    "administrativeValue": "Thành phố Huế có 40 đơn vị hành chính cấp xã (21 phường và 19 xã).",
+    "resolution": "Theo Nghị quyết số 1675/NQ-UBTVQH15 ngày 16/6/2025.",
+    "area": "Diện tích",
+    "population": "Dân số",
+    "people": "người"
+  },
+  "ward": {
+    "code": "Mã ĐVHC",
+    "area": "Diện tích",
+    "population": "Dân số",
+    "people": "người",
+    "geographicPosition": "Vị trí địa lý",
+    "committeeAddress": "Địa chỉ UBND",
+    "note": "Ghi chú"
+  },
+  "project": {
+    "legendTitle": "Phân loại dự án đầu tư",
+    "legendHint": "Bật hoặc tắt từng nhóm dự án trên bản đồ",
+    "closeLayer": "Đóng lớp dự án",
+    "defaultTitle": "Thông tin dự án",
+    "location": "Địa điểm",
+    "area": "Diện tích",
+    "totalInvestment": "Tổng mức đầu tư",
+    "investor": "Nhà đầu tư",
+    "description": "Mô tả",
+    "information": "Thông tin",
+    "implementation": "Tình hình thực hiện",
+    "progress": "Tiến độ thực hiện",
+    "issues": "Vướng mắc",
+    "proposal": "Đề xuất",
+    "note": "Ghi chú"
+  },
+  "projectCategories": {
+    "calling": "Dự án đang kêu gọi đầu tư",
+    "selecting-investor": "Dự án đã chấp thuận chủ trương đầu tư, đang triển khai lựa chọn nhà đầu tư",
+    "constructing": "Dự án đã chấp thuận nhà đầu tư, đang triển khai xây dựng",
+    "operating": "Dự án đã đi vào hoạt động"
+  },
+  "mvt": {
+    "sectionTitle": "Lớp MVT (thử nghiệm)",
+    "hint": "Đang thử nghiệm đường ống vẽ MVT theo đặc tả kỹ thuật, dữ liệu tải trực tiếp từ dcu.huecity.vn.",
+    "thuaDat": "Thửa đất (đất đai, địa chính)",
+    "tramBts": "Trạm BTS",
+    "detailsTitle": "Chi tiết đối tượng MVT",
+    "noAttributes": "Không có thuộc tính nào trong tile."
+  }
+}

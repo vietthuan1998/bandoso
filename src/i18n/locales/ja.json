@@ -1,0 +1,123 @@
+{
+  "language": {
+    "label": "言語",
+    "vi": "Tiếng Việt",
+    "en": "English",
+    "fr": "Français",
+    "ja": "日本語",
+    "ko": "한국어",
+    "zh": "中文"
+  },
+  "common": {
+    "close": "閉じる",
+    "openMenu": "地図レイヤーを開く",
+    "closeMenu": "地図レイヤーを閉じる",
+    "loading": "データを読み込み中...",
+    "originalVietnamese": "ベトナム語の原文",
+    "retry": "再試行"
+  },
+  "header": {
+    "title": "フエ市デジタル地図システム",
+    "slogan": "情報公開・透明性・連携・発展",
+    "toggleMenu": "地図レイヤーメニューを切り替える",
+    "searchPlaceholder": "場所、プロジェクト、土地を検索 ...",
+    "clearSearch": "検索をクリア",
+    "searchResults": "検索結果",
+    "resultCount": "{{count}}件",
+    "noResults": "該当するデータがありません",
+    "showingFirst": "最初の{{count}}件を表示",
+    "share": "共有",
+    "fullscreen": "全画面",
+    "utilities": "ツール",
+    "copied": "リンクをコピーしました",
+    "openSearch": "検索"
+  },
+  "footer": {
+    "organization": "フエ市スマートシティ監視運用センター",
+    "hotline": "ホットライン：19001075"
+  },
+  "map": {
+    "ariaLabel": "フエ市行政地図",
+    "loading": "地図データを読み込み中...",
+    "loadError": "地図データを読み込めません",
+    "unnamedProject": "名称未設定のプロジェクト"
+  },
+  "search": {
+    "administrativeLayer": "行政境界",
+    "unitCode": "行政コード：{{code}}",
+    "projectLayer": "プロジェクト · {{category}}"
+  },
+  "menu": {
+    "title": "フエ市デジタル地図",
+    "administrative": "行政境界",
+    "city": "フエ市",
+    "wards": "区・社",
+    "public": "公開情報",
+    "auction": "土地競売地図",
+    "investmentProjects": "投資誘致プロジェクト",
+    "planning": "都市計画",
+    "generalPlanning": "総合計画",
+    "zoningPlanning": "区域計画",
+    "detailedPlanning": "詳細計画",
+    "landUsePlanning": "土地利用計画",
+    "status": "現況",
+    "landUseStatus": "土地利用現況",
+    "populationStatus": "人口現況",
+    "infrastructure": "インフラ",
+    "transportInfrastructure": "交通インフラ",
+    "technicalInfrastructure": "技術インフラ",
+    "specialized": "専門データ",
+    "environment": "天然資源・環境",
+    "cultureTourism": "文化・観光",
+    "updating": "データを更新中です"
+  },
+  "city": {
+    "title": "フエ市概要",
+    "administrativeUnits": "行政単位",
+    "administrativeValue": "フエ市には40の社級行政単位（21区、19社）があります。",
+    "resolution": "2025年6月16日付決議第1675/NQ-UBTVQH15号による。",
+    "area": "面積",
+    "population": "人口",
+    "people": "人"
+  },
+  "ward": {
+    "code": "行政コード",
+    "area": "面積",
+    "population": "人口",
+    "people": "人",
+    "geographicPosition": "地理的位置",
+    "committeeAddress": "人民委員会住所",
+    "note": "備考"
+  },
+  "project": {
+    "legendTitle": "投資プロジェクト分類",
+    "legendHint": "地図上のプロジェクトグループを表示・非表示",
+    "closeLayer": "プロジェクトレイヤーを閉じる",
+    "defaultTitle": "プロジェクト情報",
+    "location": "場所",
+    "area": "面積",
+    "totalInvestment": "総投資額",
+    "investor": "投資家",
+    "description": "説明",
+    "information": "情報",
+    "implementation": "実施状況",
+    "progress": "進捗",
+    "issues": "課題",
+    "proposal": "提案",
+    "note": "備考"
+  },
+  "projectCategories": {
+    "calling": "投資募集中のプロジェクト",
+    "selecting-investor": "基本承認済み・投資家選定中",
+    "constructing": "投資家承認済み・建設中",
+    "operating": "稼働中のプロジェクト"
+  },
+  "mvt": {
+    "sectionTitle": "MVTレイヤー（試験）",
+    "hint": "技術仕様に基づきMVT描画パイプラインを試験中。データはdcu.huecity.vnから直接読み込みます。",
+    "thuaDat": "地籍（土地区画）",
+    "tramBts": "BTS基地局",
+    "detailsTitle": "MVTフィーチャーの詳細",
+    "noAttributes": "このタイルに属性はありません。"
+  }
+}

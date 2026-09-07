@@ -1,0 +1,123 @@
+{
+  "language": {
+    "label": "Langue",
+    "vi": "Tiếng Việt",
+    "en": "English",
+    "fr": "Français",
+    "ja": "日本語",
+    "ko": "한국어",
+    "zh": "中文"
+  },
+  "common": {
+    "close": "Fermer",
+    "openMenu": "Ouvrir les couches",
+    "closeMenu": "Fermer les couches",
+    "loading": "Chargement des données...",
+    "originalVietnamese": "Contenu original en vietnamien",
+    "retry": "Réessayer"
+  },
+  "header": {
+    "title": "Système de cartographie numérique de Hué",
+    "slogan": "Information ouverte - Transparence - Connectivité - Développement",
+    "toggleMenu": "Afficher ou masquer les couches",
+    "searchPlaceholder": "Rechercher un lieu, un projet, un terrain ...",
+    "clearSearch": "Effacer la recherche",
+    "searchResults": "Résultats de recherche",
+    "resultCount": "{{count}} résultats",
+    "noResults": "Aucune donnée correspondante",
+    "showingFirst": "Affichage des {{count}} premiers résultats",
+    "share": "Partager",
+    "fullscreen": "Plein écran",
+    "utilities": "Outils",
+    "copied": "Lien copié",
+    "openSearch": "Rechercher"
+  },
+  "footer": {
+    "organization": "Centre de supervision et d'exploitation de la ville intelligente de Hué",
+    "hotline": "Assistance : 19001075"
+  },
+  "map": {
+    "ariaLabel": "Carte administrative de Hué",
+    "loading": "Chargement de la carte...",
+    "loadError": "Impossible de charger la carte",
+    "unnamedProject": "Projet sans nom"
+  },
+  "search": {
+    "administrativeLayer": "Limites administratives",
+    "unitCode": "Code administratif : {{code}}",
+    "projectLayer": "Projets · {{category}}"
+  },
+  "menu": {
+    "title": "Carte numérique de Hué",
+    "administrative": "Limites administratives",
+    "city": "Ville de Hué",
+    "wards": "Quartiers et communes",
+    "public": "Informations publiques",
+    "auction": "Carte des enchères foncières",
+    "investmentProjects": "Projets d'appel à l'investissement",
+    "planning": "Planification",
+    "generalPlanning": "Planification générale",
+    "zoningPlanning": "Planification de zone",
+    "detailedPlanning": "Planification détaillée",
+    "landUsePlanning": "Plan d'occupation des sols",
+    "status": "État actuel",
+    "landUseStatus": "Utilisation actuelle des sols",
+    "populationStatus": "Population actuelle",
+    "infrastructure": "Infrastructures",
+    "transportInfrastructure": "Infrastructures de transport",
+    "technicalInfrastructure": "Infrastructures techniques",
+    "specialized": "Données spécialisées",
+    "environment": "Ressources naturelles et environnement",
+    "cultureTourism": "Culture et tourisme",
+    "updating": "Les données sont en cours de mise à jour"
+  },
+  "city": {
+    "title": "Présentation de la ville de Hué",
+    "administrativeUnits": "Unités administratives",
+    "administrativeValue": "Hué compte 40 unités administratives communales (21 quartiers et 19 communes).",
+    "resolution": "Selon la résolution n° 1675/NQ-UBTVQH15 du 16 juin 2025.",
+    "area": "Superficie",
+    "population": "Population",
+    "people": "habitants"
+  },
+  "ward": {
+    "code": "Code administratif",
+    "area": "Superficie",
+    "population": "Population",
+    "people": "habitants",
+    "geographicPosition": "Situation géographique",
+    "committeeAddress": "Adresse du Comité populaire",
+    "note": "Remarques"
+  },
+  "project": {
+    "legendTitle": "Catégories de projets",
+    "legendHint": "Afficher ou masquer chaque groupe de projets",
+    "closeLayer": "Fermer la couche des projets",
+    "defaultTitle": "Informations sur le projet",
+    "location": "Lieu",
+    "area": "Superficie",
+    "totalInvestment": "Investissement total",
+    "investor": "Investisseur",
+    "description": "Description",
+    "information": "Informations",
+    "implementation": "État de mise en œuvre",
+    "progress": "Avancement",
+    "issues": "Difficultés",
+    "proposal": "Proposition",
+    "note": "Remarques"
+  },
+  "projectCategories": {
+    "calling": "Projets ouverts à l'investissement",
+    "selecting-investor": "Projet approuvé en principe, sélection de l'investisseur en cours",
+    "constructing": "Investisseur approuvé, construction en cours",
+    "operating": "Projets en activité"
+  },
+  "mvt": {
+    "sectionTitle": "Couches MVT (prototype)",
+    "hint": "Test du pipeline de rendu MVT selon la spécification technique ; données chargées directement depuis dcu.huecity.vn.",
+    "thuaDat": "Parcelles (cadastre)",
+    "tramBts": "Station BTS",
+    "detailsTitle": "Détails de l'entité MVT",
+    "noAttributes": "Aucun attribut dans cette tuile."
+  }
+}

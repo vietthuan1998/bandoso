@@ -1,0 +1,123 @@
+{
+  "language": {
+    "label": "Language",
+    "vi": "Tiếng Việt",
+    "en": "English",
+    "fr": "Français",
+    "ja": "日本語",
+    "ko": "한국어",
+    "zh": "中文"
+  },
+  "common": {
+    "close": "Close",
+    "openMenu": "Open map layers",
+    "closeMenu": "Close map layers",
+    "loading": "Loading data...",
+    "originalVietnamese": "Original content in Vietnamese",
+    "retry": "Retry"
+  },
+  "header": {
+    "title": "Hue City Digital Map System",
+    "slogan": "Open information - Transparency - Connectivity - Development",
+    "toggleMenu": "Toggle map layers menu",
+    "searchPlaceholder": "Search locations, projects, land plots ...",
+    "clearSearch": "Clear search",
+    "searchResults": "Search results",
+    "resultCount": "{{count}} results",
+    "noResults": "No matching data found",
+    "showingFirst": "Showing the first {{count}} results",
+    "share": "Share",
+    "fullscreen": "Fullscreen",
+    "utilities": "Utilities",
+    "copied": "Link copied",
+    "openSearch": "Search"
+  },
+  "footer": {
+    "organization": "Hue Smart City Monitoring and Operations Center",
+    "hotline": "Hotline: 19001075"
+  },
+  "map": {
+    "ariaLabel": "Hue City administrative map",
+    "loading": "Loading map data...",
+    "loadError": "Unable to load map data",
+    "unnamedProject": "Unnamed project"
+  },
+  "search": {
+    "administrativeLayer": "Administrative boundaries",
+    "unitCode": "Unit code: {{code}}",
+    "projectLayer": "Projects · {{category}}"
+  },
+  "menu": {
+    "title": "Hue City Digital Map",
+    "administrative": "Administrative boundaries",
+    "city": "Hue City boundary",
+    "wards": "Wards and communes",
+    "public": "Public information",
+    "auction": "Land auction map",
+    "investmentProjects": "Investment promotion projects",
+    "planning": "Planning",
+    "generalPlanning": "General planning",
+    "zoningPlanning": "Zoning planning",
+    "detailedPlanning": "Detailed planning",
+    "landUsePlanning": "Land-use planning",
+    "status": "Existing conditions",
+    "landUseStatus": "Current land use",
+    "populationStatus": "Current population",
+    "infrastructure": "Infrastructure",
+    "transportInfrastructure": "Transport infrastructure",
+    "technicalInfrastructure": "Technical infrastructure",
+    "specialized": "Specialized data",
+    "environment": "Natural resources and environment",
+    "cultureTourism": "Culture and tourism",
+    "updating": "Data is being updated"
+  },
+  "city": {
+    "title": "Hue City Overview",
+    "administrativeUnits": "Administrative units",
+    "administrativeValue": "Hue City has 40 commune-level administrative units (21 wards and 19 communes).",
+    "resolution": "Under Resolution No. 1675/NQ-UBTVQH15 dated June 16, 2025.",
+    "area": "Area",
+    "population": "Population",
+    "people": "people"
+  },
+  "ward": {
+    "code": "Administrative code",
+    "area": "Area",
+    "population": "Population",
+    "people": "people",
+    "geographicPosition": "Geographic location",
+    "committeeAddress": "People's Committee address",
+    "note": "Notes"
+  },
+  "project": {
+    "legendTitle": "Investment project categories",
+    "legendHint": "Show or hide each project group on the map",
+    "closeLayer": "Close project layer",
+    "defaultTitle": "Project information",
+    "location": "Location",
+    "area": "Area",
+    "totalInvestment": "Total investment",
+    "investor": "Investor",
+    "description": "Description",
+    "information": "Information",
+    "implementation": "Implementation status",
+    "progress": "Progress",
+    "issues": "Issues",
+    "proposal": "Proposal",
+    "note": "Notes"
+  },
+  "projectCategories": {
+    "calling": "Projects calling for investment",
+    "selecting-investor": "Approved in principle; investor selection in progress",
+    "constructing": "Investor approved; construction in progress",
+    "operating": "Projects in operation"
+  },
+  "mvt": {
+    "sectionTitle": "MVT layers (prototype)",
+    "hint": "Testing the MVT rendering pipeline per the technical spec; data loads directly from dcu.huecity.vn.",
+    "thuaDat": "Land parcels (cadastral)",
+    "tramBts": "BTS station",
+    "detailsTitle": "MVT feature details",
+    "noAttributes": "No attributes in this tile."
+  }
+}
