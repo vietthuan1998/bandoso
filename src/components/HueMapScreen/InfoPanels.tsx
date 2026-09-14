@@ -10,14 +10,14 @@ export function CityInfoPanel({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   return (
     <InfoCard title={t('city.title')} onClose={onClose}>
-      <Row icon="\u{1F3DB}️" label={t('city.administrativeUnits')}>
+      <Row icon={'\u{1F3DB}️'} label={t('city.administrativeUnits')}>
         <Text style={styles.value}>{t('city.administrativeValue')}</Text>
         <Text style={styles.hint}>{t('city.resolution')}</Text>
       </Row>
-      <Row icon="\u{1F4D0}" label={t('city.area')}>
+      <Row icon={'\u{1F4D0}'} label={t('city.area')}>
         <Text style={styles.strong}>4.947,11 km²</Text>
       </Row>
-      <Row icon="\u{1F465}" label={t('city.population')}>
+      <Row icon={'\u{1F465}'} label={t('city.population')}>
         <Text style={styles.strong}>1.236.393 {t('city.people')}</Text>
       </Row>
     </InfoCard>

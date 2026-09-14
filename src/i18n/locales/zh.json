@@ -10,11 +10,16 @@
   },
   "common": {
     "close": "关闭",
+    "confirm": "完成",
     "openMenu": "打开地图图层",
     "closeMenu": "关闭地图图层",
     "loading": "正在加载数据...",
     "originalVietnamese": "越南语原文",
-    "retry": "重试"
+    "retry": "重试",
+    "yes": "是",
+    "no": "否",
+    "male": "男",
+    "female": "女"
   },
   "header": {
     "title": "顺化市数字地图系统",
@@ -40,7 +45,10 @@
     "ariaLabel": "顺化市行政地图",
     "loading": "正在加载地图数据...",
     "loadError": "无法加载地图数据",
-    "unnamedProject": "未命名项目"
+    "unnamedProject": "未命名项目",
+    "resetBearing": "将地图重置为正北方向",
+    "locateMe": "我的位置",
+    "locationUnavailable": "无法确定您的位置"
   },
   "search": {
     "administrativeLayer": "行政边界",
@@ -113,11 +121,114 @@
     "operating": "已投入运营的项目"
   },
   "mvt": {
-    "sectionTitle": "MVT 图层（试验）",
-    "hint": "正在按技术规范测试 MVT 渲染流程，数据直接从 dcu.huecity.vn 加载。",
+    "sectionTitle": "MVT 图层（15 个集合）",
+    "hint": "按技术规范第 8 节直接从 dcu.huecity.vn 渲染。虚线 = 规划（未来）图层。",
     "thuaDat": "地块（地籍）",
+    "khuCongNghiepHienTrang": "工业区现状",
+    "khuCongNghiepDinhHuong": "工业区发展规划",
+    "xuLyChatThaiHienTrang": "废物处理区现状",
+    "xuLyChatThaiDinhHuong": "废物处理区规划",
+    "nghiaTrangHienTrang": "墓地现状",
+    "nghiaTrangDinhHuong": "墓地规划",
+    "congNgheCaoDinhHuong": "高新技术区规划",
+    "coSoKhcnDinhHuong": "科技设施规划",
+    "coSoKhcnHienTrang": "科技设施现状",
+    "congTrinhNgamA": "地下工程规划A",
     "tramBts": "BTS 基站",
+    "rainWaterStations": "雨量监测站",
+    "waterLevelStation": "水位监测站",
+    "iotWindStation": "风力监测站",
+    "groups": {
+      "landData": "土地数据",
+      "planning": "规划",
+      "infrastructure": "基础设施",
+      "iot": "物联网监测站"
+    },
     "detailsTitle": "MVT 要素详情",
     "noAttributes": "该瓦片中没有属性。"
+  },
+  "tabs": {
+    "map": "地图",
+    "data": "数据",
+    "statistics": "统计",
+    "tracking": "监测",
+    "profile": "我的"
+  },
+  "dataOverview": {
+    "openButton": "查看数据概览",
+    "title": "数据概览",
+    "totalObjects": "对象总数",
+    "collectionsReadable": "可读取的集合",
+    "groupsSectionTitle": "按分组统计",
+    "footerNote": "数据来自当前有权限读取的 Directus 集合汇总。",
+    "loading": "正在汇总数据...",
+    "error": "无法加载数据概览。",
+    "groups": {
+      "landParcel": "地块",
+      "industrialZone": "工业区",
+      "wasteTreatment": "废物处理区",
+      "cemetery": "墓地",
+      "highTechZone": "高新技术区",
+      "scienceTechFacility": "科技设施",
+      "undergroundPlanning": "地下工程规划",
+      "btsStation": "BTS基站",
+      "monitoringStation": "监测站"
+    }
+  },
+  "statistics": {
+    "title": "数据统计",
+    "filters": {
+      "allLayers": "全部图层",
+      "allWards": "全部坊/社",
+      "today": "今天",
+      "asOfLabel": "数据截至",
+      "searchPlaceholder": "搜索集合...",
+      "noResults": "未找到集合"
+    },
+    "detail": {
+      "unreadable": "无法读取",
+      "lastUpdated": "最后更新：{{date}}"
+    },
+    "totalCard": "数据总量",
+    "status": {
+      "sectionTitle": "按状态",
+      "recent": "近期已更新",
+      "stale": "需要更新",
+      "unknown": "无法追踪",
+      "total": "合计",
+      "recentHint": "date_updated 在最近7天内",
+      "staleHint": "date_updated 超过7天",
+      "unknownHint": "没有可靠的更新时间戳"
+    },
+    "ward": {
+      "sectionTitle": "按坊/社",
+      "geometricNote": "根据真实坐标计算（point-in-polygon），汇总所有图层",
+      "viewAll": "查看全部 {{count}} 个坊/社",
+      "collapse": "收起",
+      "unassigned": "未分配坊/社",
+      "empty": "暂无坊/社数据"
+    },
+    "trend": {
+      "sectionTitle": "更新趋势",
+      "note": "按天汇总有真实更新时间戳的图层：地块、BTS基站",
+      "range7": "7天",
+      "range14": "14天",
+      "range30": "30天",
+      "empty": "暂无趋势数据",
+      "notAvailable": "该图层没有更新时间戳",
+      "notWardFiltered": "未按坊/社筛选"
+    },
+    "topLayers": {
+      "sectionTitle": "热门数据图层",
+      "viewAll": "查看全部",
+      "collapse": "收起",
+      "unreadable": "无法读取"
+    },
+    "loading": "正在加载统计数据...",
+    "error": "无法从Directus加载统计数据。"
+  },
+  "comingSoon": {
+    "title": "即将上线",
+    "message": "该界面正按技术规范开发中，后端就绪后将通过 API 接入真实数据。"
   }
 }

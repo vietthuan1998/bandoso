@@ -5,16 +5,39 @@ import { StyleSheet, Text } from 'react-native';
 // Unicode/emoji hệ thống làm icon tạm thời — dễ thay bằng react-native-vector-icons
 // hoặc react-native-svg sau này mà không đổi API của component.
 const GLYPHS = {
-  menu: '☰',
   close: '✕',
   search: '\u{1F50D}',
   chevronDown: '▾',
   chevronRight: '›',
-  layers: '\u{1F5FA}️',
   info: 'ℹ️',
   pin: '\u{1F4CD}',
   language: '\u{1F310}',
   check: '✓',
+  // Icon cho bottom-nav (mota/1..5.jpg): Bản đồ / Dữ liệu / Thống kê / Theo dõi / Cá nhân.
+  map: '\u{1F5FA}\u{FE0F}',
+  database: '\u{1F5C4}\u{FE0F}',
+  statistics: '\u{1F4CA}',
+  tracking: '\u{1F4E1}',
+  profile: '\u{1F464}',
+  construction: '\u{1F6A7}',
+  // Icon cho panel "Tổng quan dữ liệu" (DataOverviewPanel) — mỗi dòng nhóm
+  // collection MVT/Directus một icon riêng để dễ phân biệt khi liệt kê.
+  checkCircle: '\u{2705}',
+  landParcel: '\u{1F7EB}',
+  factory: '\u{1F3ED}',
+  recycle: '\u{267B}\u{FE0F}',
+  cemetery: '\u{1FAA6}',
+  microscope: '\u{1F52C}',
+  testTube: '\u{1F9EA}',
+  crane: '\u{1F3D7}\u{FE0F}',
+  antenna: '\u{1F4E1}',
+  satellite: '\u{1F6F0}\u{FE0F}',
+  // Icon nút "vị trí của tôi" (LocateButton) — dấu chữ thập định vị GPS.
+  locate: '\u{2316}',
+  // Icon cho StatisticsScreen (mục "Theo trạng thái", filter chip ngày).
+  refresh: '\u{1F504}',
+  warning: '\u{26A0}\u{FE0F}',
+  calendar: '\u{1F4C5}',
 } as const;
 
 export type IconName = keyof typeof GLYPHS;

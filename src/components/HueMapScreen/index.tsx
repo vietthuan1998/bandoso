@@ -16,10 +16,14 @@ import {
 } from '../../map/useHueMap';
 import type { ProjectSearchItem, Ward } from '../../map/types';
 import { PROJECT_CATEGORIES } from '../../map/projectLayers';
-import { MVT_PROTOTYPE_LAYERS, type MvtLayerConfig } from '../../map/mvtLayers';
+import { MVT_LAYERS, type MvtLayerConfig } from '../../map/mvtLayers';
 import { BottomSheet } from './BottomSheet';
+import { CompassButton } from './CompassButton';
+import { DataOverviewFab } from './DataOverviewFab';
+import { DataOverviewPanel } from './DataOverviewPanel';
 import { Header, LanguageOption } from './Header';
 import { Icon } from './Icon';
+import { LayersFab } from './LayersFab';
 import {
   CityInfoPanel,
   ProjectInfoPanel,
@@ -27,6 +31,7 @@ import {
   WardInfoPanel,
 } from './InfoPanels';
 import { LayerMenuSheet } from './LayerMenuSheet';
+import { LocateButton } from './LocateButton';
 import { MapCanvas } from './MapCanvas';
 import { MvtFeaturePanel } from './MvtFeaturePanel';
 import { SearchSheet, type SearchResult } from './SearchSheet';
@@ -44,26 +49,33 @@ function normalizeSearchText(value: string): string {
     .trim();
 }
 
-/** Màn hình bản đồ số thành phố Huế — phiên bản mobile, chuyển thể từ bandoso (web). */
-export default function HueMapScreen() {
+export default function HueMapScreen({
+  map,
+}: {
+  /**
+   * Dữ liệu bản đồ (phường/xã, dự án...) — được gọi ở AppShell (component
+   * cha) chứ không gọi useHueMap() ngay tại đây, để dữ liệu này SỐNG SÓT khi
+   * chuyển qua tab khác rồi quay lại tab Bản đồ, và để tab Thống kê
+   * (StatisticsScreen) dùng chung mà không phải tải lại từ đầu.
+   */
+  map: ReturnType<typeof useHueMap>;
+}) {
   const { t, i18n } = useTranslation();
   const language = appLanguage(i18n.resolvedLanguage ?? i18n.language);
   const insets = useSafeAreaInsets();
   const cameraRef = useRef<CameraRef>(null);
-  const map = useHueMap();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
+  const [dataOverviewOpen, setDataOverviewOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  // Thử nghiệm đường ống MVT (mục 8 tài liệu kỹ thuật) — mặc định tắt cả hai
-  // lớp cho tới khi người dùng tự bật trong menu lớp.
+  // 14 lớp MVT (mục 8 tài liệu kỹ thuật) — mặc định tắt hết cho tới khi
+  // người dùng tự bật từng lớp trong menu.
   const [mvtLayersVisible, setMvtLayersVisible] = useState<
     Record<string, boolean>
-  >(() =>
-    Object.fromEntries(MVT_PROTOTYPE_LAYERS.map(layer => [layer.id, false])),
-  );
+  >(() => Object.fromEntries(MVT_LAYERS.map(layer => [layer.id, false])));
   const [selectedMvtFeature, setSelectedMvtFeature] = useState<{
     layer: MvtLayerConfig;
     properties: Record<string, unknown>;
@@ -71,6 +83,18 @@ export default function HueMapScreen() {
   const toggleMvtLayer = (id: string, visible: boolean) => {
     setMvtLayersVisible(current => ({ ...current, [id]: visible }));
     if (!visible) setSelectedMvtFeature(null);
+  };
+
+  // Chỉ bật chấm "vị trí của tôi" (UserLocation) SAU LẦN ĐẦU người dùng nhấn
+  // LocateButton và cấp quyền thành công — không tự bật khi vào màn hình, để
+  // không tự ý xin quyền/theo dõi vị trí lúc chưa ai yêu cầu.
+  const [showUserLocation, setShowUserLocation] = useState(false);
+
+  // Hướng xem hiện tại của bản đồ (độ) — hiện la bàn khi khác 0, chạm vào để
+  // đưa bản đồ về hướng Bắc mặc định.
+  const [bearing, setBearing] = useState(0);
+  const resetBearing = () => {
+    cameraRef.current?.setStop({ bearing: 0, pitch: 0, duration: 300 });
   };
 
   const searchResults = useMemo<SearchResult[]>(() => {
@@ -227,15 +251,53 @@ export default function HueMapScreen() {
           map.clearSelection();
           setSelectedMvtFeature({ layer, properties });
         }}
+        onBearingChange={setBearing}
+        topInset={insets.top}
+        showUserLocation={showUserLocation}
       />
 
       <Header
         language={language}
         topInset={insets.top}
-        onMenuPress={() => setMenuOpen(true)}
         onSearchPress={() => setSearchOpen(true)}
         onLanguagePress={() => setLanguageSheetOpen(true)}
       />
+
+      {!menuOpen ? (
+        <LayersFab onPress={() => setMenuOpen(true)} top={insets.top + 68} />
+      ) : null}
+
+      {!dataOverviewOpen ? (
+        <DataOverviewFab
+          onPress={() => setDataOverviewOpen(true)}
+          top={insets.top + 68}
+        />
+      ) : null}
+
+      <LocateButton
+        onLocate={coords => {
+          setShowUserLocation(true);
+          cameraRef.current?.setStop({
+            center: coords,
+            zoom: 15,
+            duration: 900,
+          });
+        }}
+        style={{
+          right: SPACING.md,
+          bottom: SPACING.lg,
+        }}
+      />
+
+      {Math.abs(bearing) > 0.5 ? (
+        <CompassButton
+          bearing={bearing}
+          onPress={resetBearing}
+          // Xếp dưới DataOverviewFab (top: insets.top + 68, cao 44) + đệm 12,
+          // tránh chồng lên nhau khi cả hai cùng hiển thị.
+          style={[styles.compassButton, { top: insets.top + 68 + 44 + 12 }]}
+        />
+      ) : null}
 
       {map.loading ? (
         <View pointerEvents="none" style={styles.loadingOverlay}>
@@ -274,6 +336,11 @@ export default function HueMapScreen() {
           onClose={() => setSelectedMvtFeature(null)}
         />
       ) : null}
+
+      <DataOverviewPanel
+        visible={dataOverviewOpen}
+        onClose={() => setDataOverviewOpen(false)}
+      />
 
       {!map.loading && map.error ? (
         <View style={[styles.errorBanner, { top: insets.top + 64 }]}>
@@ -378,6 +445,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
   },
   errorText: { flex: 1, fontSize: 11, color: COLORS.critical },
+  compassButton: { position: 'absolute', right: SPACING.md },
   langSheetHeader: {
     flexDirection: 'row',
     paddingHorizontal: SPACING.lg,

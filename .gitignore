@@ -43,6 +43,7 @@ yarn-error.log
 
 # Biến môi trường / token (xem .env.example để biết cấu trúc)
 .env
+.env.local
 .env.*.local
 
 # fastlane

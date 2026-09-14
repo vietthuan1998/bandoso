@@ -5,7 +5,18 @@ buildscript {
         compileSdkVersion = 37
         targetSdkVersion = 36
         ndkVersion = "27.1.12297006"
-        kotlinVersion = "2.2.0"
+        // Cần khớp CHÍNH XÁC với bản Kotlin Gradle Plugin thật sự được áp
+        // dụng, không chỉ bản "mong muốn" — AGP 9 (compileSdk 37) tự kéo
+        // theo một bản Kotlin nội bộ cho hệ sinh thái build-tool của nó dù
+        // đã tắt android.builtInKotlin (xem android/gradle.properties), nên
+        // dependency "org.jetbrains.kotlin:kotlin-gradle-plugin" khai báo
+        // KHÔNG version ở dưới vẫn bị Gradle giải quyết lên 2.2.10 thay vì
+        // giữ 2.2.0 như khai báo cũ. @react-native-async-storage/async-storage
+        // (android/config.gradle) đọc đúng biến kotlinVersion này để chọn
+        // bản KSP khớp (ksp phải khớp tuyệt đối với bản Kotlin đang chạy,
+        // không chỉ >=) — khai sai ở đây gây lỗi
+        // "ksp-2.2.0-2.0.2 is too old for kotlin-2.2.10".
+        kotlinVersion = "2.2.10"
     }
     repositories {
         google()
@@ -14,7 +25,11 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        // Ghim rõ version bằng kotlinVersion ở trên thay vì để Gradle tự
+        // chọn — trước đây không ghim, khiến bản áp dụng thật (2.2.10, do
+        // AGP kéo theo) lệch với kotlinVersion khai báo (2.2.0), gây lỗi
+        // ksp nói trên.
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
     }
 }
 

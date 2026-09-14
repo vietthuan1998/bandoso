@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { MvtLayerConfig } from '../../map/mvtLayers';
+import { normalizeFeatureFields } from '../../map/normalizeFeatureFields';
 import { InfoCard } from './InfoCard';
 import { infoPanelStyles as styles } from './infoPanelStyles';
 
@@ -46,9 +47,12 @@ export function MvtFeaturePanel({
 }) {
   const { t } = useTranslation();
   const title = pickTitle(properties) ?? t(layer.labelKey);
-  const entries = Object.entries(properties).filter(
-    ([, value]) => value !== null && value !== undefined && value !== '',
-  );
+  const fields = normalizeFeatureFields(properties, {
+    yes: t('common.yes'),
+    no: t('common.no'),
+    male: t('common.male'),
+    female: t('common.female'),
+  });
 
   return (
     <InfoCard
@@ -57,15 +61,31 @@ export function MvtFeaturePanel({
       accentColor={layer.color}
       onClose={onClose}
     >
-      {entries.length === 0 ? (
+      {fields.length === 0 ? (
         <Text style={styles.value}>{t('mvt.noAttributes')}</Text>
       ) : (
-        entries.map(([key, value]) => (
-          <View key={key}>
-            <Text style={styles.detailLabel}>{key}</Text>
-            <Text style={styles.detailValue}>{String(value)}</Text>
-          </View>
-        ))
+        fields.map(field =>
+          field.kind === 'list' ? (
+            <View key={field.key}>
+              <Text style={styles.detailLabel}>{field.label}</Text>
+              {field.items.map((item, index) => (
+                <View key={index} style={styles.listItemCard}>
+                  {item.map(leaf => (
+                    <View key={leaf.key} style={styles.listItemRow}>
+                      <Text style={styles.listItemLabel}>{leaf.label}: </Text>
+                      <Text style={styles.listItemValue}>{leaf.value}</Text>
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View key={field.key}>
+              <Text style={styles.detailLabel}>{field.label}</Text>
+              <Text style={styles.detailValue}>{field.value}</Text>
+            </View>
+          ),
+        )
       )}
     </InfoCard>
   );

@@ -10,11 +10,16 @@
   },
   "common": {
     "close": "Fermer",
+    "confirm": "Valider",
     "openMenu": "Ouvrir les couches",
     "closeMenu": "Fermer les couches",
     "loading": "Chargement des données...",
     "originalVietnamese": "Contenu original en vietnamien",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "yes": "Oui",
+    "no": "Non",
+    "male": "Homme",
+    "female": "Femme"
   },
   "header": {
     "title": "Système de cartographie numérique de Hué",
@@ -40,7 +45,10 @@
     "ariaLabel": "Carte administrative de Hué",
     "loading": "Chargement de la carte...",
     "loadError": "Impossible de charger la carte",
-    "unnamedProject": "Projet sans nom"
+    "unnamedProject": "Projet sans nom",
+    "resetBearing": "Réorienter la carte vers le nord",
+    "locateMe": "Ma position",
+    "locationUnavailable": "Impossible de déterminer votre position"
   },
   "search": {
     "administrativeLayer": "Limites administratives",
@@ -113,11 +121,114 @@
     "operating": "Projets en activité"
   },
   "mvt": {
-    "sectionTitle": "Couches MVT (prototype)",
-    "hint": "Test du pipeline de rendu MVT selon la spécification technique ; données chargées directement depuis dcu.huecity.vn.",
+    "sectionTitle": "Couches MVT (15 collections)",
+    "hint": "Rendu directement depuis dcu.huecity.vn selon la section 8 de la spécification. Pointillés = couche prévue (planification future).",
     "thuaDat": "Parcelles (cadastre)",
+    "khuCongNghiepHienTrang": "Zone industrielle - état actuel",
+    "khuCongNghiepDinhHuong": "Développement de zone industrielle - prévu",
+    "xuLyChatThaiHienTrang": "Zone de traitement des déchets - état actuel",
+    "xuLyChatThaiDinhHuong": "Zone de traitement des déchets - prévue",
+    "nghiaTrangHienTrang": "Cimetière - état actuel",
+    "nghiaTrangDinhHuong": "Cimetière - prévu",
+    "congNgheCaoDinhHuong": "Zone de haute technologie - prévue",
+    "coSoKhcnDinhHuong": "Installation scientifique et technologique - prévue",
+    "coSoKhcnHienTrang": "Installation scientifique et technologique - état actuel",
+    "congTrinhNgamA": "Planification des ouvrages souterrains A",
     "tramBts": "Station BTS",
+    "rainWaterStations": "Station pluviométrique",
+    "waterLevelStation": "Station de niveau d'eau",
+    "iotWindStation": "Station de vent",
+    "groups": {
+      "landData": "Foncier",
+      "planning": "Planification",
+      "infrastructure": "Infrastructure",
+      "iot": "Stations IoT"
+    },
     "detailsTitle": "Détails de l'entité MVT",
     "noAttributes": "Aucun attribut dans cette tuile."
+  },
+  "tabs": {
+    "map": "Carte",
+    "data": "Données",
+    "statistics": "Statistiques",
+    "tracking": "Suivi",
+    "profile": "Profil"
+  },
+  "dataOverview": {
+    "openButton": "Voir l'aperçu des données",
+    "title": "Aperçu des données",
+    "totalObjects": "Total d'objets",
+    "collectionsReadable": "Collections accessibles",
+    "groupsSectionTitle": "Données par groupe",
+    "footerNote": "Chiffres agrégés à partir des collections Directus actuellement accessibles.",
+    "loading": "Agrégation des chiffres...",
+    "error": "Impossible de charger l'aperçu des données.",
+    "groups": {
+      "landParcel": "Parcelles de terrain",
+      "industrialZone": "Zones industrielles",
+      "wasteTreatment": "Zones de traitement des déchets",
+      "cemetery": "Cimetières",
+      "highTechZone": "Zones de haute technologie",
+      "scienceTechFacility": "Installations scientifiques et technologiques",
+      "undergroundPlanning": "Planification des ouvrages souterrains",
+      "btsStation": "Stations BTS",
+      "monitoringStation": "Stations de surveillance"
+    }
+  },
+  "statistics": {
+    "title": "Statistiques des données",
+    "filters": {
+      "allLayers": "Toutes les couches",
+      "allWards": "Tous les quartiers",
+      "today": "Aujourd'hui",
+      "asOfLabel": "Données au",
+      "searchPlaceholder": "Rechercher une collection...",
+      "noResults": "Aucune collection trouvée"
+    },
+    "detail": {
+      "unreadable": "Illisible",
+      "lastUpdated": "Dernière mise à jour : {{date}}"
+    },
+    "totalCard": "Total des données",
+    "status": {
+      "sectionTitle": "Par statut",
+      "recent": "Mis à jour récemment",
+      "stale": "À mettre à jour",
+      "unknown": "Non suivi",
+      "total": "Total",
+      "recentHint": "date_updated dans les 7 derniers jours",
+      "staleHint": "date_updated de plus de 7 jours",
+      "unknownHint": "Aucun horodatage de mise à jour fiable disponible"
+    },
+    "ward": {
+      "sectionTitle": "Par quartier",
+      "geometricNote": "Calculé à partir des coordonnées réelles (point dans polygone), cumulé sur toutes les couches",
+      "viewAll": "Voir les {{count}} quartiers",
+      "collapse": "Réduire",
+      "unassigned": "Non rattaché à un quartier",
+      "empty": "Aucune donnée par quartier pour le moment"
+    },
+    "trend": {
+      "sectionTitle": "Tendance des mises à jour",
+      "note": "Total quotidien sur les couches avec un horodatage réel : parcelles, stations BTS",
+      "range7": "7 jours",
+      "range14": "14 jours",
+      "range30": "30 jours",
+      "empty": "Aucune donnée de tendance pour le moment",
+      "notAvailable": "Cette couche n'a pas d'horodatage de mise à jour",
+      "notWardFiltered": "Non filtré par quartier"
+    },
+    "topLayers": {
+      "sectionTitle": "Principales couches de données",
+      "viewAll": "Tout voir",
+      "collapse": "Réduire",
+      "unreadable": "Illisible"
+    },
+    "loading": "Chargement des statistiques...",
+    "error": "Impossible de charger les statistiques depuis Directus."
+  },
+  "comingSoon": {
+    "title": "Bientôt disponible",
+    "message": "Cet écran est en cours de développement selon la spécification technique et se connectera aux données réelles via l'API une fois le backend prêt."
   }
 }

@@ -29,6 +29,27 @@ export const infoPanelStyles = StyleSheet.create({
   },
   detailValue: { fontSize: 12, lineHeight: 18, color: COLORS.text },
 
+  // Field dạng mảng object (vd. "chu_so_huu" nhiều đồng sở hữu) — mỗi phần
+  // tử hiển thị thành 1 thẻ con riêng thay vì gộp chung 1 dòng.
+  listItemCard: {
+    marginTop: 6,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.borderSoft,
+    gap: 2,
+  },
+  listItemIndex: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.textFaint,
+    marginBottom: 2,
+  },
+  listItemRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  listItemLabel: { fontSize: 12, fontWeight: '600', color: COLORS.textMuted },
+  listItemValue: { fontSize: 12, color: COLORS.text, flexShrink: 1 },
+
   legendRow: {
     flexDirection: 'row',
     alignItems: 'center',

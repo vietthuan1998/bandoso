@@ -6,13 +6,11 @@ import { COLORS, SPACING } from './theme';
 
 export function Header({
   language,
-  onMenuPress,
   onSearchPress,
   onLanguagePress,
   topInset,
 }: {
   language: SupportedLanguage;
-  onMenuPress: () => void;
   onSearchPress: () => void;
   onLanguagePress: () => void;
   topInset: number;
@@ -20,14 +18,6 @@ export function Header({
   const { t } = useTranslation();
   return (
     <View style={[styles.wrap, { paddingTop: topInset + SPACING.sm }]}>
-      <Pressable
-        onPress={onMenuPress}
-        style={styles.iconButton}
-        accessibilityRole="button"
-        accessibilityLabel={t('header.toggleMenu')}
-      >
-        <Icon name="menu" size={20} color={COLORS.primaryDark} />
-      </Pressable>
       <Text style={styles.title} numberOfLines={1}>
         {t('header.title')}
       </Text>

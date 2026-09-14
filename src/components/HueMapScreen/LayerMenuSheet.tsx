@@ -9,9 +9,11 @@ import {
   Text,
   View,
 } from 'react-native';
-import { MVT_PROTOTYPE_LAYERS } from '../../map/mvtLayers';
-import { BottomSheet } from './BottomSheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MVT_GROUPS, MVT_LAYERS } from '../../map/mvtLayers';
 import { Icon } from './Icon';
+import { LayersGlyph } from './LayersGlyph';
+import { LeftSheet } from './LeftSheet';
 import { COLORS, RADIUS, SPACING } from './theme';
 
 type LayerGroup = {
@@ -28,35 +30,35 @@ const LAYER_GROUPS: LayerGroup[] = [
     color: '#1b9b52',
     itemKeys: ['menu.auction'],
   },
-  {
-    id: 'planning',
-    titleKey: 'menu.planning',
-    color: '#0878bd',
-    itemKeys: [
-      'menu.generalPlanning',
-      'menu.zoningPlanning',
-      'menu.detailedPlanning',
-      'menu.landUsePlanning',
-    ],
-  },
-  {
-    id: 'status',
-    titleKey: 'menu.status',
-    color: '#68778a',
-    itemKeys: ['menu.landUseStatus', 'menu.populationStatus'],
-  },
-  {
-    id: 'infrastructure',
-    titleKey: 'menu.infrastructure',
-    color: '#8b5cf6',
-    itemKeys: ['menu.transportInfrastructure', 'menu.technicalInfrastructure'],
-  },
-  {
-    id: 'specialized',
-    titleKey: 'menu.specialized',
-    color: '#e78018',
-    itemKeys: ['menu.environment', 'menu.cultureTourism'],
-  },
+  // {
+  //   id: 'planning',
+  //   titleKey: 'menu.planning',
+  //   color: '#0878bd',
+  //   itemKeys: [
+  //     'menu.generalPlanning',
+  //     'menu.zoningPlanning',
+  //     'menu.detailedPlanning',
+  //     'menu.landUsePlanning',
+  //   ],
+  // },
+  // {
+  //   id: 'status',
+  //   titleKey: 'menu.status',
+  //   color: '#68778a',
+  //   itemKeys: ['menu.landUseStatus', 'menu.populationStatus'],
+  // },
+  // {
+  //   id: 'infrastructure',
+  //   titleKey: 'menu.infrastructure',
+  //   color: '#8b5cf6',
+  //   itemKeys: ['menu.transportInfrastructure', 'menu.technicalInfrastructure'],
+  // },
+  // {
+  //   id: 'specialized',
+  //   titleKey: 'menu.specialized',
+  //   color: '#e78018',
+  //   itemKeys: ['menu.environment', 'menu.cultureTourism'],
+  // },
 ];
 
 export function LayerMenuSheet({
@@ -97,6 +99,7 @@ export function LayerMenuSheet({
   onToggleMvtLayer: (id: string, visible: boolean) => void;
 }) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
   const [notice, setNotice] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -123,9 +126,9 @@ export function LayerMenuSheet({
     });
 
   return (
-    <BottomSheet visible={visible} onClose={onClose}>
-      <View style={styles.header}>
-        <Icon name="layers" size={16} color={COLORS.primaryDark} />
+    <LeftSheet visible={visible} onClose={onClose}>
+      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
+        <LayersGlyph size={16} color={COLORS.primaryDark} />
         <Text style={styles.headerTitle}>{t('menu.title')}</Text>
         <Pressable
           onPress={onClose}
@@ -139,7 +142,10 @@ export function LayerMenuSheet({
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + SPACING.xl },
+        ]}
       >
         <GroupHeader
           title={t('menu.administrative')}
@@ -214,27 +220,52 @@ export function LayerMenuSheet({
           <GroupHeader
             title={t('mvt.sectionTitle')}
             color="#c026d3"
-            open
-            onClick={() => {}}
+            open={openGroups.has('mvt-root')}
+            onClick={() => toggleGroup('mvt-root')}
           />
-          <View style={styles.groupBody}>
-            <Text style={styles.mvtHint}>{t('mvt.hint')}</Text>
-            {MVT_PROTOTYPE_LAYERS.map(mvtLayer => (
-              <ToggleRow
-                key={mvtLayer.id}
-                label={t(mvtLayer.labelKey)}
-                checked={mvtLayersVisible[mvtLayer.id] ?? false}
-                highlighted={mvtLayersVisible[mvtLayer.id] ?? false}
-                onToggle={value => onToggleMvtLayer(mvtLayer.id, value)}
-                onPressLabel={() =>
-                  onToggleMvtLayer(
-                    mvtLayer.id,
-                    !(mvtLayersVisible[mvtLayer.id] ?? false),
-                  )
-                }
-              />
-            ))}
-          </View>
+          {openGroups.has('mvt-root') ? (
+            <View style={styles.groupBody}>
+              <Text style={styles.mvtHint}>{t('mvt.hint')}</Text>
+              {MVT_GROUPS.map(mvtGroup => {
+                const subGroupKey = `mvt-${mvtGroup.id}`;
+                const subOpen = openGroups.has(subGroupKey);
+                const layers = MVT_LAYERS.filter(
+                  layer => layer.groupId === mvtGroup.id,
+                );
+                return (
+                  <View key={mvtGroup.id} style={styles.mvtSubGroup}>
+                    <GroupHeader
+                      title={t(mvtGroup.labelKey)}
+                      color={mvtGroup.color}
+                      open={subOpen}
+                      onClick={() => toggleGroup(subGroupKey)}
+                    />
+                    {subOpen ? (
+                      <View style={styles.groupBody}>
+                        {layers.map(mvtLayer => (
+                          <ToggleRow
+                            key={mvtLayer.id}
+                            label={t(mvtLayer.labelKey)}
+                            checked={mvtLayersVisible[mvtLayer.id] ?? false}
+                            highlighted={mvtLayersVisible[mvtLayer.id] ?? false}
+                            onToggle={value =>
+                              onToggleMvtLayer(mvtLayer.id, value)
+                            }
+                            onPressLabel={() =>
+                              onToggleMvtLayer(
+                                mvtLayer.id,
+                                !(mvtLayersVisible[mvtLayer.id] ?? false),
+                              )
+                            }
+                          />
+                        ))}
+                      </View>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </View>
+          ) : null}
         </View>
       </ScrollView>
 
@@ -244,7 +275,7 @@ export function LayerMenuSheet({
           <Text style={styles.toastText}>{t('menu.updating')}</Text>
         </View>
       ) : null}
-    </BottomSheet>
+    </LeftSheet>
   );
 }
 
@@ -324,7 +355,10 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     textTransform: 'uppercase',
   },
-  scroll: { flexGrow: 0 },
+  // Panel giờ cao hết màn hình (LeftSheet) thay vì tự co theo nội dung như
+  // BottomSheet trước đây, nên ScrollView phải giãn hết phần còn lại
+  // (flex: 1) để cuộn đúng trong chiều cao cố định của panel.
+  scroll: { flex: 1 },
   scrollContent: { paddingBottom: SPACING.xl },
   loadingRow: {
     flexDirection: 'row',
@@ -347,33 +381,52 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
+    backgroundColor: COLORS.background,
   },
   groupDot: { width: 10, height: 10, borderRadius: 5 },
-  groupTitle: { flex: 1, fontSize: 13, fontWeight: '700', color: COLORS.text },
+  groupTitle: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.text,
+    textTransform: 'uppercase',
+    letterSpacing: 0.2,
+  },
   chevronOpen: { transform: [{ rotate: '180deg' }] },
-  groupBody: { paddingBottom: SPACING.xs },
+  // Nội dung con lùi vào và có viền trái cùng màu nhóm để phân biệt rõ với
+  // GroupHeader (tiêu đề) phía trên, thay vì nằm ngang hàng khó nhận biết.
+  groupBody: {
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.sm,
+    paddingLeft: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    borderLeftWidth: 2,
+    borderLeftColor: COLORS.borderSoft,
+    marginLeft: SPACING.lg,
+  },
   mvtHint: {
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.md,
     paddingBottom: SPACING.xs,
     fontSize: 10,
     lineHeight: 14,
     color: COLORS.textFaint,
   },
+  mvtSubGroup: { borderTopWidth: 1, borderTopColor: '#f0f3f6' },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm + 2,
   },
   toggleRowActive: { backgroundColor: '#eaf5fc' },
   toggleLabelWrap: { flex: 1 },
-  toggleLabel: { fontSize: 13, fontWeight: '600', color: COLORS.text },
-  toggleLabelActive: { color: COLORS.primaryDark },
+  toggleLabel: { fontSize: 13, fontWeight: '500', color: COLORS.textMuted },
+  toggleLabelActive: { color: COLORS.primaryDark, fontWeight: '600' },
   placeholderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   },
   placeholderBox: {

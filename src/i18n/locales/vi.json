@@ -10,11 +10,16 @@
   },
   "common": {
     "close": "Đóng",
+    "confirm": "Xong",
     "openMenu": "Mở danh mục lớp bản đồ",
     "closeMenu": "Đóng danh mục lớp bản đồ",
     "loading": "Đang tải dữ liệu...",
     "originalVietnamese": "Nội dung gốc tiếng Việt",
-    "retry": "Thử lại"
+    "retry": "Thử lại",
+    "yes": "Có",
+    "no": "Không",
+    "male": "Nam",
+    "female": "Nữ"
   },
   "header": {
     "title": "Hệ thống bản đồ số thành phố Huế",
@@ -40,7 +45,10 @@
     "ariaLabel": "Bản đồ hành chính thành phố Huế",
     "loading": "Đang tải dữ liệu bản đồ...",
     "loadError": "Không thể tải dữ liệu bản đồ",
-    "unnamedProject": "Dự án chưa có tên"
+    "unnamedProject": "Dự án chưa có tên",
+    "resetBearing": "Đưa bản đồ về hướng Bắc",
+    "locateMe": "Vị trí của tôi",
+    "locationUnavailable": "Không thể xác định vị trí của bạn"
   },
   "search": {
     "administrativeLayer": "Lớp địa giới hành chính",
@@ -113,11 +121,114 @@
     "operating": "Dự án đã đi vào hoạt động"
   },
   "mvt": {
-    "sectionTitle": "Lớp MVT (thử nghiệm)",
-    "hint": "Đang thử nghiệm đường ống vẽ MVT theo đặc tả kỹ thuật, dữ liệu tải trực tiếp từ dcu.huecity.vn.",
+    "sectionTitle": "Lớp MVT (15 collection)",
+    "hint": "Vẽ trực tiếp từ dcu.huecity.vn theo mục 8 đặc tả kỹ thuật. Nét đứt = lớp định hướng (quy hoạch tương lai).",
     "thuaDat": "Thửa đất (đất đai, địa chính)",
+    "khuCongNghiepHienTrang": "Hiện trạng khu công nghiệp",
+    "khuCongNghiepDinhHuong": "Định hướng phát triển khu công nghiệp",
+    "xuLyChatThaiHienTrang": "Hiện trạng khu xử lý chất thải",
+    "xuLyChatThaiDinhHuong": "Định hướng khu xử lý chất thải",
+    "nghiaTrangHienTrang": "Hiện trạng nghĩa trang",
+    "nghiaTrangDinhHuong": "Định hướng nghĩa trang",
+    "congNgheCaoDinhHuong": "Định hướng khu công nghệ cao",
+    "coSoKhcnDinhHuong": "Định hướng cơ sở khoa học và công nghệ",
+    "coSoKhcnHienTrang": "Hiện trạng cơ sở khoa học và công nghệ",
+    "congTrinhNgamA": "Quy hoạch công trình ngầm A",
     "tramBts": "Trạm BTS",
+    "rainWaterStations": "Trạm đo mưa",
+    "waterLevelStation": "Trạm đo mực nước",
+    "iotWindStation": "Trạm đo gió",
+    "groups": {
+      "landData": "Đất đai",
+      "planning": "Quy hoạch",
+      "infrastructure": "Hạ tầng",
+      "iot": "IoT / Trạm quan trắc"
+    },
     "detailsTitle": "Chi tiết đối tượng MVT",
     "noAttributes": "Không có thuộc tính nào trong tile."
+  },
+  "tabs": {
+    "map": "Bản đồ",
+    "data": "Dữ liệu",
+    "statistics": "Thống kê",
+    "tracking": "Theo dõi",
+    "profile": "Cá nhân"
+  },
+  "dataOverview": {
+    "openButton": "Xem tổng quan dữ liệu",
+    "title": "Tổng quan dữ liệu",
+    "totalObjects": "Tổng số đối tượng",
+    "collectionsReadable": "Collection đọc được",
+    "groupsSectionTitle": "Phân nhóm dữ liệu",
+    "footerNote": "Số liệu được tổng hợp từ các collection Directus đang có quyền đọc.",
+    "loading": "Đang tổng hợp số liệu...",
+    "error": "Không tải được số liệu tổng quan.",
+    "groups": {
+      "landParcel": "Thửa đất",
+      "industrialZone": "Khu công nghiệp",
+      "wasteTreatment": "Khu xử lý chất thải",
+      "cemetery": "Nghĩa trang",
+      "highTechZone": "Khu công nghệ cao",
+      "scienceTechFacility": "Cơ sở khoa học công nghệ",
+      "undergroundPlanning": "Quy hoạch công trình ngầm",
+      "btsStation": "Trạm BTS",
+      "monitoringStation": "Trạm quan trắc"
+    }
+  },
+  "statistics": {
+    "title": "Thống kê dữ liệu",
+    "filters": {
+      "allLayers": "Tất cả lớp",
+      "allWards": "Tất cả phường, xã",
+      "today": "Hôm nay",
+      "asOfLabel": "Dữ liệu tính đến ngày",
+      "searchPlaceholder": "Tìm collection...",
+      "noResults": "Không tìm thấy collection nào"
+    },
+    "detail": {
+      "unreadable": "Không đọc được",
+      "lastUpdated": "Cập nhật lần cuối: {{date}}"
+    },
+    "totalCard": "Tổng dữ liệu",
+    "status": {
+      "sectionTitle": "Theo trạng thái",
+      "recent": "Cập nhật gần đây",
+      "stale": "Cần cập nhật",
+      "unknown": "Không theo dõi được",
+      "total": "Tổng cộng",
+      "recentHint": "date_updated trong 7 ngày gần nhất",
+      "staleHint": "date_updated cũ hơn 7 ngày",
+      "unknownHint": "Không có mốc thời gian cập nhật đáng tin cậy"
+    },
+    "ward": {
+      "sectionTitle": "Theo phường, xã",
+      "geometricNote": "Tính theo toạ độ thật (point-in-polygon), cộng dồn qua các lớp dữ liệu",
+      "viewAll": "Xem tất cả {{count}} phường, xã",
+      "collapse": "Thu gọn",
+      "unassigned": "Chưa gán phường/xã",
+      "empty": "Chưa có dữ liệu phường, xã"
+    },
+    "trend": {
+      "sectionTitle": "Xu hướng cập nhật",
+      "note": "Tổng theo ngày trên các lớp có mốc cập nhật thật: thửa đất, trạm BTS",
+      "range7": "7 ngày",
+      "range14": "14 ngày",
+      "range30": "30 ngày",
+      "empty": "Chưa có dữ liệu xu hướng",
+      "notAvailable": "Lớp này không có mốc thời gian cập nhật",
+      "notWardFiltered": "Không lọc theo phường, xã"
+    },
+    "topLayers": {
+      "sectionTitle": "Top lớp dữ liệu",
+      "viewAll": "Xem tất cả",
+      "collapse": "Thu gọn",
+      "unreadable": "Không đọc được"
+    },
+    "loading": "Đang tải số liệu thống kê...",
+    "error": "Không tải được số liệu thống kê từ Directus."
+  },
+  "comingSoon": {
+    "title": "Sắp ra mắt",
+    "message": "Màn hình này đang được xây dựng theo đặc tả kỹ thuật, sẽ nối dữ liệu thật qua API khi backend sẵn sàng."
   }
 }

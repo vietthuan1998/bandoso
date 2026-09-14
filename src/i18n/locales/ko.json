@@ -10,11 +10,16 @@
   },
   "common": {
     "close": "닫기",
+    "confirm": "완료",
     "openMenu": "지도 레이어 열기",
     "closeMenu": "지도 레이어 닫기",
     "loading": "데이터 불러오는 중...",
     "originalVietnamese": "베트남어 원문",
-    "retry": "다시 시도"
+    "retry": "다시 시도",
+    "yes": "예",
+    "no": "아니요",
+    "male": "남성",
+    "female": "여성"
   },
   "header": {
     "title": "후에시 디지털 지도 시스템",
@@ -40,7 +45,10 @@
     "ariaLabel": "후에시 행정 지도",
     "loading": "지도 데이터 불러오는 중...",
     "loadError": "지도 데이터를 불러올 수 없습니다",
-    "unnamedProject": "이름 없는 프로젝트"
+    "unnamedProject": "이름 없는 프로젝트",
+    "resetBearing": "지도를 북쪽으로 재설정",
+    "locateMe": "내 위치",
+    "locationUnavailable": "현재 위치를 확인할 수 없습니다"
   },
   "search": {
     "administrativeLayer": "행정 경계",
@@ -113,11 +121,114 @@
     "operating": "운영 중인 프로젝트"
   },
   "mvt": {
-    "sectionTitle": "MVT 레이어(시험)",
-    "hint": "기술 명세에 따라 MVT 렌더링 파이프라인을 시험 중입니다. 데이터는 dcu.huecity.vn에서 직접 불러옵니다.",
+    "sectionTitle": "MVT 레이어(15개 컬렉션)",
+    "hint": "기술 명세 8항에 따라 dcu.huecity.vn에서 직접 렌더링합니다. 점선 = 정향(향후 계획) 레이어.",
     "thuaDat": "필지(지적)",
+    "khuCongNghiepHienTrang": "산업단지 현황",
+    "khuCongNghiepDinhHuong": "산업단지 개발 계획",
+    "xuLyChatThaiHienTrang": "폐기물 처리 구역 현황",
+    "xuLyChatThaiDinhHuong": "폐기물 처리 구역 계획",
+    "nghiaTrangHienTrang": "묘지 현황",
+    "nghiaTrangDinhHuong": "묘지 계획",
+    "congNgheCaoDinhHuong": "첨단기술단지 계획",
+    "coSoKhcnDinhHuong": "과학기술시설 계획",
+    "coSoKhcnHienTrang": "과학기술시설 현황",
+    "congTrinhNgamA": "지하 구조물 계획 A",
     "tramBts": "BTS 기지국",
+    "rainWaterStations": "우량 관측소",
+    "waterLevelStation": "수위 관측소",
+    "iotWindStation": "풍향 관측소",
+    "groups": {
+      "landData": "토지 데이터",
+      "planning": "도시 계획",
+      "infrastructure": "인프라",
+      "iot": "IoT 관측소"
+    },
     "detailsTitle": "MVT 객체 상세",
     "noAttributes": "이 타일에는 속성이 없습니다."
+  },
+  "tabs": {
+    "map": "지도",
+    "data": "데이터",
+    "statistics": "통계",
+    "tracking": "모니터링",
+    "profile": "내 정보"
+  },
+  "dataOverview": {
+    "openButton": "데이터 개요 보기",
+    "title": "데이터 개요",
+    "totalObjects": "총 객체 수",
+    "collectionsReadable": "읽을 수 있는 컬렉션",
+    "groupsSectionTitle": "그룹별 데이터",
+    "footerNote": "현재 접근 가능한 Directus 컬렉션에서 집계한 수치입니다.",
+    "loading": "집계 중...",
+    "error": "데이터 개요를 불러오지 못했습니다.",
+    "groups": {
+      "landParcel": "토지 필지",
+      "industrialZone": "산업 단지",
+      "wasteTreatment": "폐기물 처리 구역",
+      "cemetery": "묘지",
+      "highTechZone": "첨단 기술 단지",
+      "scienceTechFacility": "과학 기술 시설",
+      "undergroundPlanning": "지하 구조물 계획",
+      "btsStation": "BTS 기지국",
+      "monitoringStation": "관측소"
+    }
+  },
+  "statistics": {
+    "title": "데이터 통계",
+    "filters": {
+      "allLayers": "모든 레이어",
+      "allWards": "모든 동/사",
+      "today": "오늘",
+      "asOfLabel": "데이터 기준일",
+      "searchPlaceholder": "컬렉션 검색...",
+      "noResults": "컬렉션을 찾을 수 없습니다"
+    },
+    "detail": {
+      "unreadable": "읽을 수 없음",
+      "lastUpdated": "마지막 업데이트: {{date}}"
+    },
+    "totalCard": "총 데이터 건수",
+    "status": {
+      "sectionTitle": "상태별",
+      "recent": "최근 업데이트됨",
+      "stale": "업데이트 필요",
+      "unknown": "추적 불가",
+      "total": "합계",
+      "recentHint": "date_updated가 최근 7일 이내",
+      "staleHint": "date_updated가 7일보다 오래됨",
+      "unknownHint": "신뢰할 수 있는 업데이트 시각이 없음"
+    },
+    "ward": {
+      "sectionTitle": "동/사별",
+      "geometricNote": "실제 좌표 기반 계산(point-in-polygon), 모든 레이어 합산",
+      "viewAll": "{{count}}개 동/사 모두 보기",
+      "collapse": "접기",
+      "unassigned": "동/사 미지정",
+      "empty": "아직 동/사별 데이터가 없습니다"
+    },
+    "trend": {
+      "sectionTitle": "업데이트 추이",
+      "note": "실제 업데이트 시각이 있는 레이어(필지, BTS 기지국)의 일별 합계",
+      "range7": "7일",
+      "range14": "14일",
+      "range30": "30일",
+      "empty": "아직 추이 데이터가 없습니다",
+      "notAvailable": "이 레이어에는 업데이트 시각이 없습니다",
+      "notWardFiltered": "동/사로 필터링되지 않음"
+    },
+    "topLayers": {
+      "sectionTitle": "상위 데이터 레이어",
+      "viewAll": "전체 보기",
+      "collapse": "접기",
+      "unreadable": "읽을 수 없음"
+    },
+    "loading": "통계 데이터를 불러오는 중...",
+    "error": "Directus에서 통계 데이터를 불러올 수 없습니다."
+  },
+  "comingSoon": {
+    "title": "출시 예정",
+    "message": "이 화면은 기술 명세에 따라 개발 중이며, 백엔드 준비 후 API를 통해 실제 데이터에 연결됩니다."
   }
 }

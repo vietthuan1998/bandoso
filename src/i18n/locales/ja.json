@@ -10,11 +10,16 @@
   },
   "common": {
     "close": "閉じる",
+    "confirm": "完了",
     "openMenu": "地図レイヤーを開く",
     "closeMenu": "地図レイヤーを閉じる",
     "loading": "データを読み込み中...",
     "originalVietnamese": "ベトナム語の原文",
-    "retry": "再試行"
+    "retry": "再試行",
+    "yes": "はい",
+    "no": "いいえ",
+    "male": "男性",
+    "female": "女性"
   },
   "header": {
     "title": "フエ市デジタル地図システム",
@@ -40,7 +45,10 @@
     "ariaLabel": "フエ市行政地図",
     "loading": "地図データを読み込み中...",
     "loadError": "地図データを読み込めません",
-    "unnamedProject": "名称未設定のプロジェクト"
+    "unnamedProject": "名称未設定のプロジェクト",
+    "resetBearing": "地図を北向きに戻す",
+    "locateMe": "現在地",
+    "locationUnavailable": "現在地を取得できません"
   },
   "search": {
     "administrativeLayer": "行政境界",
@@ -113,11 +121,114 @@
     "operating": "稼働中のプロジェクト"
   },
   "mvt": {
-    "sectionTitle": "MVTレイヤー（試験）",
-    "hint": "技術仕様に基づきMVT描画パイプラインを試験中。データはdcu.huecity.vnから直接読み込みます。",
+    "sectionTitle": "MVTレイヤー（15コレクション）",
+    "hint": "技術仕様の第8項に基づきdcu.huecity.vnから直接描画。破線＝定向（将来計画）レイヤー。",
     "thuaDat": "地籍（土地区画）",
+    "khuCongNghiepHienTrang": "工業団地の現況",
+    "khuCongNghiepDinhHuong": "工業団地開発計画",
+    "xuLyChatThaiHienTrang": "廃棄物処理区域の現況",
+    "xuLyChatThaiDinhHuong": "廃棄物処理区域計画",
+    "nghiaTrangHienTrang": "墓地の現況",
+    "nghiaTrangDinhHuong": "墓地計画",
+    "congNgheCaoDinhHuong": "ハイテク区域計画",
+    "coSoKhcnDinhHuong": "科学技術施設計画",
+    "coSoKhcnHienTrang": "科学技術施設の現況",
+    "congTrinhNgamA": "地下工作物計画A",
     "tramBts": "BTS基地局",
+    "rainWaterStations": "雨量観測局",
+    "waterLevelStation": "水位観測局",
+    "iotWindStation": "風況観測局",
+    "groups": {
+      "landData": "地籍データ",
+      "planning": "都市計画",
+      "infrastructure": "インフラ",
+      "iot": "IoT観測局"
+    },
     "detailsTitle": "MVTフィーチャーの詳細",
     "noAttributes": "このタイルに属性はありません。"
+  },
+  "tabs": {
+    "map": "地図",
+    "data": "データ",
+    "statistics": "統計",
+    "tracking": "モニタリング",
+    "profile": "マイページ"
+  },
+  "dataOverview": {
+    "openButton": "データ概要を見る",
+    "title": "データ概要",
+    "totalObjects": "オブジェクト総数",
+    "collectionsReadable": "読み取り可能なコレクション",
+    "groupsSectionTitle": "グループ別データ",
+    "footerNote": "現在アクセス可能なDirectusコレクションから集計した数値です。",
+    "loading": "集計中...",
+    "error": "データ概要を読み込めませんでした。",
+    "groups": {
+      "landParcel": "地籍地",
+      "industrialZone": "工業団地",
+      "wasteTreatment": "廃棄物処理区域",
+      "cemetery": "墓地",
+      "highTechZone": "ハイテク区域",
+      "scienceTechFacility": "科学技術施設",
+      "undergroundPlanning": "地下工作物計画",
+      "btsStation": "BTS基地局",
+      "monitoringStation": "観測局"
+    }
+  },
+  "statistics": {
+    "title": "データ統計",
+    "filters": {
+      "allLayers": "すべてのレイヤー",
+      "allWards": "すべての行政区",
+      "today": "今日",
+      "asOfLabel": "データ基準日",
+      "searchPlaceholder": "コレクションを検索...",
+      "noResults": "コレクションが見つかりません"
+    },
+    "detail": {
+      "unreadable": "読み取り不可",
+      "lastUpdated": "最終更新: {{date}}"
+    },
+    "totalCard": "総データ件数",
+    "status": {
+      "sectionTitle": "ステータス別",
+      "recent": "最近更新",
+      "stale": "更新が必要",
+      "unknown": "追跡不可",
+      "total": "合計",
+      "recentHint": "date_updatedが直近7日以内",
+      "staleHint": "date_updatedが7日より前",
+      "unknownHint": "信頼できる更新日時がありません"
+    },
+    "ward": {
+      "sectionTitle": "行政区別",
+      "geometricNote": "実際の座標から算出（point-in-polygon）、全レイヤー合算",
+      "viewAll": "{{count}}件の行政区をすべて表示",
+      "collapse": "折りたたむ",
+      "unassigned": "行政区未割り当て",
+      "empty": "行政区データはまだありません"
+    },
+    "trend": {
+      "sectionTitle": "更新の推移",
+      "note": "実際の更新日時を持つレイヤー（地籍、BTS基地局）の日別合計",
+      "range7": "7日間",
+      "range14": "14日間",
+      "range30": "30日間",
+      "empty": "推移データはまだありません",
+      "notAvailable": "このレイヤーには更新日時がありません",
+      "notWardFiltered": "行政区で絞り込まれていません"
+    },
+    "topLayers": {
+      "sectionTitle": "上位データレイヤー",
+      "viewAll": "すべて表示",
+      "collapse": "折りたたむ",
+      "unreadable": "読み取り不可"
+    },
+    "loading": "統計データを読み込み中...",
+    "error": "Directusから統計データを読み込めません。"
+  },
+  "comingSoon": {
+    "title": "近日公開",
+    "message": "この画面は技術仕様に基づき開発中です。バックエンド準備後にAPI経由で実データに接続します。"
   }
 }

@@ -1,4 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { describeHttpError, httpClient } from '../api/httpClient';
+import {
+  CITY_BORDER_LAYER,
+  CITY_FILL_LAYER,
+  CITY_GEOJSON_URL,
+  CITY_SOURCE_ID,
+  GEOJSON_URL,
+  STYLE_URL,
+  WARD_BORDER_LAYER,
+  WARD_COLORS,
+  WARD_FILL_LAYER,
+  WARD_HIGHLIGHT_LAYER,
+  WARD_LABEL_LAYER,
+  WARD_SOURCE_ID,
+} from '../data/mapSources';
 import i18n from '../i18n';
 import {
   INITIAL_PROJECT_CATEGORY_VISIBILITY,
@@ -15,27 +30,23 @@ import type {
   WardProperties,
 } from './types';
 
-export const GEOJSON_URL =
-  'https://ioc-canhbao.hue.gov.vn/uploadfiles/40xaphuong_TPHue.json';
-export const CITY_GEOJSON_URL =
-  'https://ioc-canhbao.hue.gov.vn/uploadfiles/thanhphohuegeo.json';
-export const STYLE_URL =
-  'https://ioc-canhbao.hue.gov.vn/uploadfiles/map/hue_light_style.json';
-
-export const CITY_SOURCE_ID = 'thanhphohue_source';
-export const CITY_FILL_LAYER = 'thanhphohue_fill';
-export const CITY_BORDER_LAYER = 'thanhphohue_border';
-export const WARD_SOURCE_ID = 'xaphuong_source';
-export const WARD_FILL_LAYER = 'xaphuong_fill';
-export const WARD_BORDER_LAYER = 'xaphuong_border';
-export const WARD_HIGHLIGHT_LAYER = 'xaphuong_highlight';
-export const WARD_LABEL_LAYER = 'xaphuong_labels';
-
-const WARD_COLORS: Record<string, string> = {
-  '1': '#F4E390',
-  '2': '#99D1E6',
-  '3': '#ABD1AE',
-  '4': '#F1A992',
+// Dữ liệu cứng (URL GeoJSON/style, id nguồn/lớp thành phố + phường/xã, bảng
+// màu WARD_COLORS) đã chuyển sang src/data/mapSources.ts — import lại rồi
+// re-export ở đây để mọi nơi đang `import { CITY_GEOJSON_URL } from
+// '.../map/useHueMap'` không phải sửa gì. WARD_COLORS trước đây không export
+// (chỉ dùng nội bộ file này) nên vẫn giữ vậy, không re-export.
+export {
+  CITY_BORDER_LAYER,
+  CITY_FILL_LAYER,
+  CITY_GEOJSON_URL,
+  CITY_SOURCE_ID,
+  GEOJSON_URL,
+  STYLE_URL,
+  WARD_BORDER_LAYER,
+  WARD_FILL_LAYER,
+  WARD_HIGHLIGHT_LAYER,
+  WARD_LABEL_LAYER,
+  WARD_SOURCE_ID,
 };
 
 function text(value: unknown): string {
@@ -162,9 +173,10 @@ export function useHueMap() {
     const load = async () => {
       setLoading(true);
       try {
-        const response = await fetch(GEOJSON_URL);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = (await response.json()) as WardFeatureCollection;
+        const response = await httpClient.get<WardFeatureCollection>(
+          GEOJSON_URL,
+        );
+        const data = response.data;
         if (disposed) return;
         data.features.forEach((feature, index) => {
           const props = feature.properties;
@@ -184,17 +196,13 @@ export function useHueMap() {
         setError(null);
       } catch (reason) {
         if (!disposed) {
-          setError(
-            reason instanceof Error
-              ? `${i18n.t('map.loadError')}: ${reason.message}`
-              : i18n.t('map.loadError'),
-          );
+          setError(`${i18n.t('map.loadError')}: ${describeHttpError(reason)}`);
         }
       } finally {
         if (!disposed) setLoading(false);
       }
     };
-    void load();
+    load();
     return () => {
       disposed = true;
     };
@@ -208,14 +216,13 @@ export function useHueMap() {
       try {
         const categoryProjects = await Promise.all(
           PROJECT_CATEGORIES.map(async category => {
-            const response = await fetch(category.sourceUrl);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = (await response.json()) as {
+            const response = await httpClient.get<{
               features?: Array<{
                 properties?: ProjectProperties | null;
                 geometry?: unknown;
               }>;
-            };
+            }>(category.sourceUrl);
+            const data = response.data;
             return (data.features ?? []).flatMap(feature => {
               if (!feature.properties) return [];
               const project = normalizeProject(category, feature.properties);
@@ -241,7 +248,7 @@ export function useHueMap() {
         if (!disposed) setProjects([]);
       }
     };
-    void loadProjectsForSearch();
+    loadProjectsForSearch();
     return () => {
       disposed = true;
     };

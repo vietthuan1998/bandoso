@@ -10,7 +10,7 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import HueMapScreen from './src/components/HueMapScreen';
+import AppShell from './src/components/AppShell';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -24,13 +24,14 @@ function App() {
 }
 
 function AppContent() {
-  // Bản đồ số Huế tự quản lý safe area (Header/BottomSheet), nên chỉ cần
-  // gọi hook này để đảm bảo SafeAreaProvider đã sẵn sàng trước khi render.
+  // AppShell (bottom-nav 5 tab + các màn hình con) tự quản lý safe area, nên
+  // chỉ cần gọi hook này để đảm bảo SafeAreaProvider đã sẵn sàng trước khi
+  // render.
   useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
-      <HueMapScreen />
+      <AppShell />
     </View>
   );
 }

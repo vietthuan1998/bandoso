@@ -1,8 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   View,
@@ -28,6 +31,36 @@ export function BottomSheet({
 }) {
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
+
+  /**
+   * KeyboardAvoidingView (behavior="height") KHÔNG đủ trên Android khi sheet
+   * này nằm trong <Modal>: Modal tạo một Dialog/Window riêng, không chắc
+   * được Activity (đã đặt windowSoftInputMode="adjustResize" trong
+   * AndroidManifest.xml) tự co lại đúng cách cho window đó, nên
+   * KeyboardAvoidingView không tính đúng khoảng cần đệm — quan sát thực tế:
+   * sheet ít nội dung vẫn bị bàn phím che dù đã bọc KeyboardAvoidingView.
+   *
+   * Sửa bằng cách tự nghe sự kiện Keyboard ở tầng thấp hơn (Keyboard module,
+   * không qua lớp tính toán của KeyboardAvoidingView) rồi CHỦ ĐỘNG cộng
+   * thêm đúng chiều cao bàn phím vào paddingBottom của sheet — cách này
+   * không phụ thuộc việc window của Modal có tự resize hay không, chỉ cần
+   * sự kiện keyboardDidShow/keyboardDidHide bắn ra (vẫn bắn dù trong Modal).
+   */
+  const [androidKeyboardHeight, setAndroidKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return undefined;
+    const showSub = Keyboard.addListener('keyboardDidShow', event => {
+      setAndroidKeyboardHeight(event.endCoordinates?.height ?? 0);
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      setAndroidKeyboardHeight(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (visible) {
@@ -77,12 +110,30 @@ export function BottomSheet({
             {
               maxHeight: maxHeight ?? SCREEN_HEIGHT * 0.82,
               transform: [{ translateY }],
+              // Sheet định vị bằng position:absolute + bottom:0, chiều cao co
+              // theo nội dung — nếu nội dung ít (vài dòng kết quả tìm kiếm),
+              // sheet rất thấp và nằm lọt hẳn vào vùng bàn phím che phía dưới
+              // màn hình. Trên Android, KeyboardAvoidingView không đủ tin cậy
+              // khi sheet nằm trong <Modal> (xem ghi chú tại khai báo
+              // androidKeyboardHeight ở trên) nên cộng thêm thủ công đúng
+              // bằng chiều cao bàn phím vào paddingBottom — đẩy nội dung thật
+              // nổi lên trên bàn phím, phần đệm rỗng phía dưới bị khuất sau
+              // bàn phím thì không sao vì không có gì để nhìn ở đó.
+              paddingBottom: androidKeyboardHeight,
             },
             style,
           ]}
         >
           <View style={styles.grabber} />
-          {children}
+          {Platform.OS === 'ios' ? (
+            // iOS: KeyboardAvoidingView hoạt động ổn định trong Modal, giữ
+            // nguyên cách cũ (đệm padding co giãn theo animation bàn phím).
+            <KeyboardAvoidingView behavior="padding">
+              {children}
+            </KeyboardAvoidingView>
+          ) : (
+            children
+          )}
         </Animated.View>
       </View>
     </Modal>

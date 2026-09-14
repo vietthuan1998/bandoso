@@ -1,6 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Nút "vị trí của tôi" (LocateButton) — xin quyền qua
+         LocationManager.requestPermissions() của @maplibre/maplibre-react-native.
+         Người dùng có thể từ chối, app vẫn chạy bình thường. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
       android:name=".MainApplication"

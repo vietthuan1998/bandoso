@@ -10,11 +10,16 @@
   },
   "common": {
     "close": "Close",
+    "confirm": "Done",
     "openMenu": "Open map layers",
     "closeMenu": "Close map layers",
     "loading": "Loading data...",
     "originalVietnamese": "Original content in Vietnamese",
-    "retry": "Retry"
+    "retry": "Retry",
+    "yes": "Yes",
+    "no": "No",
+    "male": "Male",
+    "female": "Female"
   },
   "header": {
     "title": "Hue City Digital Map System",
@@ -40,7 +45,10 @@
     "ariaLabel": "Hue City administrative map",
     "loading": "Loading map data...",
     "loadError": "Unable to load map data",
-    "unnamedProject": "Unnamed project"
+    "unnamedProject": "Unnamed project",
+    "resetBearing": "Reset map to north",
+    "locateMe": "My location",
+    "locationUnavailable": "Unable to determine your location"
   },
   "search": {
     "administrativeLayer": "Administrative boundaries",
@@ -113,11 +121,114 @@
     "operating": "Projects in operation"
   },
   "mvt": {
-    "sectionTitle": "MVT layers (prototype)",
-    "hint": "Testing the MVT rendering pipeline per the technical spec; data loads directly from dcu.huecity.vn.",
+    "sectionTitle": "MVT layers (15 collections)",
+    "hint": "Rendered directly from dcu.huecity.vn per section 8 of the technical spec. Dashed = planned (future) layer.",
     "thuaDat": "Land parcels (cadastral)",
+    "khuCongNghiepHienTrang": "Industrial zone - current status",
+    "khuCongNghiepDinhHuong": "Industrial zone development - planned",
+    "xuLyChatThaiHienTrang": "Waste treatment zone - current status",
+    "xuLyChatThaiDinhHuong": "Waste treatment zone - planned",
+    "nghiaTrangHienTrang": "Cemetery - current status",
+    "nghiaTrangDinhHuong": "Cemetery - planned",
+    "congNgheCaoDinhHuong": "High-tech zone - planned",
+    "coSoKhcnDinhHuong": "Science & technology facility - planned",
+    "coSoKhcnHienTrang": "Science & technology facility - current status",
+    "congTrinhNgamA": "Underground works planning A",
     "tramBts": "BTS station",
+    "rainWaterStations": "Rain gauge station",
+    "waterLevelStation": "Water level station",
+    "iotWindStation": "Wind station",
+    "groups": {
+      "landData": "Land data",
+      "planning": "Planning",
+      "infrastructure": "Infrastructure",
+      "iot": "IoT stations"
+    },
     "detailsTitle": "MVT feature details",
     "noAttributes": "No attributes in this tile."
+  },
+  "tabs": {
+    "map": "Map",
+    "data": "Data",
+    "statistics": "Statistics",
+    "tracking": "Tracking",
+    "profile": "Profile"
+  },
+  "dataOverview": {
+    "openButton": "View data overview",
+    "title": "Data overview",
+    "totalObjects": "Total objects",
+    "collectionsReadable": "Collections readable",
+    "groupsSectionTitle": "Data by group",
+    "footerNote": "Figures aggregated from the Directus collections currently accessible.",
+    "loading": "Aggregating figures...",
+    "error": "Could not load the data overview.",
+    "groups": {
+      "landParcel": "Land parcels",
+      "industrialZone": "Industrial zones",
+      "wasteTreatment": "Waste treatment zones",
+      "cemetery": "Cemeteries",
+      "highTechZone": "High-tech zones",
+      "scienceTechFacility": "Science & technology facilities",
+      "undergroundPlanning": "Underground construction planning",
+      "btsStation": "BTS stations",
+      "monitoringStation": "Monitoring stations"
+    }
+  },
+  "statistics": {
+    "title": "Data statistics",
+    "filters": {
+      "allLayers": "All layers",
+      "allWards": "All wards",
+      "today": "Today",
+      "asOfLabel": "Data as of",
+      "searchPlaceholder": "Search collections...",
+      "noResults": "No collections found"
+    },
+    "detail": {
+      "unreadable": "Unreadable",
+      "lastUpdated": "Last updated: {{date}}"
+    },
+    "totalCard": "Total records",
+    "status": {
+      "sectionTitle": "By status",
+      "recent": "Recently updated",
+      "stale": "Needs update",
+      "unknown": "Not tracked",
+      "total": "Total",
+      "recentHint": "date_updated within the last 7 days",
+      "staleHint": "date_updated older than 7 days",
+      "unknownHint": "No reliable update timestamp available"
+    },
+    "ward": {
+      "sectionTitle": "By ward",
+      "geometricNote": "Computed from real coordinates (point-in-polygon), combined across data layers",
+      "viewAll": "View all {{count}} wards",
+      "collapse": "Collapse",
+      "unassigned": "Unassigned to a ward",
+      "empty": "No ward data yet"
+    },
+    "trend": {
+      "sectionTitle": "Update trend",
+      "note": "Daily total across layers with real update timestamps: land parcels, BTS stations",
+      "range7": "7 days",
+      "range14": "14 days",
+      "range30": "30 days",
+      "empty": "No trend data yet",
+      "notAvailable": "This layer has no update timestamp",
+      "notWardFiltered": "Not filtered by ward"
+    },
+    "topLayers": {
+      "sectionTitle": "Top data layers",
+      "viewAll": "View all",
+      "collapse": "Collapse",
+      "unreadable": "Unreadable"
+    },
+    "loading": "Loading statistics...",
+    "error": "Unable to load statistics from Directus."
+  },
+  "comingSoon": {
+    "title": "Coming soon",
+    "message": "This screen is being built per the technical spec and will connect to real data via API once the backend is ready."
   }
 }
