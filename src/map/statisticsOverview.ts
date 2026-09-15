@@ -1,24 +1,9 @@
-import axios from 'axios';
-import { DCU_BEARER_TOKEN } from '@env';
 import type { IconName } from '../components/HueMapScreen/Icon';
-import { TIMEOUT } from '../constants/url';
 import { GEOJSON_URL } from '../data/mapSources';
+import { dcuAxios, dcuHeaders, dcuItemsUrl } from './dcuClient';
 import { DATA_OVERVIEW_GROUPS, type OverviewGroupConfig } from './dataOverview';
-import { MVT_LAYERS, MVT_TILE_HOST, type MvtLayerConfig } from './mvtLayers';
-
-/**
- * Instance axios RIÊNG cho toàn bộ lệnh gọi trong file này (dùng thay
- * `axios` gốc) — CHỈ để gắn `timeout`, không dùng httpClient dùng chung
- * (lý do không dùng httpClient đã giải thích trong dataOverview.ts: khác cơ
- * chế xác thực). Trước đây KHÔNG có timeout nào cả — nếu 1 trong ~30 request
- * mà màn hình Thống kê bắn song song (15 layer + 14 lớp lấy geom + 1 file
- * ranh giới) bị treo (mất gói tin, server không phản hồi...), cả
- * Promise.all chứa nó sẽ chờ vô thời hạn, khiến "loading" không bao giờ tắt
- * dù mọi request khác đã xong — đúng hiện tượng đã gặp thật. Có timeout để
- * một request treo tự rớt thành lỗi (rồi bị try/catch trong từng hàm bắt,
- * coi là "không đọc được") thay vì treo cả màn hình.
- */
-const dcuAxios = axios.create({ timeout: TIMEOUT });
+import { classifyFreshness, RECENT_DAYS, type LayerFreshness } from './freshness';
+import { MVT_LAYERS, type MvtLayerConfig } from './mvtLayers';
 
 /**
  * Nguồn dữ liệu THẬT cho tab "Thống kê" (StatisticsScreen), dựng theo mockup
@@ -78,17 +63,8 @@ const DATE_TRACKED_LAYER_IDS = new Set([
 const WARD_COLLECTION = 'thua_dat';
 const WARD_GROUP_FIELD = 'ten_xa';
 const DATE_FIELD_NAME = 'date_updated';
-const RECENT_DAYS = 7;
 
-function dcuHeaders() {
-  return DCU_BEARER_TOKEN ? { Authorization: DCU_BEARER_TOKEN } : undefined;
-}
-
-function dcuItemsUrl(collection: string): string {
-  return `https://${MVT_TILE_HOST}/items/${collection}`;
-}
-
-export type LayerFreshness = 'recent' | 'stale' | 'unknown';
+export type { LayerFreshness };
 
 export type LayerStat = {
   layerId: string;
@@ -116,13 +92,8 @@ async function fetchLayerStat(layer: MvtLayerConfig): Promise<LayerStat> {
         ? null
         : Number(countRaw);
 
-    let freshness: LayerFreshness = 'unknown';
     const maxUpdatedAt = dateTracked ? (row?.max?.date_updated ?? null) : null;
-    if (maxUpdatedAt) {
-      const diffDays =
-        (Date.now() - new Date(maxUpdatedAt).getTime()) / 86_400_000;
-      freshness = diffDays <= RECENT_DAYS ? 'recent' : 'stale';
-    }
+    const freshness = classifyFreshness(maxUpdatedAt);
 
     return { layerId: layer.id, collection: layer.collection, count, freshness, maxUpdatedAt };
   } catch {
@@ -201,6 +172,20 @@ async function fetchWardBreakdown(): Promise<{
   } catch {
     return { items: [], unassignedCount: 0 };
   }
+}
+
+/**
+ * API RIÊNG lấy danh sách 40 phường/xã (tên + số thửa đất) — tách khỏi
+ * fetchStatisticsOverview() (gọi ~30 request song song: 15 layer + 14 lớp
+ * lấy geom để phân loại hình học + 1 file ranh giới) vì DataScreen (tab "Dữ
+ * liệu") chỉ cần đúng danh sách tên cho ô lọc "Phường, xã", không cần toàn bộ
+ * số liệu tổng hợp. Dùng lại nguyên fetchWardBreakdown() ở trên (groupBy
+ * ten_xa của thua_dat — nguồn ranh giới hành chính đáng tin cậy duy nhất,
+ * xem ghi chú đầu file) thay vì viết lại truy vấn.
+ */
+export async function fetchWardDirectory(): Promise<WardBreakdownItem[]> {
+  const { items } = await fetchWardBreakdown();
+  return items;
 }
 
 // ===== Phân loại theo phường/xã bằng hình học (point-in-polygon) =====
@@ -317,8 +302,10 @@ async function loadWardShapes(wardBreakdown: WardBreakdownItem[]): Promise<WardS
 
 /** Point → toạ độ dùng thẳng; Polygon/MultiPolygon → trung bình toạ độ các
  * đỉnh của ring ngoài (điểm đại diện) — đủ chính xác vì thửa đất/vùng nhỏ
- * hơn nhiều so với 1 phường/xã, đã verify khớp 100% với ten_xa thật. */
-function extractRepresentativePoint(
+ * hơn nhiều so với 1 phường/xã, đã verify khớp 100% với ten_xa thật. Export
+ * để DataScreen (tab "Dữ liệu") dùng lại cho nút "Định vị trên bản đồ" của 1
+ * bản ghi cụ thể, không phải tính lại logic này. */
+export function extractRepresentativePoint(
   geom: { type: string; coordinates: unknown } | null | undefined,
 ): [number, number] | null {
   if (!geom) return null;
@@ -767,11 +754,7 @@ export async function fetchLayerAsOfCount(
     const raw = row?.count;
     const count = raw === undefined ? NaN : Number(raw);
     const maxUpdatedAt = hasDateField ? (row?.max?.[DATE_FIELD_NAME] ?? null) : null;
-    let freshness: LayerFreshness = 'unknown';
-    if (maxUpdatedAt) {
-      const diffDays = (Date.now() - new Date(maxUpdatedAt).getTime()) / 86_400_000;
-      freshness = diffDays <= RECENT_DAYS ? 'recent' : 'stale';
-    }
+    const freshness = classifyFreshness(maxUpdatedAt);
     return { count: Number.isFinite(count) ? count : null, maxUpdatedAt, freshness };
   } catch {
     return { count: null, maxUpdatedAt: null, freshness: 'unknown' };

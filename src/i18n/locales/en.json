@@ -19,7 +19,8 @@
     "yes": "Yes",
     "no": "No",
     "male": "Male",
-    "female": "Female"
+    "female": "Female",
+    "back": "Back"
   },
   "header": {
     "title": "Hue City Digital Map System",
@@ -145,7 +146,26 @@
       "iot": "IoT stations"
     },
     "detailsTitle": "MVT feature details",
-    "noAttributes": "No attributes in this tile."
+    "noAttributes": "No attributes in this tile.",
+    "viewDetail": "View details"
+  },
+  "featureDetail": {
+    "sectionAttributes": "Detailed information",
+    "locateButton": "Locate on map",
+    "exportButton": "Export data",
+    "iot": {
+      "current": "Current",
+      "sum24h": "24h total",
+      "peak24h": "24h peak",
+      "readingCount": "Readings (24h)",
+      "chartTitle": "Last 24 hours",
+      "chartEmpty": "No readings in the last 24 hours",
+      "unreadable": "Could not read sensor data",
+      "historyTitle": "Data history",
+      "historyTime": "Time",
+      "historyValue": "Value",
+      "historyEnd": "No more data"
+    }
   },
   "tabs": {
     "map": "Map",
@@ -226,6 +246,28 @@
     },
     "loading": "Loading statistics...",
     "error": "Unable to load statistics from Directus."
+  },
+  "dataScreen": {
+    "title": "Digitized data",
+    "searchPlaceholder": "Search code, address...",
+    "filters": {
+      "status": "Status"
+    },
+    "resultCount": "{{count}} results",
+    "loading": "Loading data...",
+    "error": "Unable to load data from Directus.",
+    "emptyTitle": "No matching data",
+    "emptyMessage": "Try a different keyword or filter.",
+    "loadMore": "Load more",
+    "wardUnsupportedHint": "This layer has no reliable ward data to filter by.",
+    "unreadableTitle": "No access permission",
+    "unreadableMessage": "This account is not yet granted read access to this layer's data.",
+    "unreadableLayersHint": "{{count}} layers unreadable due to missing access permission",
+    "detail": {
+      "title": "Data detail",
+      "noCoordinates": "No coordinates available to locate",
+      "viewFull": "View full detail"
+    }
   },
   "comingSoon": {
     "title": "Coming soon",

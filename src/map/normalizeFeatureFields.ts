@@ -29,7 +29,63 @@ const FIELD_LABEL_OVERRIDES: Record<string, string> = {
   ghi_chu: 'Ghi chú',
   so_hieu_to_ban_do: 'Số hiệu tờ bản đồ',
   so_thu_tu_thua: 'Số thứ tự thửa',
+  date_updated: 'Cập nhật lần cuối',
+  // Field con của "water_station_type" (trạm mực nước, vd. {desc: "Tháp báo
+  // lũ", name: "flood_3m"}) — không override thì rơi vào JSON.stringify thô
+  // (xem formatFieldValue) vì đây là 1 object đơn, không phải mảng.
+  water_station_type: 'Loại trạm',
+  desc: 'Mô tả',
 };
+
+// Field hay dùng làm tiêu đề đối tượng theo mục 11.3 của đặc tả
+// ("titleFields", sau đó fallback name/ten/code/id) — chưa có
+// registry/titleFields thật từ backend nên đoán bằng danh sách khoá phổ biến
+// này. Dùng chung cho MvtFeaturePanel (popup nhỏ trên bản đồ) và
+// FeatureDetailScreen (trang chi tiết toàn màn hình) để tiêu đề nhất quán.
+const TITLE_FIELD_CANDIDATES = [
+  'ten',
+  'name',
+  'tenTram',
+  'ten_tram',
+  'maTram',
+  'ma_tram',
+  'ma',
+  'code',
+  'id',
+];
+
+function pickFirstMatchingField(
+  properties: Record<string, unknown>,
+  candidates: string[],
+): string | null {
+  for (const key of candidates) {
+    const value = properties[key];
+    if (value !== null && value !== undefined && String(value).trim()) {
+      return String(value).trim();
+    }
+  }
+  return null;
+}
+
+export function pickFeatureTitle(
+  properties: Record<string, unknown>,
+): string | null {
+  return pickFirstMatchingField(properties, TITLE_FIELD_CANDIDATES);
+}
+
+// Field hay dùng làm tên phường/xã của 1 đối tượng — cùng cách tiếp cận
+// "danh sách khoá ứng viên" như TITLE_FIELD_CANDIDATES ở trên, để DataScreen
+// (tab "Dữ liệu") đọc được phường/xã của MỌI collection qua 1 hàm chung, thay
+// vì switch/case riêng cho từng collection. Chỉ `thua_dat.ten_xa` là field
+// text đáng tin cậy thật (xem ghi chú đầu map/statisticsOverview.ts) — các
+// khoá còn lại là dự phòng, không có collection nào đang dùng thật.
+const WARD_FIELD_CANDIDATES = ['ten_xa', 'phuong_xa', 'ward', 'khu_vuc'];
+
+export function pickFeatureWard(
+  properties: Record<string, unknown>,
+): string | null {
+  return pickFirstMatchingField(properties, WARD_FIELD_CANDIDATES);
+}
 
 // gioi_tinh trong "chu_so_huu" là mã chuỗi "0"/"1", không phải boolean.
 const GENDER_CODES: Record<string, 'male' | 'female'> = {
@@ -59,7 +115,8 @@ export type NormalizedFeatureField =
       items: NormalizedFeatureLeaf[][];
     };
 
-function pad2(n: number): string {
+/** Dùng chung cho mọi nơi cần định dạng giờ/ngày 2 chữ số (vd. "05" thay "5"). */
+export function pad2(n: number): string {
   return String(n).padStart(2, '0');
 }
 
@@ -176,15 +233,21 @@ function normalizeObjectEntries(
  * - Định dạng value theo kiểu dữ liệu: số có dấu phân cách hàng nghìn,
  *   boolean -> có/không (i18n), chuỗi ISO date -> dd/mm/yyyy, mảng nguyên
  *   thủy -> nối chuỗi.
- * - Field dạng mảng object (vd. "chu_so_huu" nhiều đồng sở hữu) -> `kind:
- *   'list'`, mỗi phần tử được chuẩn hóa thành danh sách leaf riêng để UI
- *   hiển thị từng mục rõ ràng thay vì 1 chuỗi JSON.
+ * - Field dạng mảng object (vd. "chu_so_huu" nhiều đồng sở hữu) HOẶC 1 object
+ *   đơn (vd. "water_station_type": {desc, name} của water_level_station) ->
+ *   `kind: 'list'`, mỗi phần tử/chính object đó được chuẩn hóa thành danh
+ *   sách leaf riêng để UI hiển thị từng mục rõ ràng thay vì 1 chuỗi JSON thô
+ *   (trước đây object đơn bị formatFieldValue in nguyên văn JSON.stringify).
  */
 export function normalizeFeatureFields(
   properties: Record<string, unknown>,
   labels: FieldLabels,
 ): NormalizedFeatureField[] {
   return Object.entries(properties)
+    // "geom" là field kỹ thuật (toạ độ thô đi kèm bản ghi Directus khi lấy
+    // qua fetchRecordById) — không phải thuộc tính nghiệp vụ nên không hiển
+    // thị trong bảng chi tiết ở bất kỳ màn hình nào dùng hàm này.
+    .filter(([key]) => key !== 'geom')
     .map(([key, value]) => [key, parseIfJson(value)] as const)
     .filter(([, value]) => !isEmpty(value))
     .map(([key, value]) => {
@@ -195,6 +258,14 @@ export function normalizeFeatureFields(
           key,
           label,
           items: value.map(entry => normalizeObjectEntries(entry, labels)),
+        };
+      }
+      if (isPlainObject(value)) {
+        return {
+          kind: 'list',
+          key,
+          label,
+          items: [normalizeObjectEntries(value, labels)],
         };
       }
       return { kind: 'text', key, label, value: formatKeyedValue(key, value, labels) };

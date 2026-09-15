@@ -19,7 +19,8 @@
     "yes": "是",
     "no": "否",
     "male": "男",
-    "female": "女"
+    "female": "女",
+    "back": "返回"
   },
   "header": {
     "title": "顺化市数字地图系统",
@@ -145,7 +146,26 @@
       "iot": "物联网监测站"
     },
     "detailsTitle": "MVT 要素详情",
-    "noAttributes": "该瓦片中没有属性。"
+    "noAttributes": "该瓦片中没有属性。",
+    "viewDetail": "查看详情"
+  },
+  "featureDetail": {
+    "sectionAttributes": "详细信息",
+    "locateButton": "在地图上定位",
+    "exportButton": "导出数据",
+    "iot": {
+      "current": "当前",
+      "sum24h": "24小时总量",
+      "peak24h": "24小时峰值",
+      "readingCount": "读数次数(24小时)",
+      "chartTitle": "过去24小时",
+      "chartEmpty": "过去24小时内没有测量数据",
+      "unreadable": "无法读取传感器数据",
+      "historyTitle": "数据历史",
+      "historyTime": "时间",
+      "historyValue": "数值",
+      "historyEnd": "没有更多数据"
+    }
   },
   "tabs": {
     "map": "地图",
@@ -226,6 +246,28 @@
     },
     "loading": "正在加载统计数据...",
     "error": "无法从Directus加载统计数据。"
+  },
+  "dataScreen": {
+    "title": "数字化数据",
+    "searchPlaceholder": "搜索编号、地址...",
+    "filters": {
+      "status": "状态"
+    },
+    "resultCount": "{{count}} 条结果",
+    "loading": "正在加载数据...",
+    "error": "无法从 Directus 加载数据。",
+    "emptyTitle": "没有匹配的数据",
+    "emptyMessage": "请尝试其他关键词或筛选条件。",
+    "loadMore": "加载更多",
+    "wardUnsupportedHint": "该图层没有可靠的坊/乡数据可供筛选。",
+    "unreadableTitle": "没有访问权限",
+    "unreadableMessage": "该账号尚未获得读取此图层数据的权限。",
+    "unreadableLayersHint": "{{count}} 个图层因权限不足无法读取",
+    "detail": {
+      "title": "数据详情",
+      "noCoordinates": "没有可用于定位的坐标",
+      "viewFull": "查看完整详情"
+    }
   },
   "comingSoon": {
     "title": "即将上线",

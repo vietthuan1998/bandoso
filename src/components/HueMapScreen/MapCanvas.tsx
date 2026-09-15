@@ -49,6 +49,7 @@ import {
   mvtTileUrl,
   type MvtLayerConfig,
 } from '../../map/mvtLayers';
+import type { GeoJsonGeometry } from '../../map/geometryBounds';
 import type { SupportedLanguage } from '../../i18n';
 
 const INITIAL_CENTER: [number, number] = [107.5991, 16.4637];
@@ -99,13 +100,26 @@ const CITY_CEILING_LAYER = 'city-ceiling';
 const WARD_CEILING_LAYER = 'ward-ceiling';
 const POINTS_CEILING_LAYER = 'points-ceiling';
 const POINTS_CEILING_SOURCE_ID = 'points-ceiling-source';
+
+/** Nguồn/lớp tô nổi bật hình học THẬT của đối tượng đang xem chi tiết (xem
+ * prop highlightFeature) — đặt afterId=POINTS_CEILING_LAYER giống layer điểm
+ * của MVT_LAYERS nên luôn vẽ ĐÈ LÊN mọi layer khác (thêm sau cùng trong cây
+ * JSX = trên cùng trong nhóm cùng 1 mốc afterId). */
+const FEATURE_HIGHLIGHT_SOURCE_ID = 'feature-highlight-source';
+const FEATURE_HIGHLIGHT_FILL_LAYER = 'feature-highlight-fill';
+const FEATURE_HIGHLIGHT_LINE_LAYER = 'feature-highlight-line';
+const FEATURE_HIGHLIGHT_CIRCLE_LAYER = 'feature-highlight-circle';
 const EMPTY_FEATURE_COLLECTION: GeoJSON.FeatureCollection = {
   type: 'FeatureCollection',
   features: [],
 };
 
 let authHeaderRegistered = false;
-function ensureTileAuthHeader() {
+/** Đăng ký header xác thực cho style/tile bản đồ (TILE_AUTH_RULES) — export
+ * để các MapView khác ngoài MapCanvas (vd. mini-map định vị trong popup chi
+ * tiết của DataScreen) cũng gọi được; idempotent nhờ authHeaderRegistered,
+ * gọi nhiều lần từ nhiều nơi không đăng ký trùng. */
+export function ensureTileAuthHeader() {
   if (authHeaderRegistered) return;
   authHeaderRegistered = true;
   TILE_AUTH_RULES.forEach(rule => {
@@ -132,6 +146,7 @@ export function MapCanvas({
   onProjectPress,
   mvtLayersVisible,
   onMvtFeaturePress,
+  highlightFeature,
   onBearingChange,
   topInset,
   showUserLocation,
@@ -154,7 +169,20 @@ export function MapCanvas({
   onMvtFeaturePress: (
     layer: MvtLayerConfig,
     properties: Record<string, unknown>,
+    /** Toạ độ [lng, lat] nơi người dùng CHẠM để chọn đối tượng (không phải
+     * hình học của feature) — dùng cho nút "Định vị trên bản đồ" của
+     * FeatureDetailScreen, đủ chính xác vì chính là điểm người dùng vừa
+     * nhấn trúng đối tượng này. */
+    coordinates: [number, number],
   ) => void;
+  /**
+   * Hình học THẬT (GeoJSON, lấy từ Directus Items API theo id — xem
+   * fetchRecordById trong map/dataRecords.ts) của đối tượng đang được xem chi
+   * tiết — vẽ nổi bật đúng hình dạng (polygon/line/point) lên trên các lớp
+   * MVT thường, KHÔNG dùng geometry rút gọn/gần đúng của tile. null = không
+   * có gì để tô nổi bật (chưa chọn đối tượng, hoặc bản ghi không có geom).
+   */
+  highlightFeature: { geometry: GeoJsonGeometry; color: string } | null;
   /** Báo lên component cha góc xoay (bearing, độ) hiện tại của bản đồ. */
   onBearingChange: (bearing: number) => void;
   /**
@@ -197,6 +225,25 @@ export function MapCanvas({
           ] as FilterSpecification)
         : undefined,
     [selectedWardId],
+  );
+
+  // GeoJSON "1 feature" (hoặc rỗng) cho nguồn tô nổi bật — rỗng thay vì
+  // không mount GeoJSONSource khi chưa có gì để tô, tránh phải mount/unmount
+  // nguồn liên tục mỗi lần chọn/bỏ chọn đối tượng.
+  const highlightGeoJson = useMemo<GeoJSON.FeatureCollection>(
+    () => ({
+      type: 'FeatureCollection',
+      features: highlightFeature?.geometry
+        ? [
+            {
+              type: 'Feature',
+              properties: {},
+              geometry: highlightFeature.geometry as GeoJSON.Geometry,
+            },
+          ]
+        : [],
+    }),
+    [highlightFeature],
   );
 
   const labelTextField = useMemo(
@@ -437,7 +484,13 @@ export function MapCanvas({
               const properties = event.nativeEvent.features[0]?.properties as
                 | Record<string, unknown>
                 | undefined;
-              if (properties) onMvtFeaturePress(mvtLayer, properties);
+              if (properties) {
+                onMvtFeaturePress(
+                  mvtLayer,
+                  properties,
+                  event.nativeEvent.lngLat,
+                );
+              }
             }}
           >
             {/*
@@ -526,6 +579,48 @@ export function MapCanvas({
           </VectorSource>
         );
       })}
+
+      {/* Tô nổi bật hình học THẬT của đối tượng đang xem chi tiết (xem prop
+          highlightFeature) — luôn mount (data rỗng khi không có gì để tô)
+          để tránh mount/unmount nguồn liên tục. afterId=POINTS_CEILING_LAYER
+          giống layer điểm của MVT_LAYERS, thêm SAU CÙNG trong cây JSX nên
+          luôn vẽ đè lên mọi layer khác cùng mốc. */}
+      <GeoJSONSource id={FEATURE_HIGHLIGHT_SOURCE_ID} data={highlightGeoJson}>
+        <Layer
+          type="fill"
+          id={FEATURE_HIGHLIGHT_FILL_LAYER}
+          source={FEATURE_HIGHLIGHT_SOURCE_ID}
+          afterId={POINTS_CEILING_LAYER}
+          filter={['==', ['geometry-type'], 'Polygon'] as FilterSpecification}
+          paint={{
+            'fill-color': highlightFeature?.color ?? '#d71920',
+            'fill-opacity': 0.28,
+          }}
+        />
+        <Layer
+          type="line"
+          id={FEATURE_HIGHLIGHT_LINE_LAYER}
+          source={FEATURE_HIGHLIGHT_SOURCE_ID}
+          afterId={POINTS_CEILING_LAYER}
+          paint={{
+            'line-color': highlightFeature?.color ?? '#d71920',
+            'line-width': 3.5,
+          }}
+        />
+        <Layer
+          type="circle"
+          id={FEATURE_HIGHLIGHT_CIRCLE_LAYER}
+          source={FEATURE_HIGHLIGHT_SOURCE_ID}
+          afterId={POINTS_CEILING_LAYER}
+          filter={['==', ['geometry-type'], 'Point'] as FilterSpecification}
+          paint={{
+            'circle-radius': 9,
+            'circle-color': highlightFeature?.color ?? '#d71920',
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 3,
+          }}
+        />
+      </GeoJSONSource>
     </MapLibreMap>
   );
 }

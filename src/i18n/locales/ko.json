@@ -19,7 +19,8 @@
     "yes": "예",
     "no": "아니요",
     "male": "남성",
-    "female": "여성"
+    "female": "여성",
+    "back": "뒤로"
   },
   "header": {
     "title": "후에시 디지털 지도 시스템",
@@ -145,7 +146,26 @@
       "iot": "IoT 관측소"
     },
     "detailsTitle": "MVT 객체 상세",
-    "noAttributes": "이 타일에는 속성이 없습니다."
+    "noAttributes": "이 타일에는 속성이 없습니다.",
+    "viewDetail": "상세 보기"
+  },
+  "featureDetail": {
+    "sectionAttributes": "상세 정보",
+    "locateButton": "지도에서 위치 보기",
+    "exportButton": "데이터 내보내기",
+    "iot": {
+      "current": "현재",
+      "sum24h": "24시간 합계",
+      "peak24h": "24시간 최고",
+      "readingCount": "측정 횟수(24시간)",
+      "chartTitle": "지난 24시간",
+      "chartEmpty": "지난 24시간 동안 측정 데이터가 없습니다",
+      "unreadable": "센서 데이터를 읽을 수 없습니다",
+      "historyTitle": "데이터 이력",
+      "historyTime": "시간",
+      "historyValue": "값",
+      "historyEnd": "더 이상 데이터 없음"
+    }
   },
   "tabs": {
     "map": "지도",
@@ -226,6 +246,28 @@
     },
     "loading": "통계 데이터를 불러오는 중...",
     "error": "Directus에서 통계 데이터를 불러올 수 없습니다."
+  },
+  "dataScreen": {
+    "title": "디지털 데이터",
+    "searchPlaceholder": "코드, 주소 검색...",
+    "filters": {
+      "status": "상태"
+    },
+    "resultCount": "{{count}}개 결과",
+    "loading": "데이터를 불러오는 중...",
+    "error": "Directus에서 데이터를 불러올 수 없습니다.",
+    "emptyTitle": "일치하는 데이터가 없습니다",
+    "emptyMessage": "다른 키워드나 필터를 시도해 보세요.",
+    "loadMore": "더 보기",
+    "wardUnsupportedHint": "이 레이어에는 신뢰할 수 있는 지역(읍/면/동) 데이터가 없습니다.",
+    "unreadableTitle": "접근 권한이 없습니다",
+    "unreadableMessage": "이 계정에는 아직 이 레이어 데이터에 대한 읽기 권한이 없습니다.",
+    "unreadableLayersHint": "{{count}}개 레이어는 접근 권한이 없어 읽을 수 없습니다",
+    "detail": {
+      "title": "데이터 상세",
+      "noCoordinates": "위치를 표시할 좌표가 없습니다",
+      "viewFull": "전체 상세 보기"
+    }
   },
   "comingSoon": {
     "title": "출시 예정",

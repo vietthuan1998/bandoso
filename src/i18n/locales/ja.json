@@ -19,7 +19,8 @@
     "yes": "はい",
     "no": "いいえ",
     "male": "男性",
-    "female": "女性"
+    "female": "女性",
+    "back": "戻る"
   },
   "header": {
     "title": "フエ市デジタル地図システム",
@@ -145,7 +146,26 @@
       "iot": "IoT観測局"
     },
     "detailsTitle": "MVTフィーチャーの詳細",
-    "noAttributes": "このタイルに属性はありません。"
+    "noAttributes": "このタイルに属性はありません。",
+    "viewDetail": "詳細を見る"
+  },
+  "featureDetail": {
+    "sectionAttributes": "詳細情報",
+    "locateButton": "地図で位置を表示",
+    "exportButton": "データを書き出す",
+    "iot": {
+      "current": "現在",
+      "sum24h": "24時間合計",
+      "peak24h": "24時間最大",
+      "readingCount": "測定回数(24時間)",
+      "chartTitle": "過去24時間",
+      "chartEmpty": "過去24時間の測定データがありません",
+      "unreadable": "センサーデータを読み込めませんでした",
+      "historyTitle": "データ履歴",
+      "historyTime": "日時",
+      "historyValue": "値",
+      "historyEnd": "これ以上のデータはありません"
+    }
   },
   "tabs": {
     "map": "地図",
@@ -226,6 +246,28 @@
     },
     "loading": "統計データを読み込み中...",
     "error": "Directusから統計データを読み込めません。"
+  },
+  "dataScreen": {
+    "title": "デジタル化データ",
+    "searchPlaceholder": "コード・住所で検索...",
+    "filters": {
+      "status": "ステータス"
+    },
+    "resultCount": "{{count}} 件",
+    "loading": "データを読み込み中...",
+    "error": "Directusからデータを読み込めません。",
+    "emptyTitle": "該当するデータがありません",
+    "emptyMessage": "別のキーワードやフィルターをお試しください。",
+    "loadMore": "もっと見る",
+    "wardUnsupportedHint": "このレイヤーには信頼できる行政区データがありません。",
+    "unreadableTitle": "アクセス権限がありません",
+    "unreadableMessage": "このアカウントはこのレイヤーのデータ読み取り権限がまだ付与されていません。",
+    "unreadableLayersHint": "{{count}} 件のレイヤーはアクセス権限がなく読み取れません",
+    "detail": {
+      "title": "データ詳細",
+      "noCoordinates": "位置を特定できる座標がありません",
+      "viewFull": "詳細をすべて見る"
+    }
   },
   "comingSoon": {
     "title": "近日公開",

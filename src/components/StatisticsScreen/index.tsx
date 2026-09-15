@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Platform,
-  Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,9 +14,11 @@ import DateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker';
 import { BottomSheet } from '../HueMapScreen/BottomSheet';
+import { FilterChip, PickerOption } from '../HueMapScreen/FilterControls';
 import { Icon, type IconName } from '../HueMapScreen/Icon';
-import { COLORS, RADIUS, SPACING } from '../HueMapScreen/theme';
+import { CHART_WIDTH, COLORS, RADIUS, SPACING } from '../HueMapScreen/theme';
 import { MVT_LAYERS } from '../../map/mvtLayers';
+import { pad2 } from '../../map/normalizeFeatureFields';
 import {
   computeWardScopedGroups,
   computeWardScopedStatus,
@@ -35,6 +36,7 @@ import {
 } from '../../map/statisticsOverview';
 import { DonutChart } from './DonutChart';
 import { TrendChart } from './TrendChart';
+import { FRESHNESS_COLOR, FRESHNESS_ICON } from '../HueMapScreen/freshnessUi';
 
 /**
  * Tab "Thống kê" — dựng theo bố cục mota/2.jpg, lấy số liệu THẬT từ API
@@ -70,21 +72,6 @@ import { TrendChart } from './TrendChart';
  * làm lớp bảo vệ bổ sung.
  */
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const CHART_WIDTH =
-  SCREEN_WIDTH - (SPACING.lg + SPACING.md) * 2 - SPACING.md * 2;
-
-const FRESHNESS_COLOR: Record<LayerFreshness, string> = {
-  recent: COLORS.ok,
-  stale: COLORS.warn,
-  unknown: COLORS.offline,
-};
-const FRESHNESS_ICON: Record<LayerFreshness, IconName> = {
-  recent: 'checkCircle',
-  stale: 'refresh',
-  unknown: 'warning',
-};
-
 function formatNumber(value: number): string {
   return value.toLocaleString('vi-VN');
 }
@@ -93,9 +80,6 @@ function formatPercent(value: number): string {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   })}%`;
-}
-function pad2(n: number): string {
-  return String(n).padStart(2, '0');
 }
 function formatDateIso(iso: string): string {
   const [y, m, d] = iso.split('-');
@@ -907,30 +891,6 @@ function Section({
   );
 }
 
-function FilterChip({
-  icon,
-  label,
-  onPress,
-}: {
-  icon: IconName;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={styles.filterChip}
-      accessibilityRole="button"
-    >
-      <Icon name={icon} size={13} color={COLORS.textMuted} />
-      <Text style={styles.filterChipText} numberOfLines={1}>
-        {label}
-      </Text>
-      <Icon name="chevronDown" size={11} color={COLORS.textFaint} />
-    </Pressable>
-  );
-}
-
 function StatusTile({
   freshness,
   count,
@@ -1027,41 +987,6 @@ function TopLayerRow({
     </View>
   );
 }
-
-function PickerOption({
-  label,
-  hint,
-  active,
-  onPress,
-}: {
-  label: string;
-  hint?: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.pickerOption, active ? styles.pickerOptionActive : null]}
-      accessibilityRole="button"
-    >
-      <Text
-        style={[
-          styles.pickerOptionText,
-          active ? styles.pickerOptionTextActive : null,
-        ]}
-        numberOfLines={1}
-      >
-        {label}
-      </Text>
-      <View style={styles.pickerOptionRight}>
-        {hint ? <Text style={styles.pickerOptionHint}>{hint}</Text> : null}
-        {active ? <Icon name="check" size={14} color={COLORS.primary} /> : null}
-      </View>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.background },
   header: {
@@ -1086,19 +1011,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
   },
-  filterChip: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    height: 34,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-  filterChipText: { flex: 1, fontSize: 11, color: COLORS.text },
 
   totalCard: {
     flexDirection: 'row',
@@ -1316,17 +1228,4 @@ const styles = StyleSheet.create({
   topLayerNumbers: { alignItems: 'flex-end' },
   topLayerCount: { fontSize: 12, fontWeight: '800', color: COLORS.text },
   topLayerPercent: { fontSize: 10, color: COLORS.textFaint },
-
-  pickerOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-  pickerOptionActive: { backgroundColor: '#eaf5fc' },
-  pickerOptionText: { flex: 1, fontSize: 13, color: COLORS.text },
-  pickerOptionTextActive: { color: COLORS.primaryDark, fontWeight: '700' },
-  pickerOptionRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  pickerOptionHint: { fontSize: 11, color: COLORS.textFaint },
 });

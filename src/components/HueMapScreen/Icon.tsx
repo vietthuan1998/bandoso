@@ -9,6 +9,7 @@ const GLYPHS = {
   search: '\u{1F50D}',
   chevronDown: '▾',
   chevronRight: '›',
+  chevronLeft: '‹',
   info: 'ℹ️',
   pin: '\u{1F4CD}',
   language: '\u{1F310}',
@@ -38,6 +39,12 @@ const GLYPHS = {
   refresh: '\u{1F504}',
   warning: '\u{26A0}\u{FE0F}',
   calendar: '\u{1F4C5}',
+  // Icon header của FeatureDetailScreen (nút chia sẻ) — nút "định vị trên
+  // bản đồ" dùng lại icon "pin" có sẵn ở trên.
+  share: '\u{1F4E4}',
+  // Icon ô lọc "Trạng thái" của DataScreen (tab "Dữ liệu") — lọc "database"
+  // đã dùng cho ô lọc "lớp"/collection, "pin" cho ô lọc "phường, xã".
+  status: '\u{1F4CB}',
 } as const;
 
 export type IconName = keyof typeof GLYPHS;

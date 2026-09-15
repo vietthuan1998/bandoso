@@ -225,7 +225,6 @@ export function LayerMenuSheet({
           />
           {openGroups.has('mvt-root') ? (
             <View style={styles.groupBody}>
-              <Text style={styles.mvtHint}>{t('mvt.hint')}</Text>
               {MVT_GROUPS.map(mvtGroup => {
                 const subGroupKey = `mvt-${mvtGroup.id}`;
                 const subOpen = openGroups.has(subGroupKey);

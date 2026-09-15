@@ -70,4 +70,17 @@ export const infoPanelStyles = StyleSheet.create({
   },
   noticeIcon: { fontSize: 13 },
   noticeText: { fontSize: 11, fontWeight: '600', color: COLORS.warningText },
+
+  // Link "Xem chi tiết" ở cuối MvtFeaturePanel, dẫn sang FeatureDetailScreen.
+  detailLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: 12,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderSoft,
+  },
+  detailLinkText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
 });

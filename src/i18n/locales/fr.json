@@ -19,7 +19,8 @@
     "yes": "Oui",
     "no": "Non",
     "male": "Homme",
-    "female": "Femme"
+    "female": "Femme",
+    "back": "Retour"
   },
   "header": {
     "title": "Système de cartographie numérique de Hué",
@@ -145,7 +146,26 @@
       "iot": "Stations IoT"
     },
     "detailsTitle": "Détails de l'entité MVT",
-    "noAttributes": "Aucun attribut dans cette tuile."
+    "noAttributes": "Aucun attribut dans cette tuile.",
+    "viewDetail": "Voir les détails"
+  },
+  "featureDetail": {
+    "sectionAttributes": "Informations détaillées",
+    "locateButton": "Localiser sur la carte",
+    "exportButton": "Exporter les données",
+    "iot": {
+      "current": "Actuel",
+      "sum24h": "Total sur 24 h",
+      "peak24h": "Pic sur 24 h",
+      "readingCount": "Mesures (24 h)",
+      "chartTitle": "Dernières 24 heures",
+      "chartEmpty": "Aucune mesure au cours des 24 dernières heures",
+      "unreadable": "Impossible de lire les données du capteur",
+      "historyTitle": "Historique des données",
+      "historyTime": "Heure",
+      "historyValue": "Valeur",
+      "historyEnd": "Plus de données"
+    }
   },
   "tabs": {
     "map": "Carte",
@@ -226,6 +246,28 @@
     },
     "loading": "Chargement des statistiques...",
     "error": "Impossible de charger les statistiques depuis Directus."
+  },
+  "dataScreen": {
+    "title": "Données numérisées",
+    "searchPlaceholder": "Rechercher un code, une adresse...",
+    "filters": {
+      "status": "Statut"
+    },
+    "resultCount": "{{count}} résultats",
+    "loading": "Chargement des données...",
+    "error": "Impossible de charger les données depuis Directus.",
+    "emptyTitle": "Aucune donnée correspondante",
+    "emptyMessage": "Essayez un autre mot-clé ou filtre.",
+    "loadMore": "Charger plus",
+    "wardUnsupportedHint": "Cette couche n'a pas de donnée de quartier fiable pour filtrer.",
+    "unreadableTitle": "Accès non autorisé",
+    "unreadableMessage": "Ce compte n'a pas encore l'autorisation de lire les données de cette couche.",
+    "unreadableLayersHint": "{{count}} couches illisibles faute d'autorisation d'accès",
+    "detail": {
+      "title": "Détail des données",
+      "noCoordinates": "Aucune coordonnée disponible pour la localisation",
+      "viewFull": "Voir le détail complet"
+    }
   },
   "comingSoon": {
     "title": "Bientôt disponible",

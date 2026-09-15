@@ -1,3 +1,5 @@
+import { Dimensions } from 'react-native';
+
 // Bảng màu theo "Design system tham chiếu" trong mota/README.md
 export const COLORS = {
   primary: '#0878bd',
@@ -22,3 +24,9 @@ export const COLORS = {
 
 export const RADIUS = { sm: 8, md: 12, lg: 16, pill: 999 } as const;
 export const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 } as const;
+
+/** Bề rộng biểu đồ dùng chung cho StatisticsScreen và FeatureDetailScreen —
+ * bề ngang màn hình trừ đệm ngang 2 lớp (padding thân trang + padding
+ * section), mỗi bên. */
+export const CHART_WIDTH =
+  Dimensions.get('window').width - (SPACING.lg + SPACING.md) * 2 - SPACING.md * 2;

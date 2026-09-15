@@ -144,20 +144,6 @@ export const MVT_LAYERS: MvtLayerConfig[] = [
     geometryTypes: ['polygon', 'linestring', 'point'],
     color: THEME_COLOR.coSoKhcn,
   },
-  {
-    id: 'cong-trinh-ngam-a',
-    // CHÚ Ý: id/labelKey vẫn ghi "công trình ngầm A" nhưng collection thật
-    // đang trỏ tới gisportal_DinhHuongTruongChuyenBiet_P (Trường chuyên
-    // biệt) — khác với qhpk_da2d144c3d_CongTrinhNgamA lúc entry này được
-    // thêm ban đầu. Chưa rõ đây là thay đổi có chủ đích hay nhầm lẫn khi
-    // sửa — cần xác nhận lại rồi đổi collection hoặc labelKey cho khớp.
-    collection: 'gisportal_DinhHuongTruongChuyenBiet_P',
-    labelKey: 'mvt.congTrinhNgamA',
-    groupId: 'planning',
-    geometryTypes: ['polygon', 'linestring', 'point'],
-    color: THEME_COLOR.congTrinhNgam,
-    dashed: true,
-  },
 
   // Hạ tầng
   {

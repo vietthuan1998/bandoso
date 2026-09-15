@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DataScreen } from '../DataScreen';
 import HueMapScreen from '../HueMapScreen';
 import { COLORS } from '../HueMapScreen/theme';
+import type { MapLocateRequest } from '../../map/dataRecords';
 import { useHueMap } from '../../map/useHueMap';
 import { StatisticsScreen } from '../StatisticsScreen';
 import { BottomTabBar } from './BottomTabBar';
@@ -27,12 +29,35 @@ export default function AppShell() {
   const insets = useSafeAreaInsets();
   const map = useHueMap();
 
+  // Yêu cầu "Định vị trên bản đồ" từ DataScreen (tab "Dữ liệu") — bật đúng
+  // lớp MVT, chọn đúng đối tượng rồi bay camera tới toạ độ của nó khi mở lại
+  // tab Bản đồ. HueMapScreen chỉ được render khi activeTab === 'map' nên tự
+  // nó không giữ được yêu cầu này qua lần chuyển tab, phải nâng state lên
+  // đây. `token` đảm bảo yêu cầu bay tới ĐÚNG bản ghi đã chọn trước đó vẫn
+  // kích hoạt lại được (dependency của effect trong HueMapScreen so theo
+  // object mới, không chỉ theo toạ độ — chọn lại đúng bản ghi cũ vẫn cần bay
+  // lại nếu người dùng đã tự kéo bản đồ đi nơi khác).
+  const [mapFocusRequest, setMapFocusRequest] = useState<
+    (MapLocateRequest & { token: number }) | null
+  >(null);
+  const requestMapFocus = useCallback((request: MapLocateRequest) => {
+    setMapFocusRequest({ ...request, token: Date.now() });
+    setActiveTab('map');
+  }, []);
+  const clearMapFocusRequest = useCallback(() => setMapFocusRequest(null), []);
+
   return (
     <View style={styles.root}>
       <View style={styles.content}>
-        {activeTab === 'map' ? <HueMapScreen map={map} /> : null}
+        {activeTab === 'map' ? (
+          <HueMapScreen
+            map={map}
+            focusRequest={mapFocusRequest}
+            onFocusHandled={clearMapFocusRequest}
+          />
+        ) : null}
         {activeTab === 'data' ? (
-          <PlaceholderScreen icon="database" titleKey="tabs.data" />
+          <DataScreen onLocateOnMap={requestMapFocus} />
         ) : null}
         {activeTab === 'statistics' ? <StatisticsScreen /> : null}
         {activeTab === 'tracking' ? (
