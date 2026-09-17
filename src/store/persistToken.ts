@@ -1,12 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-/**
- * Lưu trữ access token của người dùng (khác với các token tĩnh trong .env
- * dùng cho tile bản đồ — xem src/config/mapTileAuth.ts). App hiện chưa có
- * màn hình đăng nhập, module này chuẩn bị sẵn cho tính năng đó: getToken
- * dùng trong interceptor của httpClient.ts, setToken/clearToken gọi khi
- * đăng nhập/đăng xuất.
- */
 const TOKEN_KEY = '@huemaps/auth_token';
 
 export async function getToken(): Promise<string | null> {

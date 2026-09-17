@@ -9,13 +9,6 @@ import {
 import { COLORS } from './theme';
 
 const NEEDLE_SIZE = 9;
-
-/**
- * Nút la bàn nổi trên bản đồ. Kim xoay ngược lại đúng góc xoay (bearing) hiện
- * tại của bản đồ để luôn chỉ đúng hướng Bắc thật, chạm vào để đưa bản đồ về
- * hướng mặc định (bearing/pitch = 0). Component cha chịu trách nhiệm chỉ
- * render nút này khi bản đồ đang thực sự bị xoay.
- */
 export function CompassButton({
   bearing,
   onPress,

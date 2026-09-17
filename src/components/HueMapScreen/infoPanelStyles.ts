@@ -29,8 +29,6 @@ export const infoPanelStyles = StyleSheet.create({
   },
   detailValue: { fontSize: 12, lineHeight: 18, color: COLORS.text },
 
-  // Field dạng mảng object (vd. "chu_so_huu" nhiều đồng sở hữu) — mỗi phần
-  // tử hiển thị thành 1 thẻ con riêng thay vì gộp chung 1 dòng.
   listItemCard: {
     marginTop: 6,
     padding: 8,

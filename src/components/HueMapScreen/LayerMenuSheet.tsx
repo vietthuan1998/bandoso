@@ -30,35 +30,6 @@ const LAYER_GROUPS: LayerGroup[] = [
     color: '#1b9b52',
     itemKeys: ['menu.auction'],
   },
-  // {
-  //   id: 'planning',
-  //   titleKey: 'menu.planning',
-  //   color: '#0878bd',
-  //   itemKeys: [
-  //     'menu.generalPlanning',
-  //     'menu.zoningPlanning',
-  //     'menu.detailedPlanning',
-  //     'menu.landUsePlanning',
-  //   ],
-  // },
-  // {
-  //   id: 'status',
-  //   titleKey: 'menu.status',
-  //   color: '#68778a',
-  //   itemKeys: ['menu.landUseStatus', 'menu.populationStatus'],
-  // },
-  // {
-  //   id: 'infrastructure',
-  //   titleKey: 'menu.infrastructure',
-  //   color: '#8b5cf6',
-  //   itemKeys: ['menu.transportInfrastructure', 'menu.technicalInfrastructure'],
-  // },
-  // {
-  //   id: 'specialized',
-  //   titleKey: 'menu.specialized',
-  //   color: '#e78018',
-  //   itemKeys: ['menu.environment', 'menu.cultureTourism'],
-  // },
 ];
 
 export function LayerMenuSheet({

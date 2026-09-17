@@ -2,12 +2,6 @@ import { Text, View } from 'react-native';
 import type { NormalizedFeatureField } from '../../map/normalizeFeatureFields';
 import { infoPanelStyles as styles } from './infoPanelStyles';
 
-/**
- * Render danh sách field đã chuẩn hoá (normalizeFeatureFields) — tách ra
- * dùng chung cho MvtFeaturePanel (popup nhỏ trên bản đồ) và
- * FeatureDetailScreen (trang chi tiết toàn màn hình), tránh lặp lại cùng 1
- * khối JSX xử lý field dạng text/danh sách ở 2 nơi.
- */
 export function FeatureFieldList({
   fields,
   emptyText,

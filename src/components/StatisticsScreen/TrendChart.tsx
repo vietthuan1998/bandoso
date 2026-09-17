@@ -16,23 +16,10 @@ const PADDING_X = 8;
 const PADDING_TOP = 10;
 const PADDING_BOTTOM = 22;
 const LABEL_WIDTH = 30;
-/** Số nhãn ngày tối đa hiển thị trên trục X — cố định ở 7 dù đang xem 7,
- * 14 hay 30 ngày, để không tràn/chồng chữ khi số điểm dữ liệu tăng lên. */
 const MAX_LABELS = 7;
-/** Bề rộng dành riêng bên trái cho nhãn giá trị trục Y (đủ chỗ cho số có
- * dấu phân cách hàng nghìn, vd. "1.234"). */
 const Y_AXIS_WIDTH = 34;
-/** Số khoảng chia trục Y -> Y_TICKS+1 mốc giá trị dàn đều từ minValue tới
- * maxValue (gồm cả 2 đầu), đủ để đọc thang đo mà không rối trên chiều cao
- * 140px. */
 const Y_TICKS = 3;
 
-/**
- * Chọn tối đa `maxLabels` chỉ số, DÀN ĐỀU trên `count` điểm, luôn gồm điểm
- * đầu và điểm cuối — dùng để chỉ hiện 1 phần nhãn trục X thay vì mọi điểm
- * (14/30 điểm nhãn sẽ tràn/chồng nhau trên màn hình điện thoại), trong khi
- * đường và các điểm trên biểu đồ vẫn vẽ đủ, không bớt dữ liệu nào.
- */
 function pickLabelIndices(count: number, maxLabels: number): Set<number> {
   if (count <= maxLabels) {
     return new Set(Array.from({ length: count }, (_, i) => i));
@@ -45,20 +32,11 @@ function pickLabelIndices(count: number, maxLabels: number): Set<number> {
   return indices;
 }
 
-/** "1234.5" -> "1.234,5" (bỏ ".0" nếu là số nguyên) — dùng cho nhãn trục Y. */
 function formatTickValue(value: number): string {
   const rounded = Math.round(value * 10) / 10;
   return rounded.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
 }
 
-/**
- * Biểu đồ đường + vùng tô, có trục Y (vạch chia + giá trị) và trục X (nhãn
- * điểm) — dùng chung cho "Xu hướng cập nhật" (StatisticsScreen, mota/2.jpg)
- * và khối "Biểu đồ 24 giờ qua" của trạm IoT (FeatureDetailScreen, mota/5.jpg).
- * Vẽ tay bằng react-native-svg (nối các điểm bằng đoạn thẳng, không có thư
- * viện chart nào trong dự án để vẽ đường cong mượt — chấp nhận được cho biểu
- * đồ xu hướng đơn giản).
- */
 export function TrendChart({
   points,
   width,
@@ -70,13 +48,6 @@ export function TrendChart({
     return null;
   }
 
-  // Thang trục Y ĐỘNG theo dữ liệu thật, KHÔNG cố định đáy ở 0 — vài nguồn
-  // (vd. water_level_depth của trạm mực nước) có giá trị âm thật (đo tương
-  // đối so với 1 mốc chuẩn, không phải lượng cộng dồn như mưa), cố định đáy
-  // 0 sẽ đẩy toàn bộ điểm âm ra ngoài/kịch đáy biểu đồ, vẽ sai hình dạng dữ
-  // liệu thật. Đáy trục vẫn giữ ở 0 khi mọi giá trị không âm (như "Xu hướng
-  // cập nhật"/lượng mưa) — chỉ nới xuống dưới 0 khi dữ liệu thật sự có âm;
-  // tương tự đỉnh trục giữ tối thiểu ở 0.
   const rawMin = Math.min(...points.map(p => p.count));
   const rawMax = Math.max(...points.map(p => p.count));
   const minValue = Math.min(0, rawMin);
@@ -96,28 +67,21 @@ export function TrendChart({
     return { x, y, point };
   });
 
-  // Đáy vùng tô là ĐÁY TRỤC (đúng minValue, không còn mặc định là 0) — khi
-  // minValue < 0 đây là đường ngang y=0 thật sự nằm giữa biểu đồ, xem
-  // zeroLineY bên dưới.
   const baselineY = PADDING_TOP + innerHeight;
   const linePath = coords
     .map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`)
     .join(' ');
   const areaPath =
-    `${linePath} L${coords[coords.length - 1].x.toFixed(1)},${baselineY.toFixed(1)} ` +
-    `L${coords[0].x.toFixed(1)},${baselineY.toFixed(1)} Z`;
+    `${linePath} L${coords[coords.length - 1].x.toFixed(1)},${baselineY.toFixed(
+      1,
+    )} ` + `L${coords[0].x.toFixed(1)},${baselineY.toFixed(1)} Z`;
 
   const labelIndices = pickLabelIndices(points.length, MAX_LABELS);
 
-  // Vạch chia trục Y: Y_TICKS+1 mốc dàn đều từ minValue tới maxValue (gồm cả
-  // 2 đầu) — không còn giả định đáy là 0.
   const yTicks = Array.from({ length: Y_TICKS + 1 }, (_, i) => {
     const value = minValue + (valueRange * i) / Y_TICKS;
     return { value, y: valueToY(value) };
   });
-  // Dữ liệu có cả âm lẫn dương -> vẽ thêm 1 đường mốc "0" nổi bật (không
-  // trùng 2 vạch chia bất kỳ nào ở trên vì Y_TICKS chia đều theo min/max,
-  // hiếm khi rơi đúng 0) để người xem biết đâu là ranh giới âm/dương.
   const zeroLineY = minValue < 0 && maxValue > 0 ? valueToY(0) : null;
 
   return (

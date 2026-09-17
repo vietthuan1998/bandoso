@@ -38,7 +38,6 @@ function formatIotValue(value: number | null): string {
     : value.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
 }
 
-/** ISO timestamp thật từ Directus (date_updated) -> "HH:mm dd/mm/yyyy". */
 function formatDateTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -47,34 +46,6 @@ function formatDateTime(iso: string): string {
   )}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 
-/**
- * Trang "Chi tiết đối tượng" toàn màn hình — mở từ link "Xem chi tiết" ở
- * MvtFeaturePanel (popup nổi trên bản đồ). Có 2 kiểu bố cục tuỳ loại dữ liệu
- * (KHÔNG dựa vào groupId 'iot' của MVT_LAYERS mà dựa vào
- * iotParameterForLayer() — xem map/iotReadings.ts — vì chỉ 3/4 lớp nhóm IoT
- * thật sự có bảng số đo chuỗi thời gian đứng sau, BTS thì không):
- *
- *  - Trạm mưa/mực nước/gió (có bảng số đo thật) → bố cục tham khảo
- *    mota/5.jpg: thêm khối 3 ô số liệu (Hiện tại / Tổng hoặc Đỉnh 24 giờ /
- *    Số lượt đo) + biểu đồ 24 giờ qua, tất cả tính từ dữ liệu thô THẬT của
- *    chính trạm đang xem (fetchIotStationDetail) — không suy đoán ngưỡng
- *    cảnh báo nào (mockup có ô "Cảnh báo" nhưng không có cấu hình ngưỡng
- *    thật nên bỏ, thay bằng "Số lượt đo" — vẫn là số liệu thật). Khối cuối
- *    trang là "Lịch sử dữ liệu theo giờ" (24 dòng, mới nhất trước) THAY CHO
- *    bảng thuộc tính — vì thuộc tính của 1 trạm (mã, tên, khu vực...) không
- *    đổi theo thời gian và ít giá trị hơn lịch sử số đo với người xem trạm.
- *  - Mọi đối tượng khác → bố cục tham khảo mota/3.jpg: thẻ trạng thái (tiêu
- *    đề/nhãn lớp + badge "độ mới dữ liệu") + bảng thuộc tính đầy đủ.
- *
- * Cả 2 kiểu dùng chung:
- *  - Badge "độ mới dữ liệu": tính từ field `date_updated` thật của CHÍNH đối
- *    tượng đang xem (khác StatisticsScreen tính theo max() cả collection) —
- *    chỉ hiện khi field này thực sự có giá trị.
- *  - "Định vị trên bản đồ": bay camera tới toạ độ CHẠM THẬT lúc chọn đối
- *    tượng (lngLat của sự kiện onPress, xem MapCanvas.tsx), không suy đoán.
- *  - "Xuất dữ liệu": xuất toàn bộ thuộc tính đã chuẩn hoá thành văn bản qua
- *    API Share hệ thống — dữ liệu thật, không phải nút minh hoạ.
- */
 export function FeatureDetailScreen({
   layer,
   properties,
@@ -84,8 +55,6 @@ export function FeatureDetailScreen({
 }: {
   layer: MvtLayerConfig;
   properties: Record<string, unknown>;
-  /** Toạ độ [lng, lat] nơi người dùng chạm để chọn đối tượng này — null nếu
-   * vì lý do nào đó sự kiện chạm không kèm toạ độ. */
   coordinates: [number, number] | null;
   onBack: () => void;
   onLocate: (coordinates: [number, number]) => void;
@@ -106,9 +75,6 @@ export function FeatureDetailScreen({
     [properties, t],
   );
 
-  // `date_updated` thật của CHÍNH bản ghi này (không phải max() của cả
-  // collection) — chỉ 1 số collection có field này (xem
-  // map/statisticsOverview.ts), nên badge chỉ hiện khi có giá trị.
   const rawUpdatedAt = properties.date_updated;
   const updatedAtIso =
     typeof rawUpdatedAt === 'string' && rawUpdatedAt.trim()
@@ -116,11 +82,10 @@ export function FeatureDetailScreen({
       : null;
   const freshness = updatedAtIso ? classifyFreshness(updatedAtIso) : null;
 
-  // Chỉ 3 lớp trạm mưa/mực nước/gió có bảng số đo chuỗi thời gian thật đứng
-  // sau (xem map/iotReadings.ts) — layer nào không thuộc 3 lớp này (kể cả
-  // BTS, dù cùng nhóm "IoT") dùng bố cục mota/3.jpg, không có khối biểu đồ.
   const iotKind = iotParameterForLayer(layer.id);
-  const iotStationId = iotKind ? iotStationIdentifier(iotKind, properties) : null;
+  const iotStationId = iotKind
+    ? iotStationIdentifier(iotKind, properties)
+    : null;
   const [iotDetail, setIotDetail] = useState<IotStationDetail | 'error' | null>(
     null,
   );
@@ -146,12 +111,6 @@ export function FeatureDetailScreen({
     };
   }, [iotKind, iotStationId]);
 
-  // Bảng "Lịch sử dữ liệu" — TÁCH RIÊNG khỏi fetchIotStationDetail ở trên (vốn
-  // chỉ lấy đúng "snapshot" 24 giờ gần nhất cho 3 ô số liệu + biểu đồ). Bảng
-  // này phân trang lùi VÔ HẠN về quá khứ bằng con trỏ thời gian, tải thêm mỗi
-  // khi cuộn gần cuối danh sách (xem fetchIotHistoryPage) — không giới hạn
-  // 24h. `historyKeyRef` để loại bỏ kết quả trả về TRỄ của 1 trạm ĐÃ RỜI ĐI
-  // (người dùng đổi đối tượng khác khi trang trước còn đang tải).
   const [historyItems, setHistoryItems] = useState<IotHistoryRecord[]>([]);
   const [historyCursor, setHistoryCursor] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -189,7 +148,12 @@ export function FeatureDetailScreen({
 
   const loadMoreHistory = () => {
     if (!iotKind || !iotStationId) return;
-    if (historyLoading || historyLoadingMore || historyExhausted || !historyCursor) {
+    if (
+      historyLoading ||
+      historyLoadingMore ||
+      historyExhausted ||
+      !historyCursor
+    ) {
       return;
     }
     const key = `${iotKind}:${iotStationId}`;
@@ -222,10 +186,7 @@ export function FeatureDetailScreen({
     ];
     try {
       await Share.share({ message: lines.join('\n') });
-    } catch {
-      // Người dùng huỷ hoặc thiết bị không hỗ trợ chia sẻ — bỏ qua lặng lẽ,
-      // không phải lỗi ứng dụng.
-    }
+    } catch {}
   };
 
   return (
@@ -246,14 +207,6 @@ export function FeatureDetailScreen({
       </View>
 
       {iotKind ? (
-        // FlatList (không phải ScrollView) vì bảng "Lịch sử dữ liệu" bên dưới
-        // phân trang kiểu load-more khi cuộn gần cuối (onEndReached) — cần 1
-        // danh sách ảo hoá làm KHUNG CUỘN DUY NHẤT của trang; lồng FlatList
-        // trong ScrollView sẽ vừa bị RN cảnh báo "VirtualizedLists should
-        // never be nested inside plain ScrollViews", vừa khiến onEndReached
-        // không bao giờ bắn (nó theo dõi cuộn của chính FlatList, không phải
-        // ScrollView cha). Mọi nội dung phía trên bảng (thẻ trạng thái, 3 ô
-        // số liệu, biểu đồ) chuyển vào ListHeaderComponent.
         <FlatList
           style={styles.list}
           contentContainerStyle={[
@@ -265,7 +218,9 @@ export function FeatureDetailScreen({
           renderItem={({ item, index }) => (
             <HistoryRow
               item={item}
-              unit={typeof iotDetail === 'object' && iotDetail ? iotDetail.unit : ''}
+              unit={
+                typeof iotDetail === 'object' && iotDetail ? iotDetail.unit : ''
+              }
               zebra={index % 2 === 1}
             />
           )}
@@ -427,7 +382,6 @@ export function FeatureDetailScreen({
   );
 }
 
-/** 1 trong 3 ô số liệu IoT (Hiện tại / Tổng·Đỉnh 24 giờ / Số lượt đo). */
 function IotTile({
   label,
   value,
@@ -450,11 +404,6 @@ function IotTile({
   );
 }
 
-/**
- * Thẻ trạng thái đầu trang — tiêu đề đối tượng + badge "độ mới dữ liệu".
- * Tách riêng để dùng chung cho cả 2 nhánh bố cục (FlatList của trạm IoT lẫn
- * ScrollView của đối tượng khác) mà không lặp lại JSX.
- */
 function HeroCard({
   layer,
   title,
@@ -520,15 +469,6 @@ function HeroCard({
   );
 }
 
-/**
- * 1 dòng trong bảng "Lịch sử dữ liệu" — bản ghi THÔ (chưa gộp giờ, xem
- * fetchIotHistoryPage), MỚI NHẤT hiện trước, mốc thời gian đầy đủ ngày/giờ
- * (khác chartPoints chỉ có "HH:00") vì bảng này cuộn ngược được nhiều ngày,
- * không còn gói gọn trong "hôm nay" như biểu đồ 24h phía trên. Vằn zebra
- * xen kẽ (`zebra`) thay cho đường kẻ ngang dày để dễ dò dòng trên màn hình
- * hẹp — không còn cột "chất lượng" như bản gộp giờ trước đó vì mỗi dòng ở
- * đây LUÔN là 1 mốc đo thật (không có giá trị nội suy nào để phân biệt).
- */
 function HistoryRow({
   item,
   unit,
@@ -544,7 +484,11 @@ function HistoryRow({
         {formatDateTime(item.time)}
       </Text>
       <Text
-        style={[styles.historyCell, styles.historyValueCol, styles.historyValueAlign]}
+        style={[
+          styles.historyCell,
+          styles.historyValueCol,
+          styles.historyValueAlign,
+        ]}
       >
         {formatIotValue(item.value)}
         {unit ? <Text style={styles.historyUnit}> {unit}</Text> : null}

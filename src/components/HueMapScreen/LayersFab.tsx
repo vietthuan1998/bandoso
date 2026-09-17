@@ -3,11 +3,6 @@ import { Pressable, StyleSheet } from 'react-native';
 import { LayersGlyph } from './LayersGlyph';
 import { COLORS } from './theme';
 
-/**
- * Nút tròn nổi mở menu lớp bản đồ, kiểu Google Maps — đúng theo mota/1.jpg:
- * góc trên-trái khung bản đồ (ngay dưới thanh header/tìm kiếm), hình tròn
- * nền xanh, icon 3 lớp xếp chồng.
- */
 export function LayersFab({
   onPress,
   top,

@@ -11,17 +11,6 @@ import { InfoCard } from './InfoCard';
 import { infoPanelStyles as styles } from './infoPanelStyles';
 import { COLORS } from './theme';
 
-/**
- * Panel chi tiết chung cho đối tượng MVT — vì chưa có registry thật
- * (titleFields/detailFields lấy từ backend theo mục 9), nên chỉ liệt kê toàn
- * bộ thuộc tính có sẵn trong tile dưới dạng key/value. Đây là bước kiểm
- * chứng đường ống MVT, không phải panel chi tiết hoàn chỉnh theo mục 11.3.
- *
- * Có link "Xem chi tiết" ở cuối, dẫn sang FeatureDetailScreen — trang chi
- * tiết toàn màn hình cùng dữ liệu (properties) này, trình bày rộng rãi hơn
- * (theo bố cục mota/5.jpg) kèm badge độ mới dữ liệu, nút định vị trên bản đồ
- * và chia sẻ, thay vì chỉ xem gọn trong popup nổi này.
- */
 export function MvtFeaturePanel({
   layer,
   properties,

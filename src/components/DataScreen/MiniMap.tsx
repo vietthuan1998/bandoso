@@ -5,29 +5,6 @@ import { STYLE_URL } from '../../map/useHueMap';
 import { ensureTileAuthHeader } from '../HueMapScreen/MapCanvas';
 import { RADIUS } from '../HueMapScreen/theme';
 
-/**
- * Bản đồ thu nhỏ, KHÔNG tương tác (mọi cử chỉ đã tắt) — định vị trực quan 1
- * bản ghi trong popup "Chi tiết dữ liệu" của DataScreen, theo đúng bố cục
- * mota (ảnh xem trước bản đồ ngay trên khối thông tin). Ghim tại
- * `coordinates` — với đối tượng dạng vùng (polygon/multipolygon), nơi gọi đã
- * quy về điểm trung tâm trước khi truyền vào đây (xem
- * extractRepresentativePoint trong map/statisticsOverview.ts), component này
- * chỉ vẽ đúng 1 điểm, không tự tính centroid.
- *
- * QUAY LẠI DÙNG <Map> SỐNG (không dùng StaticMapImageManager — đã thử,
- * nhưng ảnh tĩnh không tải được trên máy thật, có thể do module native chưa
- * được build vào app hoặc hạn chế khác không kiểm chứng được từ môi trường
- * này). <Map> sống render đúng dữ liệu thật (đã xác nhận hoạt động trước đó)
- * nhưng là 1 bề mặt native riêng (SurfaceView/tương đương trên Android) —
- * KHÔNG bị cắt bởi `overflow: hidden` của View cha khi nằm trong vùng cuộn.
- * Vì vậy component này CHỈ ĐƯỢC ĐẶT NGOÀI mọi ScrollView (xem DataScreen —
- * mini-map nằm ở phần cố định phía trên popup, không cuộn cùng danh sách
- * thuộc tính) — tự nó không di chuyển thì không có gì để "tràn" ra khi vuốt.
- *
- * Dùng lại nguyên STYLE_URL/ensureTileAuthHeader của MapCanvas.tsx (bản đồ
- * chính) để cùng 1 nền bản đồ, cùng cơ chế xác thực tile — không phải style
- * riêng biệt.
- */
 export function DataRecordMiniMap({
   coordinates,
   color,
@@ -57,9 +34,6 @@ export function DataRecordMiniMap({
       >
         <Camera initialViewState={{ center: coordinates, zoom: 15.5 }} />
       </MapLibreMap>
-      {/* Ghim vị trí — vẽ bằng View thuần (chấm + chân nhọn), đặt cố định
-          giữa khung ảnh xem trước vì camera luôn canh giữa đúng `coordinates`
-          (initialViewState.center), không cần ViewAnnotation gắn toạ độ. */}
       <View pointerEvents="none" style={styles.pinWrap}>
         <View style={[styles.pinHead, { backgroundColor: color }]} />
         <View style={[styles.pinTail, { borderTopColor: color }]} />
@@ -68,8 +42,6 @@ export function DataRecordMiniMap({
   );
 }
 
-/** Khối thay thế khi bản ghi không xác định được toạ độ — vẫn giữ đúng chiều
- * cao của mini-map để bố cục popup không nhảy giật, không giả vờ có bản đồ. */
 export function DataRecordMiniMapPlaceholder({
   message,
   height = 150,
@@ -117,5 +89,10 @@ const styles = StyleSheet.create({
     borderRightColor: 'transparent',
   },
   placeholder: { alignItems: 'center', justifyContent: 'center' },
-  placeholderText: { fontSize: 11, color: '#8a99a8', textAlign: 'center', paddingHorizontal: 20 },
+  placeholderText: {
+    fontSize: 11,
+    color: '#8a99a8',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
 });

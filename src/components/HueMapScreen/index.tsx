@@ -22,7 +22,10 @@ import {
   pickRecordId,
   type MapLocateRequest,
 } from '../../map/dataRecords';
-import { boundsOfGeometry, type GeoJsonGeometry } from '../../map/geometryBounds';
+import {
+  boundsOfGeometry,
+  type GeoJsonGeometry,
+} from '../../map/geometryBounds';
 import { BottomSheet } from './BottomSheet';
 import { CompassButton } from './CompassButton';
 import { DataOverviewFab } from './DataOverviewFab';
@@ -61,19 +64,7 @@ export default function HueMapScreen({
   focusRequest,
   onFocusHandled,
 }: {
-  /**
-   * Dữ liệu bản đồ (phường/xã, dự án...) — được gọi ở AppShell (component
-   * cha) chứ không gọi useHueMap() ngay tại đây, để dữ liệu này SỐNG SÓT khi
-   * chuyển qua tab khác rồi quay lại tab Bản đồ, và để tab Thống kê
-   * (StatisticsScreen) dùng chung mà không phải tải lại từ đầu.
-   */
   map: ReturnType<typeof useHueMap>;
-  /**
-   * Yêu cầu xử lý ngay khi màn hình này mở ra, đến từ nút "Định vị trên bản
-   * đồ" của DataScreen (tab "Dữ liệu") — bật lớp MVT tương ứng (nếu đang
-   * tắt), chọn đúng đối tượng đó (hiện MvtFeaturePanel như khi chạm trực
-   * tiếp trên bản đồ) rồi bay camera tới toạ độ, xem AppShell.
-   */
   focusRequest?: (MapLocateRequest & { token: number }) | null;
   onFocusHandled?: () => void;
 }) {
@@ -88,27 +79,18 @@ export default function HueMapScreen({
   const [dataOverviewOpen, setDataOverviewOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  // 14 lớp MVT (mục 8 tài liệu kỹ thuật) — mặc định tắt hết cho tới khi
-  // người dùng tự bật từng lớp trong menu.
   const [mvtLayersVisible, setMvtLayersVisible] = useState<
     Record<string, boolean>
   >(() => Object.fromEntries(MVT_LAYERS.map(layer => [layer.id, false])));
   const [selectedMvtFeature, setSelectedMvtFeature] = useState<{
     layer: MvtLayerConfig;
     properties: Record<string, unknown>;
-    /** Toạ độ [lng, lat] người dùng đã chạm để chọn đối tượng — dùng cho nút
-     * "Định vị trên bản đồ" của FeatureDetailScreen. */
     coordinates: [number, number];
   } | null>(null);
-  // Trang "Chi tiết đối tượng" toàn màn hình (FeatureDetailScreen), mở từ
-  // link "Xem chi tiết" trong MvtFeaturePanel — tách riêng khỏi
-  // selectedMvtFeature để đóng/mở không làm mất lựa chọn hiện tại.
   const [mvtFeatureDetailOpen, setMvtFeatureDetailOpen] = useState(false);
-  // Hình học THẬT (geom, lấy qua fetchRecordById — xem selectFeature bên
-  // dưới) của đối tượng đang chọn, dùng để tô nổi bật đúng hình dạng lên
-  // MapCanvas — null khi chưa chọn gì hoặc chưa/không lấy được geom.
   const [highlightGeometry, setHighlightGeometry] =
     useState<GeoJsonGeometry | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const closeMvtFeature = () => {
     setSelectedMvtFeature(null);
     setMvtFeatureDetailOpen(false);
@@ -119,30 +101,11 @@ export default function HueMapScreen({
     if (!visible) closeMvtFeature();
   };
 
-  // Chọn 1 layer + toạ độ + properties BAN ĐẦU (nhanh, có ngay — từ tile MVT
-  // khi chạm trực tiếp, hoặc từ DataScreen khi "Định vị trên bản đồ"), rồi
-  // NÂNG CẤP bất đồng bộ lên bản ghi gốc mới nhất (kèm geom) qua
-  // fetchRecordById — dùng CHUNG cho cả 2 đường vào (chạm trên bản đồ VÀ từ
-  // tab "Dữ liệu"), để FeatureDetailScreen/MvtFeaturePanel luôn hiển thị
-  // cùng 1 dữ liệu bất kể mở từ đâu (xem giải thích trong hội thoại — trước
-  // đây properties từ tile MVT và từ Items API lệch nhau). Đồng thời, có
-  // geom thật thì tô nổi bật đúng hình dạng đối tượng + bay camera khung vừa
-  // đúng nó (fitBounds) thay vì chỉ bay tới 1 điểm đại diện.
-  //
-  // QUAN TRỌNG: hàm này là NƠI DUY NHẤT ra lệnh camera cho 1 lần chọn đối
-  // tượng — ĐÚNG 1 lệnh camera mỗi lần gọi, không bao giờ 2. Từng có lỗi
-  // thật: nơi gọi (focusRequest bên dưới) tự bắn thêm 1 setStop() TRƯỚC khi
-  // gọi hàm này — 2 lệnh camera liên tiếp trong cùng 1 tick khiến cameraRef
-  // (native) bỏ qua lệnh sau, biểu hiện là "từ tab Dữ liệu bấm định vị nhưng
-  // camera không nhúc nhích", trong khi chạm trực tiếp trên bản đồ (chỉ có 1
-  // lệnh fitBounds duy nhất) vẫn hoạt động bình thường.
   const selectionTokenRef = useRef(0);
   const selectFeature = (
     layer: MvtLayerConfig,
     properties: Record<string, unknown>,
     coordinates: [number, number],
-    /** properties ĐÃ LÀ bản ghi gốc rồi (từ DataScreen, qua Items API) —
-     * không cần fetchRecordById lại, dùng geom sẵn có trong properties luôn. */
     alreadyFull: boolean,
   ) => {
     const token = ++selectionTokenRef.current;
@@ -150,10 +113,6 @@ export default function HueMapScreen({
     setSelectedMvtFeature({ layer, properties, coordinates });
     setHighlightGeometry(null);
 
-    /** flyToPointIfNoBounds: DataScreen luôn là 1 hành động điều hướng chủ
-     * động ("Định vị trên bản đồ") — camera BẮT BUỘC phải di chuyển tới đâu
-     * đó dù bản ghi không có geom hợp lệ. Chạm trực tiếp trên bản đồ thì
-     * không cần ép — người dùng đã thấy đối tượng ngay tại đó rồi. */
     const applyGeom = (geom: unknown, flyToPointIfNoBounds: boolean) => {
       const geometry = (geom ?? null) as GeoJsonGeometry;
       setHighlightGeometry(geometry);
@@ -161,7 +120,11 @@ export default function HueMapScreen({
       if (bounds) {
         focusBounds(bounds);
       } else if (flyToPointIfNoBounds) {
-        cameraRef.current?.setStop({ center: coordinates, zoom: 17, duration: 900 });
+        cameraRef.current?.setStop({
+          center: coordinates,
+          zoom: 17,
+          duration: 900,
+        });
       }
     };
 
@@ -182,13 +145,8 @@ export default function HueMapScreen({
     });
   };
 
-  // Chỉ bật chấm "vị trí của tôi" (UserLocation) SAU LẦN ĐẦU người dùng nhấn
-  // LocateButton và cấp quyền thành công — không tự bật khi vào màn hình, để
-  // không tự ý xin quyền/theo dõi vị trí lúc chưa ai yêu cầu.
   const [showUserLocation, setShowUserLocation] = useState(false);
 
-  // Hướng xem hiện tại của bản đồ (độ) — hiện la bàn khi khác 0, chạm vào để
-  // đưa bản đồ về hướng Bắc mặc định.
   const [bearing, setBearing] = useState(0);
   const resetBearing = () => {
     cameraRef.current?.setStop({ bearing: 0, pitch: 0, duration: 300 });
@@ -274,62 +232,31 @@ export default function HueMapScreen({
     return [...wardResults, ...projectResults];
   }, [language, map.projects, map.wards, search, t]);
 
-  // Xử lý focusRequest đến từ DataScreen (nút "Định vị trên bản đồ") — bật
-  // đúng lớp MVT của bản ghi (nếu đang tắt), chọn đối tượng đó (hiện
-  // MvtFeaturePanel giống hệt như chạm trực tiếp trên bản đồ) rồi bay camera
-  // tới toạ độ. CHỈ để selectFeature(..., true) ra lệnh camera — KHÔNG tự
-  // gọi thêm setStop() ở đây (xem ghi chú "QUAN TRỌNG" tại khai báo
-  // selectFeature: 2 lệnh camera liên tiếp trong cùng 1 tick từng khiến
-  // native cameraRef bỏ qua lệnh thứ 2, camera đứng yên dù đã bật lớp/chọn
-  // đúng đối tượng).
-  //
-  // THỬ LẠI NHIỀU LẦN thay vì đợi 1 mốc thời gian cố định: màn hình này vừa
-  // được mount lại (đổi tab từ "Dữ liệu" sang "Bản đồ", cây MapCanvas khá
-  // nặng — 14 nguồn vector MVT + phường/xã + dự án), cameraRef có thể CHƯA
-  // gắn xong sau 1 khoảng chờ cố định trên máy chậm — gọi setStop() lúc đó
-  // là gọi vào ref rỗng, không báo lỗi nhưng camera không bay tới đâu cả
-  // (đúng triệu chứng "nhấn định vị nhưng không tới đúng toạ độ"). Poll tối
-  // đa ~2s (20 lần / 100ms), đủ dư so với thời gian mount thực tế.
   useEffect(() => {
     if (!focusRequest) return undefined;
-    let cancelled = false;
-    let attempts = 0;
-    let timer: ReturnType<typeof setTimeout>;
 
     const applyFocus = () => {
       const layer = MVT_LAYERS.find(item => item.id === focusRequest.layerId);
       if (layer) {
         toggleMvtLayer(layer.id, true);
-        selectFeature(layer, focusRequest.properties, focusRequest.coordinates, true);
+        selectFeature(
+          layer,
+          focusRequest.properties,
+          focusRequest.coordinates,
+          true,
+        );
       }
+      onFocusHandled?.();
     };
 
-    const tick = () => {
-      if (cancelled) return;
-      attempts += 1;
-      if (cameraRef.current) {
-        applyFocus();
-        onFocusHandled?.();
-        return;
-      }
-      if (attempts >= 20) {
-        // Bỏ cuộc phần camera sau ~2s không thấy sẵn sàng, nhưng vẫn bật lớp
-        // + chọn đối tượng (không phụ thuộc cameraRef) thay vì im lặng bỏ cả
-        // yêu cầu — người dùng còn xem được panel, tự cuộn tới nơi được.
-        applyFocus();
-        onFocusHandled?.();
-        return;
-      }
-      timer = setTimeout(tick, 100);
-    };
-    timer = setTimeout(tick, 100);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- toggleMvtLayer/selectFeature đều ổn định theo từng lần render (định nghĩa lại mỗi render nhưng hành vi không đổi), thêm vào deps chỉ khiến effect chạy lại thừa mà không đổi kết quả.
-  }, [focusRequest, onFocusHandled]);
+    if (mapReady) {
+      applyFocus();
+      return undefined;
+    }
+    const timer = setTimeout(applyFocus, 4000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRequest, mapReady, onFocusHandled]);
 
   const focusBounds = (bounds: [number, number, number, number] | null) => {
     if (!bounds) return;
@@ -402,16 +329,18 @@ export default function HueMapScreen({
         }}
         mvtLayersVisible={mvtLayersVisible}
         onMvtFeaturePress={(layer, properties, coordinates) => {
-          // properties ở đây LẤY TỪ TILE MVT (chưa chắc đủ/mới nhất, xem ghi
-          // chú tại selectFeature) — false = cần fetchRecordById nâng cấp.
           selectFeature(layer, properties, coordinates, false);
         }}
         highlightFeature={
           highlightGeometry && selectedMvtFeature
-            ? { geometry: highlightGeometry, color: selectedMvtFeature.layer.color }
+            ? {
+                geometry: highlightGeometry,
+                color: selectedMvtFeature.layer.color,
+              }
             : null
         }
         onBearingChange={setBearing}
+        onMapReady={() => setMapReady(true)}
         topInset={insets.top}
         showUserLocation={showUserLocation}
       />
@@ -453,8 +382,6 @@ export default function HueMapScreen({
         <CompassButton
           bearing={bearing}
           onPress={resetBearing}
-          // Xếp dưới DataOverviewFab (top: insets.top + 68, cao 44) + đệm 12,
-          // tránh chồng lên nhau khi cả hai cùng hiển thị.
           style={[styles.compassButton, { top: insets.top + 68 + 44 + 12 }]}
         />
       ) : null}
@@ -564,9 +491,6 @@ export default function HueMapScreen({
         ))}
       </BottomSheet>
 
-      {/* Trang "Chi tiết đối tượng" toàn màn hình — đặt CUỐI CÙNG trong cây
-          JSX để luôn vẽ đè lên Header/FAB/panel còn lại (RN vẽ theo thứ tự
-          khai báo, phần tử sau nằm trên phần tử trước). */}
       {selectedMvtFeature && mvtFeatureDetailOpen ? (
         <FeatureDetailScreen
           layer={selectedMvtFeature.layer}

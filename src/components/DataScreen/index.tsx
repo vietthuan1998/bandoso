@@ -121,7 +121,9 @@ export function DataScreen({
     return () => clearTimeout(timer);
   }, [search]);
 
-  const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
+  const [selectedLayerId, setSelectedLayerId] = useState<string | null>(
+    DATA_SCREEN_LAYERS[0]?.id ?? null,
+  );
   const [layerSheetOpen, setLayerSheetOpen] = useState(false);
   const selectedLayer = useMemo(
     () =>
@@ -161,6 +163,14 @@ export function DataScreen({
    * khỏi danh sách gộp thay vì làm hỏng cả danh sách. */
   const [unreadableLayerIds, setUnreadableLayerIds] = useState<string[]>([]);
   const requestKeyRef = useRef(0);
+  /** Chặn loadMore gọi chồng — `onEndReached` của FlatList có thể bắn 2 lần
+   * liên tiếp trong cùng 1 tick (đà cuộn) TRƯỚC KHI state `loadingMore`/
+   * `page` kịp cập nhật qua re-render; đọc state trong closure lúc đó vẫn
+   * thấy giá trị CŨ nên cả 2 lần gọi đều lọt qua guard, cùng fetch đúng 1
+   * trang -> nối trùng bản ghi vào `records` -> key React trùng (đúng lỗi
+   * "same key" đã gặp thật). Ref thay đổi ĐỒNG BỘ, không chờ re-render, nên
+   * chặn được lần gọi thứ 2 ngay lập tức. */
+  const loadingMoreRef = useRef(false);
 
   useEffect(() => {
     const key = ++requestKeyRef.current;
@@ -203,7 +213,10 @@ export function DataScreen({
 
   const canLoadMore = !!selectedLayer && !loading && records.length < total;
   const loadMore = () => {
-    if (!selectedLayer || loading || loadingMore || !canLoadMore) return;
+    if (!selectedLayer || loading || loadingMoreRef.current || !canLoadMore) {
+      return;
+    }
+    loadingMoreRef.current = true;
     const nextPage = page + 1;
     const key = requestKeyRef.current;
     setLoadingMore(true);
@@ -216,10 +229,26 @@ export function DataScreen({
     })
       .then(result => {
         if (requestKeyRef.current !== key) return;
-        setRecords(prev => [...prev, ...result.items]);
+        // Lọc bỏ bản ghi đã có sẵn (id trùng) trước khi nối trang mới — vừa
+        // là lưới an toàn cho race ở guard trên, vừa chống trùng khi biên 2
+        // trang chồng lấn (Directus sort theo date_updated không duy nhất
+        // -> nhiều bản ghi cùng mốc giờ, thứ tự phân trang không đảm bảo ổn
+        // định tuyệt đối giữa 2 lần gọi).
+        setRecords(prev => {
+          const existingIds = new Set(
+            prev.map(item => item.id).filter(Boolean),
+          );
+          const fresh = result.items.filter(
+            item => !item.id || !existingIds.has(item.id),
+          );
+          return [...prev, ...fresh];
+        });
         setPage(nextPage);
       })
-      .finally(() => setLoadingMore(false));
+      .finally(() => {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      });
   };
 
   const [detailRecord, setDetailRecord] = useState<DataRecord | null>(null);
@@ -795,7 +824,6 @@ function DetailFieldListGroup({
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.background },

@@ -2,8 +2,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon, type IconName } from './Icon';
 import { COLORS, RADIUS, SPACING } from './theme';
 
-/** "Chip" bộ lọc dùng chung cho StatisticsScreen và DataScreen — mở 1 bottom
- * sheet chọn giá trị khi bấm. */
 export function FilterChip({
   icon,
   label,
@@ -33,7 +31,6 @@ export function FilterChip({
   );
 }
 
-/** 1 dòng lựa chọn trong bottom sheet của FilterChip — "hint" (vd. số đếm) tuỳ chọn. */
 export function PickerOption({
   label,
   hint,

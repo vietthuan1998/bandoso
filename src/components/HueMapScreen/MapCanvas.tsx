@@ -56,55 +56,11 @@ const INITIAL_CENTER: [number, number] = [107.5991, 16.4637];
 
 const PRECISE_HITBOX = { top: 1, right: 1, bottom: 1, left: 1 };
 
-/**
- * Ba layer "trần" vô hình, dùng làm mốc beforeId/afterId CỐ ĐỊNH để ép thứ
- * tự vẽ VÀ thứ tự ưu tiên khi chạm TOÀN CỤC giữa mọi nguồn độc lập trên bản
- * đồ: thành phố < phường/xã < dự án/MVT (vùng con, cụ thể hơn phường/xã) <
- * điểm (circle). Xếp theo thứ tự tăng dần: CITY_CEILING_LAYER (thấp nhất) →
- * WARD_CEILING_LAYER → POINTS_CEILING_LAYER (cao nhất, mọi layer dạng điểm
- * neo afterId vào đây).
- *
- * Đây không chỉ là thứ tự vẽ — theo cách @maplibre/maplibre-react-native cài
- * đặt xử lý chạm (MLRNMapView.getPressableSourceWithHighestZIndex trên
- * Android, getTouchableSourceWithHighestZIndex trên iOS), khi một điểm chạm
- * trúng nhiều nguồn cùng lúc, nguồn có layer nằm CAO NHẤT trong style sẽ
- * thắng và nhận sự kiện onPress — không có logic ưu tiên nào khác. Vì vậy
- * xếp đúng layer nào ở trên layer nào ở đây quyết định luôn thứ tự ưu tiên
- * khi chạm, tương đương cơ chế queryRenderedFeatures-guard mà bản web
- * (bandoso) dùng, nhưng thực hiện ở tầng z-order thay vì logic mỗi handler.
- *
- * TẠI SAO CẦN 3 MỐC RIÊNG THAY VÌ 1 MỐC DÙNG CHUNG: nếu mọi layer vùng (city,
- * ward, project, mvt) đều neo beforeId vào CÙNG MỘT mốc, thứ tự tương đối
- * giữa chúng phụ thuộc vào THỜI ĐIỂM MOUNT thực tế — layer mount sau nằm gần
- * mốc hơn. Khối phường/xã (`wardData ? ... : null`) chỉ mount sau khi dữ
- * liệu tải xong bất đồng bộ, nên có thể mount SAU các layer MVT/dự án (vốn
- * mount ngay từ lần render đầu) — khiến phường/xã nhảy lên trên, đè mất các
- * vùng con MVT/dự án cụ thể hơn nó, dù ý đồ ngược lại. Dùng 3 mốc mount TĨNH
- * (không phụ thuộc dữ liệu nào), tự chuỗi vào nhau bằng afterId ngay từ đầu,
- * đảm bảo TRẦN của mỗi tầng đã có thứ tự cố định trước khi bất kỳ layer dữ
- * liệu thật nào (city/ward/project/mvt) kịp mount — nên layer thật của mỗi
- * tầng, dù mount lúc nào, cũng chỉ so với TRẦN của tầng mình, không phụ
- * thuộc thời điểm mount của tầng khác.
- *
- * QUAN TRỌNG: cả 3 layer trần phải nằm trong một nguồn (source) RIÊNG, KHÔNG
- * có onPress (xem POINTS_CEILING_SOURCE_ID bên dưới) — tuyệt đối không gắn
- * vào bất kỳ nguồn nào có onPress. Cơ chế xử lý chạm của thư viện gom toàn
- * bộ layer con của MỘT nguồn đang bị chạm trúng lại làm "đại diện" cho
- * nguồn đó rồi mới so z-order; nếu trần (luôn nằm rất cao) bị coi là con
- * của một nguồn cụ thể, nguồn đó sẽ mượn luôn vị trí cao đó và thắng ưu
- * tiên ở MỌI nơi nó phủ tới, bất kể layer thật của nó có nằm trên tại điểm
- * chạm hay không — từng gây lỗi thành phố cướp ưu tiên của phường/xã và MVT
- * dù đã xếp z-order đúng.
- */
 const CITY_CEILING_LAYER = 'city-ceiling';
 const WARD_CEILING_LAYER = 'ward-ceiling';
 const POINTS_CEILING_LAYER = 'points-ceiling';
 const POINTS_CEILING_SOURCE_ID = 'points-ceiling-source';
 
-/** Nguồn/lớp tô nổi bật hình học THẬT của đối tượng đang xem chi tiết (xem
- * prop highlightFeature) — đặt afterId=POINTS_CEILING_LAYER giống layer điểm
- * của MVT_LAYERS nên luôn vẽ ĐÈ LÊN mọi layer khác (thêm sau cùng trong cây
- * JSX = trên cùng trong nhóm cùng 1 mốc afterId). */
 const FEATURE_HIGHLIGHT_SOURCE_ID = 'feature-highlight-source';
 const FEATURE_HIGHLIGHT_FILL_LAYER = 'feature-highlight-fill';
 const FEATURE_HIGHLIGHT_LINE_LAYER = 'feature-highlight-line';
@@ -115,10 +71,6 @@ const EMPTY_FEATURE_COLLECTION: GeoJSON.FeatureCollection = {
 };
 
 let authHeaderRegistered = false;
-/** Đăng ký header xác thực cho style/tile bản đồ (TILE_AUTH_RULES) — export
- * để các MapView khác ngoài MapCanvas (vd. mini-map định vị trong popup chi
- * tiết của DataScreen) cũng gọi được; idempotent nhờ authHeaderRegistered,
- * gọi nhiều lần từ nhiều nơi không đăng ký trùng. */
 export function ensureTileAuthHeader() {
   if (authHeaderRegistered) return;
   authHeaderRegistered = true;
@@ -148,6 +100,7 @@ export function MapCanvas({
   onMvtFeaturePress,
   highlightFeature,
   onBearingChange,
+  onMapReady,
   topInset,
   showUserLocation,
 }: {
@@ -169,36 +122,13 @@ export function MapCanvas({
   onMvtFeaturePress: (
     layer: MvtLayerConfig,
     properties: Record<string, unknown>,
-    /** Toạ độ [lng, lat] nơi người dùng CHẠM để chọn đối tượng (không phải
-     * hình học của feature) — dùng cho nút "Định vị trên bản đồ" của
-     * FeatureDetailScreen, đủ chính xác vì chính là điểm người dùng vừa
-     * nhấn trúng đối tượng này. */
     coordinates: [number, number],
   ) => void;
-  /**
-   * Hình học THẬT (GeoJSON, lấy từ Directus Items API theo id — xem
-   * fetchRecordById trong map/dataRecords.ts) của đối tượng đang được xem chi
-   * tiết — vẽ nổi bật đúng hình dạng (polygon/line/point) lên trên các lớp
-   * MVT thường, KHÔNG dùng geometry rút gọn/gần đúng của tile. null = không
-   * có gì để tô nổi bật (chưa chọn đối tượng, hoặc bản ghi không có geom).
-   */
   highlightFeature: { geometry: GeoJsonGeometry; color: string } | null;
   /** Báo lên component cha góc xoay (bearing, độ) hiện tại của bản đồ. */
   onBearingChange: (bearing: number) => void;
-  /**
-   * Khoảng cách an toàn từ mép trên màn hình (safe-area inset). BẮT BUỘC
-   * cần để đặt lại vị trí thước tỉ lệ (scaleBar): margin mặc định của thư
-   * viện (~8dp từ mép trên MapView) rơi đúng vào vùng bị Header (thanh tiêu
-   * đề trắng đục render CHỒNG LÊN bản đồ, xem HueMapScreen/index.tsx) che
-   * khuất — thước vẫn được vẽ nhưng nằm dưới lớp Header nên không nhìn
-   * thấy. Không phải vấn đề thẩm mỹ, không đặt lại là thước không hiện ra.
-   */
+  onMapReady?: () => void;
   topInset: number;
-  /**
-   * Hiện chấm "vị trí của tôi" (UserLocation) trên bản đồ — chỉ true sau khi
-   * LocateButton (HueMapScreen/index.tsx) xin quyền thành công lần đầu, để
-   * không tự ý theo dõi vị trí thiết bị khi chưa ai yêu cầu.
-   */
   showUserLocation: boolean;
 }) {
   useEffect(() => {
@@ -227,9 +157,6 @@ export function MapCanvas({
     [selectedWardId],
   );
 
-  // GeoJSON "1 feature" (hoặc rỗng) cho nguồn tô nổi bật — rỗng thay vì
-  // không mount GeoJSONSource khi chưa có gì để tô, tránh phải mount/unmount
-  // nguồn liên tục mỗi lần chọn/bỏ chọn đối tượng.
   const highlightGeoJson = useMemo<GeoJSON.FeatureCollection>(
     () => ({
       type: 'FeatureCollection',
@@ -275,6 +202,7 @@ export function MapCanvas({
       onRegionDidChange={(event: NativeSyntheticEvent<ViewStateChangeEvent>) =>
         onBearingChange(event.nativeEvent.bearing)
       }
+      onDidFinishLoadingMap={onMapReady}
     >
       <Camera
         ref={cameraRef}
@@ -283,33 +211,8 @@ export function MapCanvas({
         maxZoom={20}
       />
 
-      {/*
-        Chấm xanh đánh dấu vị trí hiện tại của thiết bị (kiểu Google Maps) —
-        chỉ mount sau khi LocateButton đã xin quyền vị trí thành công
-        (showUserLocation), nên không tự động theo dõi/tiêu hao pin khi chưa
-        ai bấm nút định vị. `accuracy` vẽ thêm vòng tròn bán kính sai số GPS.
-      */}
       {showUserLocation ? <UserLocation animated accuracy /> : null}
 
-      {/*
-        Nguồn riêng, KHÔNG có onPress, chỉ để chứa 3 layer trần vô hình xếp
-        theo thứ tự cố định (xem giải thích ở khai báo hằng số phía trên).
-        Đặt ngay sau Camera, mount TĨNH không phụ thuộc dữ liệu nào — để thứ
-        tự CITY_CEILING < WARD_CEILING < POINTS_CEILING được xác lập trước
-        khi bất kỳ layer city/ward/project/mvt thật nào kịp mount.
-
-        Bắt buộc phải tách nguồn riêng: nếu gắn layer trần vào một nguồn có
-        onPress (như CITY_SOURCE_ID ở lần sửa trước), cơ chế xử lý chạm của
-        maplibre-react-native (getPressableSourceWithHighestZIndex trên
-        Android, getTouchableSourceWithHighestZIndex trên iOS) sẽ coi trần
-        là layer "đại diện" cho nguồn đó — vì trần luôn nằm rất cao, nguồn đó
-        sẽ mượn luôn vị trí cao đó và thắng ưu tiên chạm ở MỌI nơi nó phủ
-        tới, bất kể layer thật của nó có thật sự nằm trên tại điểm chạm hay
-        không (đây chính là lỗi khiến thành phố "cướp" ưu tiên của phường/xã
-        và thửa đất). Một nguồn không có onPress bị loại khỏi toàn bộ danh
-        sách xét ưu tiên chạm (pressableSources), nên layer trần đặt ở đây
-        chỉ còn tác dụng thuần z-order.
-      */}
       <GeoJSONSource
         id={POINTS_CEILING_SOURCE_ID}
         data={EMPTY_FEATURE_COLLECTION}
@@ -410,8 +313,6 @@ export function MapCanvas({
             beforeId={WARD_CEILING_LAYER}
             filter={wardFilter}
             layout={{
-              // Biểu thức coalesce đa ngôn ngữ: kiểu style-spec chưa mô tả hết
-              // các dạng expression runtime nên cần ép kiểu ở đây.
               'text-field': labelTextField as unknown as string,
               'text-size': 11,
               'text-anchor': 'center',
@@ -463,11 +364,6 @@ export function MapCanvas({
         );
       })}
 
-      {/*
-        Thử nghiệm đường ống MVT (mục 8 + 10.1 đặc tả kỹ thuật): tile lấy trực
-        tiếp từ dcu.huecity.vn, source-layer = tên collection Directus.
-        Header Bearer cho host này đã đăng ký ở ensureTileAuthHeader().
-      */}
       {MVT_LAYERS.map(mvtLayer => {
         const visible = mvtLayersVisible[mvtLayer.id] ?? false;
         const sourceId = mvtSourceId(mvtLayer.id);
@@ -493,12 +389,6 @@ export function MapCanvas({
               }
             }}
           >
-            {/*
-              Thứ tự vẽ theo mục 10.1: polygon → outline → line → point.
-              Một collection có thể trộn nhiều kiểu hình học (mục 9), nên mỗi
-              layer tự lọc đúng kiểu bằng ['==', ['geometry-type'], ...] thay
-              vì giả định cả source-layer chỉ có một kiểu duy nhất.
-            */}
             {mvtLayer.geometryTypes.includes('polygon') && (
               <Layer
                 type="fill"
@@ -512,8 +402,6 @@ export function MapCanvas({
                 layout={{ visibility: visible ? 'visible' : 'none' }}
                 paint={{
                   'fill-color': mvtLayer.color,
-                  // Lớp "định hướng" (quy hoạch tương lai) vẽ nhạt hơn "hiện
-                  // trạng" cùng chủ đề để phân biệt trực quan.
                   'fill-opacity': mvtLayer.dashed ? 0.18 : 0.35,
                 }}
               />
@@ -568,8 +456,6 @@ export function MapCanvas({
                 paint={{
                   'circle-radius': 6,
                   'circle-color': mvtLayer.color,
-                  // Lớp "định hướng" vẽ nhạt hơn "hiện trạng", nhất quán với
-                  // fill-opacity của polygon cùng chủ đề.
                   'circle-opacity': mvtLayer.dashed ? 0.55 : 1,
                   'circle-stroke-color': '#ffffff',
                   'circle-stroke-width': 2,
@@ -580,11 +466,6 @@ export function MapCanvas({
         );
       })}
 
-      {/* Tô nổi bật hình học THẬT của đối tượng đang xem chi tiết (xem prop
-          highlightFeature) — luôn mount (data rỗng khi không có gì để tô)
-          để tránh mount/unmount nguồn liên tục. afterId=POINTS_CEILING_LAYER
-          giống layer điểm của MVT_LAYERS, thêm SAU CÙNG trong cây JSX nên
-          luôn vẽ đè lên mọi layer khác cùng mốc. */}
       <GeoJSONSource id={FEATURE_HIGHLIGHT_SOURCE_ID} data={highlightGeoJson}>
         <Layer
           type="fill"

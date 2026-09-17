@@ -17,10 +17,6 @@ export const SUPPORTED_LANGUAGES = [
 ] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
-// Ghi chú: bản mobile chưa gắn AsyncStorage nên lựa chọn ngôn ngữ chỉ tồn tại
-// trong phiên làm việc hiện tại (không lưu lại giữa các lần mở app). Nếu cần
-// ghi nhớ, hãy thêm @react-native-async-storage/async-storage và đọc/ghi giá
-// trị "hue-maps-language" tại đây.
 const DEFAULT_LANGUAGE: SupportedLanguage = 'vi';
 
 void i18n.use(initReactI18next).init({

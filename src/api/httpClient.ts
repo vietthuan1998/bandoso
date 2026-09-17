@@ -11,9 +11,6 @@ export const httpClient = axios.create({
   },
 });
 
-// Các URL GeoJSON/style tuyệt đối (ioc-canhbao.hue.gov.vn, ...) không bị ảnh
-// hưởng bởi baseURL này — axios chỉ dùng baseURL khi url truyền vào là tương
-// đối, nên các request hiện có trong useHueMap.ts vẫn chạy như cũ.
 httpClient.interceptors.request.use(async config => {
   const token = await getToken();
   if (token) {
@@ -26,8 +23,8 @@ httpClient.interceptors.request.use(async config => {
 export function describeHttpError(error: unknown): string {
   if (axios.isAxiosError(error)) {
     if (error.response) {
-      const message =
-        (error.response.data as { message?: string } | undefined)?.message;
+      const message = (error.response.data as { message?: string } | undefined)
+        ?.message;
       return message ?? `HTTP ${error.response.status}`;
     }
     return error.message;

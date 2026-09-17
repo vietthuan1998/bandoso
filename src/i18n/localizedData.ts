@@ -9,7 +9,6 @@ function clean(value: unknown): string {
   return result.toLowerCase() === 'null' ? '' : result;
 }
 
-/** Đọc trường `field_en` hoặc `translations.en.field`, sau đó dự phòng bằng tiếng Việt. */
 export function getLocalizedDataValue(
   properties: DataRecord,
   fieldNames: string[],

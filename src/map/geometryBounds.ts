@@ -1,15 +1,7 @@
-/**
- * Tính bounding box [minX, minY, maxX, maxY] từ 1 hình học GeoJSON BẤT KỲ
- * (Point/LineString/Polygon/MultiPolygon/MultiLineString...) — dùng chung 1
- * hàm đệ quy duyệt hết mọi toạ độ lồng nhau, thay vì switch/case theo từng
- * kiểu `geometry.type` (cùng tinh thần "tránh switch/case" của
- * map/normalizeFeatureFields.ts). Dùng để cameraRef.fitBounds() khung camera
- * vừa đúng 1 đối tượng cụ thể (xem HueMapScreen/index.tsx) — chính xác hơn
- * hẳn so với chỉ bay tới 1 điểm đại diện, đặc biệt với đối tượng dạng vùng
- * lớn (polygon).
- */
-
-export type GeoJsonGeometry = { type: string; coordinates: unknown } | null | undefined;
+export type GeoJsonGeometry =
+  | { type: string; coordinates: unknown }
+  | null
+  | undefined;
 
 function collectPoints(coordinates: unknown, into: number[][]): void {
   if (!Array.isArray(coordinates)) return;

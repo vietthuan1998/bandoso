@@ -3,10 +3,6 @@ import { Pressable, StyleSheet } from 'react-native';
 import { Icon } from './Icon';
 import { COLORS } from './theme';
 
-/**
- * Nút tròn nổi mở panel "Tổng quan dữ liệu" (DataOverviewPanel) — đặt đối
- * xứng với LayersFab, ở góc trên-phải khung bản đồ thay vì trên-trái.
- */
 export function DataOverviewFab({
   onPress,
   top,

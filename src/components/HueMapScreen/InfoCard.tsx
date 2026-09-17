@@ -3,11 +3,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './Icon';
 import { COLORS, RADIUS, SPACING } from './theme';
 
-/**
- * Thẻ thông tin nổi phía dưới bản đồ (tương đương panel bên phải trên web),
- * dùng chung cho thông tin thành phố / phường-xã / dự án / chú giải lớp dự án.
- * Bản đồ phía sau vẫn tương tác được vì đây không phải modal toàn màn hình.
- */
 export function InfoCard({
   title,
   subtitle,

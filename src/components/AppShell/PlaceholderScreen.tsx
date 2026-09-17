@@ -4,13 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '../HueMapScreen/Icon';
 import { COLORS, SPACING } from '../HueMapScreen/theme';
 
-/**
- * Màn hình chờ cho các tab chưa có API/dữ liệu thật (Dữ liệu, Thống kê, Theo
- * dõi, Cá nhân — SCR-03/05/07.../13 trong mục 11.4 đặc tả kỹ thuật). Cố tình
- * KHÔNG dựng số liệu minh họa như trong mockup mota — mục 18.1.1 yêu cầu mọi
- * số liệu hiển thị phải truy xuất được từ Directus/BFF; widget chưa đủ hợp
- * đồng dữ liệu phải hiển thị "Chưa có dữ liệu", không hiển thị số liệu giả.
- */
 export function PlaceholderScreen({
   icon,
   titleKey,

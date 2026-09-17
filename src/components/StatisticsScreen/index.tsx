@@ -38,40 +38,6 @@ import { DonutChart } from './DonutChart';
 import { TrendChart } from './TrendChart';
 import { FRESHNESS_COLOR, FRESHNESS_ICON } from '../HueMapScreen/freshnessUi';
 
-/**
- * Tab "Thống kê" — dựng theo bố cục mota/2.jpg, lấy số liệu THẬT từ API
- * Directus. Xem giải thích đầy đủ (kể cả cách tính "Theo phường, xã" bằng
- * hình học point-in-polygon thay vì field text) ở đầu file
- * map/statisticsOverview.ts.
- *
- * BA BỘ LỌC ĐỀU ĐỘNG THẬT VÀ KẾT HỢP ĐƯỢC VỚI NHAU:
- *  - Không chọn lớp, không chọn phường/xã → TỔNG HỢP toàn bộ 15 collection,
- *    cộng dồn theo từng phường/xã bằng hình học (banner tổng/3 ô trạng
- *    thái/donut/Theo phường xã/Xu hướng/Top lớp dữ liệu).
- *  - Chọn 1 phường/xã (không chọn lớp) → mọi số liệu trên (trừ Xu hướng, xem
- *    dưới) thu hẹp lại đúng phường/xã đó, vẫn cộng dồn qua toàn bộ layer —
- *    tra thẳng ma trận layerWardCounts đã tính sẵn lúc tải overview, không
- *    gọi API nào thêm (computeWardScopedStatus/computeWardScopedGroups/
- *    getWardTotal trong statisticsOverview.ts).
- *  - Chọn 1 lớp (collection) → toàn màn hình chuyển sang số liệu riêng của
- *    lớp đó; chọn thêm phường/xã thì thu hẹp tiếp — cũng tra ma trận có
- *    sẵn, không gọi API.
- *  - "Ngày" → lọc "tính đến ngày đó" (date_updated <= ngày) cho tổng số bản
- *    ghi CHỈ khi có chọn đúng 1 lớp và KHÔNG chọn phường/xã (fetchLayerAsOfCount)
- *    — số theo phường/xã lấy từ ma trận hình học (không có mốc ngày của
- *    từng bản ghi) nên không kết hợp chính xác được với bộ lọc ngày, xem
- *    ghi chú tại fetchLayerAsOfCount. "Ngày" cũng làm mốc kết thúc cho biểu
- *    đồ Xu hướng ở mọi chế độ.
- *  - "Xu hướng cập nhật" KHÔNG lọc theo phường/xã (chỉ theo lớp + ngày) — dữ
- *    liệu xu hướng đến từ đếm theo ngày trên toàn collection, không có toạ
- *    độ để phân loại theo khu vực trong cùng 1 truy vấn.
- *
- * LOẠI TRỪ COLLECTION HỆ THỐNG DIRECTUS: registry MVT_LAYERS hiện tại vốn
- * chỉ khai báo collection nghiệp vụ thật (không cái nào là "directus_*"),
- * statisticsOverview.ts vẫn lọc tường minh qua isSystemDirectusCollection()
- * làm lớp bảo vệ bổ sung.
- */
-
 function formatNumber(value: number): string {
   return value.toLocaleString('vi-VN');
 }
@@ -85,7 +51,6 @@ function formatDateIso(iso: string): string {
   const [y, m, d] = iso.split('-');
   return `${d}/${m}/${y}`;
 }
-/** Định dạng một timestamp ISO thật từ Directus (vd. date_updated) thành dd/mm/yyyy. */
 function formatTimestamp(isoTimestamp: string): string {
   const d = new Date(isoTimestamp);
   return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
@@ -112,11 +77,7 @@ export function StatisticsScreen() {
   const [selectedWard, setSelectedWard] = useState<string | null>(null);
   const [wardSheetOpen, setWardSheetOpen] = useState(false);
 
-  /** null = hôm nay (không lọc). */
   const [asOfDate, setAsOfDate] = useState<string | null>(null);
-  /** iOS hiện date picker dạng inline trong BottomSheet (cần nút xác nhận vì
-   * không tự đóng khi chọn); Android dùng DateTimePickerAndroid.open() —
-   * dialog gốc tự quản lý, không cần state hiển thị riêng. */
   const [iosDatePickerOpen, setIosDatePickerOpen] = useState(false);
   const [pendingDate, setPendingDate] = useState(() => new Date());
 
@@ -127,8 +88,6 @@ export function StatisticsScreen() {
   const [trendPoints, setTrendPoints] = useState<TrendPoint[]>([]);
   const [trendLoading, setTrendLoading] = useState(false);
 
-  /** Đếm "tính đến ngày" cho 1 lớp cụ thể — chỉ dùng khi có chọn lớp, KHÔNG
-   * chọn phường/xã và có chọn ngày (xem ghi chú ở đầu file). */
   const [layerAsOf, setLayerAsOf] = useState<{
     count: number | null;
     maxUpdatedAt: string | null;
@@ -180,9 +139,6 @@ export function StatisticsScreen() {
     [overview, selectedLayerId],
   );
 
-  // Đếm "tính đến ngày" — chỉ gọi API khi có đúng 1 lớp + có ngày + KHÔNG có
-  // phường/xã (số theo phường/xã lấy từ ma trận hình học, không kết hợp
-  // được với lọc ngày, xem ghi chú đầu file).
   useEffect(() => {
     if (!selectedLayerId || !selectedCollection || !asOfDate || selectedWard) {
       setLayerAsOf(null);
@@ -202,9 +158,6 @@ export function StatisticsScreen() {
     };
   }, [selectedLayerId, selectedCollection, asOfDate, selectedWard]);
 
-  // Xu hướng cập nhật — hợp nhất cho cả 2 chế độ (Tất cả lớp / 1 collection
-  // cụ thể), chạy lại khi đổi khoảng ngày (7/14/30) hoặc mốc "tính đến
-  // ngày". KHÔNG lọc theo phường/xã (xem ghi chú đầu file).
   useEffect(() => {
     let cancelled = false;
     async function run() {
@@ -258,7 +211,6 @@ export function StatisticsScreen() {
     ? formatDateIso(asOfDate)
     : t('statistics.filters.today');
 
-  // ===== Số liệu khi CÓ chọn 1 lớp (bất kể có chọn phường/xã hay không) =====
   const layerScopedCount = useMemo(() => {
     if (!overview || !selectedLayerId) return null;
     if (selectedWardKey) {
@@ -331,13 +283,6 @@ export function StatisticsScreen() {
       : allLayersScoped.groups.slice(0, 5);
   }, [allLayersScoped, topLayersExpanded]);
 
-  /**
-   * Android dùng DateTimePickerAndroid.open() — API mệnh lệnh, tự hiện dialog
-   * lịch gốc của hệ điều hành và tự đóng, không cần state hiển thị riêng.
-   * iOS không có API mệnh lệnh tương đương nên hiện <DateTimePicker
-   * display="inline"> trong BottomSheet, kèm nút xác nhận vì kiểu inline
-   * không tự đóng khi chọn ngày.
-   */
   function openDatePicker() {
     const currentValue = asOfDate
       ? new Date(`${asOfDate}T00:00:00`)
@@ -378,8 +323,6 @@ export function StatisticsScreen() {
         <ScrollView
           contentContainerStyle={{ paddingBottom: insets.bottom + SPACING.xl }}
         >
-          {/* Hàng bộ lọc — cả 3 ô đều động thật và kết hợp được với nhau,
-              xem giải thích ở đầu file. */}
           <View style={styles.filterRow}>
             <FilterChip
               icon="database"
@@ -402,7 +345,6 @@ export function StatisticsScreen() {
 
           {selectedCollection && selectedLayerId ? (
             <>
-              {/* Banner tổng của lớp đang chọn (thu hẹp theo phường/xã nếu có) */}
               <View style={styles.totalCard}>
                 <View style={styles.totalIconWrap}>
                   <Icon name="database" size={22} color="#ffffff" />
@@ -426,8 +368,6 @@ export function StatisticsScreen() {
                 </View>
               </View>
 
-              {/* Trạng thái đơn — 1 lớp thì chỉ có 1 giá trị, không phải
-                  phân bố nhiều lớp như donut ở chế độ "Tất cả lớp". */}
               <View style={styles.singleStatusRow}>
                 <View
                   style={[
@@ -460,7 +400,6 @@ export function StatisticsScreen() {
                 ) : null}
               </View>
 
-              {/* Theo phường, xã của lớp đang chọn — tính bằng hình học. */}
               <Section
                 title={t('statistics.ward.sectionTitle')}
                 hint={t('statistics.ward.geometricNote')}
@@ -491,7 +430,6 @@ export function StatisticsScreen() {
                 )}
               </Section>
 
-              {/* Xu hướng cập nhật của lớp đang chọn */}
               <Section
                 title={t('statistics.trend.sectionTitle')}
                 hint={
@@ -524,8 +462,6 @@ export function StatisticsScreen() {
             </>
           ) : (
             <>
-              {/* Banner tổng — TỔNG HỢP toàn bộ 15 lớp, thu hẹp theo
-                  phường/xã nếu có chọn. */}
               <View style={styles.totalCard}>
                 <View style={styles.totalIconWrap}>
                   <Icon name="database" size={22} color="#ffffff" />
@@ -542,7 +478,6 @@ export function StatisticsScreen() {
                 </View>
               </View>
 
-              {/* 3 ô trạng thái */}
               <View style={styles.tileRow}>
                 {(allLayersScoped?.buckets ?? []).map(bucket => (
                   <StatusTile
@@ -559,7 +494,6 @@ export function StatisticsScreen() {
                 ))}
               </View>
 
-              {/* Theo trạng thái */}
               <Section title={t('statistics.status.sectionTitle')}>
                 <View style={styles.statusBody}>
                   <DonutChart
@@ -607,7 +541,6 @@ export function StatisticsScreen() {
                 </View>
               </Section>
 
-              {/* Theo phường, xã — TỔNG HỢP toàn bộ 15 lớp */}
               <Section
                 title={t('statistics.ward.sectionTitle')}
                 hint={t('statistics.ward.geometricNote')}
@@ -649,7 +582,6 @@ export function StatisticsScreen() {
                 ) : null}
               </Section>
 
-              {/* Xu hướng cập nhật */}
               <Section
                 title={t('statistics.trend.sectionTitle')}
                 hint={
@@ -676,7 +608,6 @@ export function StatisticsScreen() {
                 )}
               </Section>
 
-              {/* Top lớp dữ liệu — xếp hạng lại theo phường/xã nếu có chọn */}
               <Section
                 title={t('statistics.topLayers.sectionTitle')}
                 action={{
@@ -708,11 +639,6 @@ export function StatisticsScreen() {
         </ScrollView>
       )}
 
-      {/* Sheet chọn lớp — danh sách phẳng đúng 15 collection curate trong
-          MVT_LAYERS, không nhóm theo tiêu đề, không kèm số liệu nào khác
-          ngoài tên lớp. Chọn 1 collection chuyển toàn bộ màn hình sang số
-          liệu động của riêng collection đó, giữ nguyên phường/xã đang lọc
-          (nếu có). */}
       <BottomSheet
         visible={layerSheetOpen}
         onClose={() => setLayerSheetOpen(false)}
@@ -741,8 +667,6 @@ export function StatisticsScreen() {
         </ScrollView>
       </BottomSheet>
 
-      {/* Sheet chọn phường, xã — luôn 40 phường/xã thật (canonical, lấy từ
-          thua_dat), giữ nguyên lớp đang lọc (nếu có). */}
       <BottomSheet
         visible={wardSheetOpen}
         onClose={() => setWardSheetOpen(false)}
@@ -778,12 +702,6 @@ export function StatisticsScreen() {
         </ScrollView>
       </BottomSheet>
 
-      {/* Date picker "tính đến ngày" — CHỈ dùng trên iOS. Android xử lý qua
-          DateTimePickerAndroid.open() (xem openDatePicker phía trên), dialog
-          lịch gốc hệ điều hành tự hiện/tự đóng, không cần sheet riêng. iOS
-          không có API mệnh lệnh tương đương nên hiện picker dạng inline
-          trong BottomSheet, kèm 2 nút vì kiểu inline không tự đóng khi chọn
-          ngày (khác hành vi mặc định của dialog Android). */}
       {Platform.OS === 'ios' ? (
         <BottomSheet
           visible={iosDatePickerOpen}
@@ -829,7 +747,6 @@ export function StatisticsScreen() {
         </BottomSheet>
       ) : null}
 
-      {/* Sheet chọn khoảng ngày cho biểu đồ xu hướng */}
       <BottomSheet
         visible={trendSheetOpen}
         onClose={() => setTrendSheetOpen(false)}

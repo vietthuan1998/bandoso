@@ -12,12 +12,6 @@ const TABS: Array<{ id: AppTabId; icon: IconName; labelKey: string }> = [
   { id: 'profile', icon: 'profile', labelKey: 'tabs.profile' },
 ];
 
-/**
- * Bottom-nav 5 tab theo đúng bố cục trong mota/1..5.jpg (Bản đồ / Dữ liệu /
- * Thống kê / Theo dõi / Cá nhân), luôn hiển thị cố định ở đáy màn hình bất
- * kể đang ở tab nào — khớp mục 5.4/11.4 của đặc tả kỹ thuật (Web dùng route,
- * Mobile dùng bottom tabs tương đương).
- */
 export function BottomTabBar({
   activeTab,
   onChangeTab,

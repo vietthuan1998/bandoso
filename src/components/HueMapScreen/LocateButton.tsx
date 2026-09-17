@@ -12,18 +12,6 @@ import { LocationManager } from '@maplibre/maplibre-react-native';
 import { Icon } from './Icon';
 import { COLORS, RADIUS, SPACING } from './theme';
 
-/**
- * Nút tròn nổi "vị trí của tôi", góc dưới-phải khung bản đồ. Xin quyền truy
- * cập vị trí rồi bay camera tới toạ độ hiện tại của thiết bị.
- *
- * QUAN TRỌNG: xin quyền là thao tác người dùng CÓ THỂ TỪ CHỐI — đây là luồng
- * hợp lệ, không phải lỗi ứng dụng. LocationManager.requestPermissions()/
- * getCurrentPosition() của @maplibre/maplibre-react-native đã tự bắt lỗi nội
- * bộ (trả về false/undefined thay vì throw), nhưng vẫn bọc try/catch ở đây
- * để chắc chắn không có trường hợp nào (thiết bị không có GPS, dịch vụ vị trí
- * tắt, promise native bị reject...) làm crash màn hình hay hiện lỗi đỏ — chỉ
- * lặng lẽ báo "không xác định được vị trí" bằng gợi ý nhỏ, tự biến mất.
- */
 export function LocateButton({
   onLocate,
   style,
@@ -65,7 +53,6 @@ export function LocateButton({
       }
       onLocate([position.coords.longitude, position.coords.latitude]);
     } catch {
-      // Không để bất kỳ lỗi native/promise nào lọt ra ngoài màn hình.
       flashUnavailable();
     } finally {
       setLoading(false);

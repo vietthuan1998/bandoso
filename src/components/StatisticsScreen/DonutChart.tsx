@@ -7,16 +7,6 @@ const STROKE = 22;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-/**
- * Biểu đồ donut vẽ bằng react-native-svg (nhiều <Circle> xếp chồng, mỗi lát
- * cắt dùng strokeDasharray/strokeDashoffset để chỉ vẽ đúng một cung) — kỹ
- * thuật chuẩn để dựng donut chart không cần thư viện chart riêng (dự án
- * chưa có SVG trước khi thêm tính năng này). Khớp bố cục "Theo trạng thái"
- * trong mota/2.jpg; xem StatisticsScreen/index.tsx để biết 3 lát cắt ở đây
- * là gì (không phải Hoàn thành/Đang cập nhật/Lỗi như mockup nguyên bản — xem
- * ghi chú trong map/statisticsOverview.ts vì mockup không có field trạng
- * thái thật tương ứng).
- */
 export function DonutChart({
   segments,
 }: {
@@ -33,8 +23,6 @@ export function DonutChart({
         width={SIZE}
         height={SIZE}
         viewBox={`0 0 ${SIZE} ${SIZE}`}
-        // Xoay -90° để lát cắt đầu tiên bắt đầu từ đỉnh (12 giờ) — mặc định
-        // SVG vẽ góc 0° từ hướng 3 giờ.
         style={styles.rotated}
       >
         {total === 0 ? (

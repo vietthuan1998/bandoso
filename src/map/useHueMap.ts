@@ -30,11 +30,6 @@ import type {
   WardProperties,
 } from './types';
 
-// Dữ liệu cứng (URL GeoJSON/style, id nguồn/lớp thành phố + phường/xã, bảng
-// màu WARD_COLORS) đã chuyển sang src/data/mapSources.ts — import lại rồi
-// re-export ở đây để mọi nơi đang `import { CITY_GEOJSON_URL } from
-// '.../map/useHueMap'` không phải sửa gì. WARD_COLORS trước đây không export
-// (chỉ dùng nội bộ file này) nên vẫn giữ vậy, không re-export.
 export {
   CITY_BORDER_LAYER,
   CITY_FILL_LAYER,
@@ -110,7 +105,6 @@ function normalizeProject(
   };
 }
 
-/** Trả về [west, south, east, north] — định dạng LngLatBounds của maplibre-react-native. */
 export function geometryBounds(
   geometry: unknown,
 ): [number, number, number, number] | null {
@@ -166,8 +160,6 @@ export function useHueMap() {
   const selectedWardIdRef = useRef<string | null>(null);
   selectedWardIdRef.current = selectedWard?.id ?? null;
 
-  // Tải dữ liệu ranh giới phường/xã một lần, tính sẵn publicWardId/publicFillColor
-  // (như bản web) vì biểu thức style của MapLibre không tra được bảng màu tuỳ ý.
   useEffect(() => {
     let disposed = false;
     const load = async () => {
@@ -208,8 +200,6 @@ export function useHueMap() {
     };
   }, []);
 
-  // Tải riêng dữ liệu 4 lớp dự án đầu tư để phục vụ tìm kiếm (tên, địa điểm,
-  // nhà đầu tư) và tính bounds để bay camera tới khi chọn kết quả.
   useEffect(() => {
     let disposed = false;
     const loadProjectsForSearch = async () => {

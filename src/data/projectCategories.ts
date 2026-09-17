@@ -1,16 +1,5 @@
 import type { ProjectCategory, ProjectCategoryId } from '../map/types';
 
-/**
- * Dữ liệu cứng của 4 loại dự án đầu tư — tách khỏi src/map/projectLayers.ts
- * (nơi vẫn giữ các hàm build id lớp bản đồ liên quan). Xem ghi chú gốc ở
- * dưới về PUBLIC_ASSET_BASE_URL.
- *
- * Bản web (bandoso) tham chiếu các tệp GeoJSON này bằng đường dẫn tương đối
- * ("/data/bandoduan/..."), được trình duyệt tự suy ra theo domain đang chạy
- * trang (footer trỏ tới https://bandoso.hue.gov.vn). Ứng dụng mobile không có
- * "domain hiện tại" nên cần một gốc URL tuyệt đối — đây là giả định cần xác
- * nhận lại với đội vận hành cổng bản đồ số trước khi phát hành bản chính thức.
- */
 export const PUBLIC_ASSET_BASE_URL = 'https://bandoso.hue.gov.vn';
 
 export const PROJECT_CATEGORIES: ProjectCategory[] = [

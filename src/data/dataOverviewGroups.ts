@@ -1,19 +1,5 @@
 import type { OverviewGroupConfig } from '../map/dataOverview';
 
-/**
- * Dữ liệu cứng cách nhóm 15 collection MVT thành 9 dòng cho panel "Tổng quan
- * dữ liệu" — tách khỏi src/map/dataOverview.ts (nơi vẫn giữ type và logic
- * gọi API đếm số bản ghi).
- *
- * Gộp hiện trạng + định hướng theo đúng chủ đề khi cả hai tồn tại (thửa đất,
- * khu công nghiệp, khu xử lý chất thải, nghĩa trang, cơ sở KHCN); các
- * collection lẻ (không có cặp hiện trạng/định hướng) đứng riêng một dòng.
- * Khớp với ảnh mẫu "Tổng quan dữ liệu" thực tế bên vận hành cung cấp (đã đối
- * chiếu số liệu API thật trùng khớp: Khu công nghiệp 6+8=14, Khu xử lý chất
- * thải 7+8=15, Nghĩa trang 44+48=92, Trạm quan trắc 55+17+4=76 — KHÔNG gồm
- * trạm BTS, vì trambts là hạ tầng viễn thông, không phải trạm quan trắc môi
- * trường, nên tách dòng riêng).
- */
 export const DATA_OVERVIEW_GROUPS: OverviewGroupConfig[] = [
   {
     id: 'land-parcel',

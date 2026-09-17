@@ -8,19 +8,11 @@ import {
   Text,
   View,
 } from 'react-native';
-import {
-  fetchDataOverview,
-  type DataOverview,
-} from '../../map/dataOverview';
+import { fetchDataOverview, type DataOverview } from '../../map/dataOverview';
 import { describeHttpError } from '../../api/httpClient';
 import { Icon } from './Icon';
 import { COLORS, RADIUS, SPACING } from './theme';
 
-/**
- * Panel nổi "Tổng quan dữ liệu" — đếm số bản ghi THẬT trong từng collection
- * Directus (xem map/dataOverview.ts), không phải số liệu tĩnh/minh hoạ.
- * Chỉ tải dữ liệu khi `visible` bật lần đầu, không tải lại mỗi lần re-render.
- */
 export function DataOverviewPanel({
   visible,
   onClose,
@@ -32,16 +24,6 @@ export function DataOverviewPanel({
   const [overview, setOverview] = useState<DataOverview | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Đánh dấu "đã bắt đầu tải" bằng ref (không phải state) — CỐ Ý không đưa
-  // overview/loading vào dependency của effect bên dưới. Effect gọi
-  // setLoading(true), nếu loading nằm trong dependency, chính thay đổi đó sẽ
-  // khiến effect tự chạy lại ngay sau khi vừa chạy — lần chạy lại thực thi
-  // cleanup của lần trước (đặt disposed = true) TRƯỚC KHI fetch cũ kịp xong,
-  // nên .then()/.catch()/.finally() của lần fetch gốc luôn bị guard
-  // `if (!disposed)` chặn lại — setOverview/setLoading(false) không bao giờ
-  // được gọi, panel kẹt mãi ở trạng thái "đang tải" dù request thành công
-  // bình thường. Dùng ref để effect chỉ phụ thuộc `visible`, không tự kích
-  // hoạt lại do chính state nó thay đổi.
   const hasFetchedRef = useRef(false);
 
   useEffect(() => {
@@ -192,7 +174,11 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
   },
   loadingText: { fontSize: 12, color: COLORS.textMuted },
-  errorText: { fontSize: 12, color: COLORS.critical, paddingVertical: SPACING.sm },
+  errorText: {
+    fontSize: 12,
+    color: COLORS.critical,
+    paddingVertical: SPACING.sm,
+  },
   tileRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md },
   tile: {
     flex: 1,

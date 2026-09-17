@@ -12,13 +12,6 @@ import { COLORS, RADIUS } from './theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-/**
- * Panel trượt ra từ mép trái màn hình, cao hết chiều cao khả dụng — dùng cho
- * menu các lớp bản đồ (xem LayerMenuSheet.tsx). Cùng khuôn mẫu animation với
- * BottomSheet.tsx (Modal trong suốt + backdrop mờ dần + Animated.View trượt),
- * chỉ khác trục trượt (translateX từ mép trái thay vì translateY từ đáy) và
- * hình dạng panel (cao hết màn hình, bo góc bên phải thay vì bo góc trên).
- */
 export function LeftSheet({
   visible,
   onClose,
@@ -29,7 +22,6 @@ export function LeftSheet({
   visible: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  /** Chiều rộng panel, tính bằng điểm (points). Mặc định 82% màn hình, tối đa 340. */
   width?: number;
   style?: ViewStyle;
 }) {
