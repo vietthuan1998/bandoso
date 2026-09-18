@@ -66,6 +66,22 @@ export function pickFeatureWard(
   return pickFirstMatchingField(properties, WARD_FIELD_CANDIDATES);
 }
 
+const LOCATION_FIELD_CANDIDATES = [
+  'dia_chi',
+  'diaChi',
+  'dia_diem',
+  'diadiem',
+  'address',
+  'vi_tri',
+  'viTri',
+];
+
+export function pickFeatureLocation(
+  properties: Record<string, unknown>,
+): string | null {
+  return pickFirstMatchingField(properties, LOCATION_FIELD_CANDIDATES);
+}
+
 const GENDER_CODES: Record<string, 'male' | 'female'> = {
   '1': 'male',
   '0': 'female',

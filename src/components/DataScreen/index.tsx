@@ -40,55 +40,6 @@ import { Icon } from '../HueMapScreen/Icon';
 import { COLORS, RADIUS, SPACING } from '../HueMapScreen/theme';
 import { DataRecordMiniMap, DataRecordMiniMapPlaceholder } from './MiniMap';
 
-/**
- * Tab "Dữ liệu" — liệt kê/tìm kiếm TỪNG BẢN GHI thật của 14 collection MVT
- * nghiệp vụ (khác StatisticsScreen chỉ tổng hợp số lượng), theo bố cục
- * mota (ô tìm kiếm + 3 ô lọc + danh sách + popup chi tiết khi chọn 1 dòng).
- *
- * 3 Ô LỌC:
- *  - "Lớp" (collection) — 14 collection thật của DATA_SCREEN_LAYERS, mặc
- *    định "Tất cả lớp" (gộp 1 trang nhỏ từ mọi collection, xem
- *    fetchAllLayersRecords). Chọn đúng 1 lớp mới có phân trang "Tải thêm"
- *    đầy đủ (map/dataRecords.ts).
- *  - "Phường, xã" — 40 phường/xã thật, lấy qua fetchWardDirectory() (API
- *    RIÊNG, tách khỏi fetchStatisticsOverview() nặng — xem ghi chú tại
- *    fetchWardDirectory trong map/statisticsOverview.ts). Chỉ lọc CHÍNH XÁC
- *    được cho lớp có field ten_xa thật (hiện chỉ "Thửa đất", xem
- *    WARD_TRACKED_LAYER_IDS) — lớp khác hiện gợi ý wardUnsupportedHint thay
- *    vì lọc sai âm thầm.
- *  - "Trạng thái" — TẠM THỜI BỎ QUA theo yêu cầu: không có field trạng thái
- *    hoàn thành/lỗi dùng chung cho mọi collection (cùng lý do đã nêu ở đầu
- *    map/statisticsOverview.ts), nên ô này chỉ hiển thị, không lọc được gì —
- *    tránh dựng logic lọc trên dữ liệu không có thật.
- *
- * QUYỀN TRUY CẬP: một số collection gisportal_* (nhóm "Quy hoạch") trả 403
- * (tài khoản DCU_BEARER_TOKEN hiện chưa được cấp quyền đọc collection đó) —
- * map/dataRecords.ts phân biệt rõ "không đọc được" (unreadableReason) với
- * "đọc được nhưng 0 kết quả khớp bộ lọc" (total: 0), để không hiển thị nhầm
- * "Không có dữ liệu phù hợp" cho trường hợp thật ra là thiếu quyền.
- *
- * CHUẨN HOÁ DỮ LIỆU: mọi bản ghi đi qua map/dataRecords.ts#normalizeRecord —
- * dùng "danh sách khoá ứng viên" (pickFeatureTitle/pickFeatureWard) để suy ra
- * tiêu đề/phường-xã chung cho MỌI collection, không switch/case riêng từng
- * loại. Popup chi tiết dùng lại nguyên dữ liệu đã chuẩn hoá
- * (normalizeFeatureFields, cũng dùng cho MvtFeaturePanel/FeatureDetailScreen)
- * qua DetailField/DetailFieldListGroup riêng (bố cục nhãn/giá trị khác
- * FeatureFieldList, xem "làm đẹp popup"); nút "Xem chi tiết đầy đủ" mở thẳng
- * FeatureDetailScreen — không dựng lại toàn bộ UI chi tiết lần 2. Có thêm
- * DataRecordMiniMap (MiniMap.tsx) — bản đồ sống (KHÔNG tương tác, đặt cố
- * định NGOÀI vùng cuộn của popup — xem ghi chú ở đó) ghim đúng vị trí bản
- * ghi, quy về điểm trung tâm nếu bản ghi là 1 vùng (xem
- * extractRepresentativePoint).
- *
- * LƯU Ý: cùng 1 đối tượng có thể hiển thị KHÁC NHAU giữa panel trên bản đồ
- * (MvtFeaturePanel, đọc từ tile MVT — /mvt/{z}/{x}/{y}.mvt) và popup ở đây
- * (đọc thẳng từ Directus Items API — /items/<collection>, xem
- * fetchDataRecordsPage). Đây LÀ 2 NGUỒN DỮ LIỆU KHÁC NHAU (không phải lỗi
- * chuẩn hoá — cả 2 nơi dùng chung normalizeFeatureFields): tile MVT do server
- * tiền xử lý/đóng gói riêng cho việc vẽ bản đồ (có thể cache, có thể không
- * mang đủ mọi field), còn Items API luôn trả bản ghi gốc mới nhất.
- */
-
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 350;
 
@@ -103,9 +54,6 @@ function formatDateTime(iso: string): string {
 export function DataScreen({
   onLocateOnMap,
 }: {
-  /** Chuyển sang tab Bản đồ, bật lớp tương ứng, chọn đúng bản ghi rồi bay
-   * camera tới toạ độ của nó — không bắt buộc; thiếu prop này thì nút
-   * "Định vị trên bản đồ" không xuất hiện. */
   onLocateOnMap?: (request: MapLocateRequest) => void;
 }) {
   const { t } = useTranslation();
@@ -155,21 +103,10 @@ export function DataScreen({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasError, setHasError] = useState(false);
-  /** Chỉ có ý nghĩa khi đang chọn đúng 1 lớp — null nghĩa là gọi được (dù có
-   * thể 0 kết quả khớp bộ lọc). Xem ghi chú "QUYỀN TRUY CẬP" ở đầu file. */
   const [unreadableReason, setUnreadableReason] =
     useState<DataRecordsUnreadableReason>(null);
-  /** Chỉ có ý nghĩa ở chế độ "Tất cả lớp" — id các lớp gọi lỗi/403, bị loại
-   * khỏi danh sách gộp thay vì làm hỏng cả danh sách. */
   const [unreadableLayerIds, setUnreadableLayerIds] = useState<string[]>([]);
   const requestKeyRef = useRef(0);
-  /** Chặn loadMore gọi chồng — `onEndReached` của FlatList có thể bắn 2 lần
-   * liên tiếp trong cùng 1 tick (đà cuộn) TRƯỚC KHI state `loadingMore`/
-   * `page` kịp cập nhật qua re-render; đọc state trong closure lúc đó vẫn
-   * thấy giá trị CŨ nên cả 2 lần gọi đều lọt qua guard, cùng fetch đúng 1
-   * trang -> nối trùng bản ghi vào `records` -> key React trùng (đúng lỗi
-   * "same key" đã gặp thật). Ref thay đổi ĐỒNG BỘ, không chờ re-render, nên
-   * chặn được lần gọi thứ 2 ngay lập tức. */
   const loadingMoreRef = useRef(false);
 
   useEffect(() => {
@@ -229,11 +166,6 @@ export function DataScreen({
     })
       .then(result => {
         if (requestKeyRef.current !== key) return;
-        // Lọc bỏ bản ghi đã có sẵn (id trùng) trước khi nối trang mới — vừa
-        // là lưới an toàn cho race ở guard trên, vừa chống trùng khi biên 2
-        // trang chồng lấn (Directus sort theo date_updated không duy nhất
-        // -> nhiều bản ghi cùng mốc giờ, thứ tự phân trang không đảm bảo ổn
-        // định tuyệt đối giữa 2 lần gọi).
         setRecords(prev => {
           const existingIds = new Set(
             prev.map(item => item.id).filter(Boolean),
@@ -284,10 +216,6 @@ export function DataScreen({
     setFullDetailOpen(false);
   };
 
-  /** Gói tham số cho onLocateOnMap — luôn dùng layerId/properties của
-   * detailRecord ĐANG XEM (không phải của record gốc chọn từ danh sách nếu
-   * khác, dù thực tế luôn là cùng 1 bản ghi) để HueMapScreen bật đúng lớp và
-   * chọn đúng đối tượng, không chỉ bay camera tới 1 điểm trống. */
   const locateRequestFor = (
     coordinates: [number, number],
   ): MapLocateRequest | null =>
@@ -303,12 +231,6 @@ export function DataScreen({
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <FlatList
         data={records}
-        // Kèm index làm khoá dự phòng — 1 số collection (gisportal_* thiếu
-        // field khoá chính quen thuộc, xem ID_FIELD_CANDIDATES trong
-        // map/dataRecords.ts) khiến nhiều bản ghi cùng rơi về id "" giống
-        // nhau, mà chỉ ghép collection+id thì bị trùng khoá React ("two
-        // children with the same key"). Vẫn ưu tiên item.id khi có (ổn định
-        // qua các lần render/tải thêm), index chỉ dự phòng khi thiếu.
         keyExtractor={(item, index) => `${item.collection}-${item.id || index}`}
         contentContainerStyle={{ paddingBottom: insets.bottom + SPACING.xl }}
         onEndReachedThreshold={0.4}
@@ -489,10 +411,6 @@ export function DataScreen({
         </ScrollView>
       </BottomSheet>
 
-      {/* Popup "Chi tiết dữ liệu" khi chọn 1 dòng trong danh sách — có mini
-          bản đồ định vị ở đầu (ghim đúng toạ độ, hoặc điểm trung tâm nếu bản
-          ghi là 1 vùng/polygon, xem extractRepresentativePoint), theo đúng
-          bố cục mota. */}
       <BottomSheet
         visible={!!detailRecord && !fullDetailOpen}
         onClose={closeDetail}
@@ -500,12 +418,6 @@ export function DataScreen({
       >
         {detailRecord && detailLayer ? (
           <>
-            {/* Thanh tiêu đề + mini bản đồ CỐ ĐỊNH, đặt NGOÀI ScrollView bên
-                dưới — <Map> sống là 1 bề mặt native riêng (SurfaceView trên
-                Android), không bị cắt bởi overflow:hidden khi nằm trong vùng
-                cuộn (đã gặp thật: vuốt danh sách thuộc tính làm bản đồ "tràn"
-                ra ngoài khung). Đặt cố định ở đây thì bản đồ không di chuyển
-                khi vuốt, không còn gì để tràn — xem thêm ghi chú ở MiniMap.tsx. */}
             <View style={styles.detailFixedHeader}>
               <View style={styles.detailTopRow}>
                 <Text style={styles.detailSheetTitle}>
@@ -673,13 +585,8 @@ function DataRecordCard({
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
       accessibilityRole="button"
     >
-      <View
-        style={[
-          styles.cardIcon,
-          { backgroundColor: record.color, shadowColor: record.color },
-        ]}
-      >
-        <Icon name="database" size={18} color="#ffffff" />
+      <View style={[styles.cardIcon, { backgroundColor: record.color }]}>
+        <Icon name="database" size={16} color="#ffffff" />
       </View>
       <View style={styles.cardBody}>
         <View style={styles.cardTopRow}>
@@ -695,19 +602,11 @@ function DataRecordCard({
           ) : null}
         </View>
 
-        <View
-          style={[
-            styles.cardLayerPill,
-            { backgroundColor: `${record.color}14` },
-          ]}
-        >
-          <Text
-            style={[styles.cardLayerPillText, { color: record.color }]}
-            numberOfLines={1}
-          >
-            {t(record.layerLabelKey)}
+        {record.location ? (
+          <Text style={styles.cardLocationText} numberOfLines={1}>
+            {record.location}
           </Text>
-        </View>
+        ) : null}
 
         {record.ward || record.updatedAt ? (
           <View style={styles.cardMetaCol}>
@@ -767,12 +666,6 @@ function StatusBadge({
   );
 }
 
-/**
- * 1 dòng thuộc tính trong popup chi tiết — nhãn bên trái, giá trị canh phải
- * cùng dòng (đủ chỗ co giãn cho giá trị dài), đường kẻ mảnh phía dưới trừ
- * dòng cuối. Field dạng "list" (vd. nhiều đồng sở hữu) render thành khối
- * riêng (DetailFieldListGroup) thay vì 1 dòng đơn.
- */
 function DetailField({
   field,
   last,
@@ -892,41 +785,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: SPACING.sm + 2,
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.sm + 2,
-    padding: SPACING.md,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.borderSoft,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderSoft,
     backgroundColor: COLORS.surface,
-    // Bóng đổ mềm để mỗi dòng nổi thành 1 "thẻ" thật sự thay vì chỉ có viền
-    // phẳng — cùng tông màu bóng (#0f2c47) đang dùng cho BottomSheet/InfoCard
-    // trong app, giữ nhất quán ngôn ngữ thị giác.
-    shadowColor: '#0f2c47',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
   },
-  // Phản hồi chạm rõ ràng hơn — nền hơi tối lại và tắt bóng đổ khi đang nhấn
-  // (giữ opacity mặc định của Pressable là chưa đủ rõ trên nền trắng).
-  cardPressed: { backgroundColor: COLORS.background, shadowOpacity: 0 },
+  cardPressed: { backgroundColor: COLORS.background },
   cardIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
-    // Bóng đổ NHUỘM MÀU theo chính layer (shadowColor gán động = record.color
-    // ở nơi dùng) — làm rõ sắc thái riêng của từng lớp dữ liệu ngay từ icon,
-    // nhất quán với bảng màu MVT_LAYERS thay vì 1 bóng xám dùng chung.
-    shadowOpacity: 0.35,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
-  cardBody: { flex: 1, minWidth: 0, gap: 4 },
+  cardBody: { flex: 1, minWidth: 0, gap: 3 },
   cardTopRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -939,18 +813,7 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     lineHeight: 18,
   },
-  cardLayerPill: {
-    alignSelf: 'flex-start',
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  cardLayerPillText: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
+  cardLocationText: { fontSize: 12, color: COLORS.textMuted },
   cardMetaCol: { gap: 2, marginTop: 1 },
   cardMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   cardMetaText: { flex: 1, fontSize: 11, color: COLORS.textMuted },
@@ -977,10 +840,6 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.sm,
     gap: SPACING.md,
   },
-  // Chiều cao GIỚI HẠN CỤ THỂ (không chỉ flex:1) cho vùng cuộn — tránh phụ
-  // thuộc vào cách Yoga tự co giãn ScrollView khi nó không còn là con DUY
-  // NHẤT của sheet (giờ có thêm detailFixedHeader phía trên); một con số cụ
-  // thể đảm bảo chắc chắn cuộn được bất kể chi tiết co giãn mặc định.
   detailScroll: { maxHeight: 430 },
   detailBody: {
     paddingHorizontal: SPACING.lg,

@@ -2,7 +2,11 @@ import axios from 'axios';
 import { dcuAxios, dcuHeaders, dcuItemsUrl } from './dcuClient';
 import { classifyFreshness, type LayerFreshness } from './freshness';
 import { MVT_LAYERS, type MvtLayerConfig } from './mvtLayers';
-import { pickFeatureTitle, pickFeatureWard } from './normalizeFeatureFields';
+import {
+  pickFeatureLocation,
+  pickFeatureTitle,
+  pickFeatureWard,
+} from './normalizeFeatureFields';
 import {
   isSystemDirectusCollection,
   layerHasDateField,
@@ -24,10 +28,12 @@ export type DataRecord = {
   id: string;
   layerId: string;
   collection: string;
-  layerLabelKey: string;
   color: string;
   title: string;
   ward: string | null;
+  /** Địa điểm/địa chỉ dạng text (xem pickFeatureLocation) — null khi
+   * collection không có field kiểu này (không suy đoán thay thế). */
+  location: string | null;
   updatedAt: string | null;
   status: LayerFreshness;
   properties: Record<string, unknown>;
@@ -59,10 +65,10 @@ function normalizeRecord(
     id,
     layerId: layer.id,
     collection: layer.collection,
-    layerLabelKey: layer.labelKey,
     color: layer.color,
     title: pickFeatureTitle(raw) ?? id ?? layer.collection,
     ward: pickFeatureWard(raw),
+    location: pickFeatureLocation(raw),
     updatedAt,
     status: layerHasDateField(layer.id)
       ? classifyFreshness(updatedAt)
