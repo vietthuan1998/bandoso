@@ -142,7 +142,10 @@
       "historyTitle": "Lịch sử dữ liệu",
       "historyTime": "Thời gian",
       "historyValue": "Giá trị",
-      "historyEnd": "Đã hết dữ liệu"
+      "historyEnd": "Đã hết dữ liệu",
+      "sectionTitle": "Số liệu quan trắc",
+      "latestAt": "Lần đo gần nhất: {{time}}",
+      "loadMore": "Xem thêm"
     }
   },
   "tabs": {
@@ -253,8 +256,7 @@
     "unreadableLayersHint": "{{count}} lớp không đọc được do chưa có quyền truy cập",
     "detail": {
       "title": "Chi tiết dữ liệu",
-      "noCoordinates": "Không xác định được toạ độ để định vị",
-      "viewFull": "Xem chi tiết đầy đủ"
+      "noCoordinates": "Không xác định được toạ độ để định vị"
     }
   },
   "comingSoon": {
@@ -271,5 +273,36 @@
     "sessionExpiredBanner": "Phiên làm việc đã hết hạn, vui lòng đăng nhập lại",
     "loggedInStatus": "Bạn đã đăng nhập",
     "logoutButton": "Đăng xuất"
+  },
+  "report": {
+    "title": "Xuất báo cáo",
+    "layer": "Lớp dữ liệu",
+    "format": "Định dạng",
+    "kind": "Loại báo cáo",
+    "kinds": {
+      "byWard": "Theo phường, xã",
+      "byLayer": "Theo lớp",
+      "byStatus": "Theo trạng thái"
+    },
+    "wards": "Phường, xã",
+    "dateFrom": "Từ ngày",
+    "dateTo": "Đến ngày",
+    "noLimit": "Không giới hạn",
+    "clearDate": "Xoá ngày",
+    "submit": "Xuất báo cáo",
+    "exporting": "Đang xuất báo cáo...",
+    "errors": {
+      "unauthorized": "Đăng nhập ở tab Cá nhân để xuất báo cáo.",
+      "forbidden": "Tài khoản chưa được cấp quyền xuất báo cáo.",
+      "notImplemented": "Định dạng này chưa được hỗ trợ.",
+      "error": "Không xuất được báo cáo. Vui lòng thử lại.",
+      "openFailed": "Đã lưu vào {{location}} nhưng không mở được tệp.",
+      "saveFailed": "Không lưu được tệp báo cáo vào máy.",
+      "storagePermission": "Cần cấp quyền lưu trữ để lưu báo cáo vào thư mục Tải xuống.",
+      "noApp": "Đã lưu vào {{location}} nhưng máy chưa có ứng dụng mở được loại tệp này."
+    },
+    "locationAndroid": "Tải xuống/{{folder}}/{{name}}",
+    "locationIos": "Tệp › Trên iPhone › {{folder}} › {{name}}",
+    "savedTo": "Đã lưu báo cáo vào {{location}}"
   }
 }

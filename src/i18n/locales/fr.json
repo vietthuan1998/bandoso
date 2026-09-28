@@ -142,7 +142,10 @@
       "historyTitle": "Historique des données",
       "historyTime": "Heure",
       "historyValue": "Valeur",
-      "historyEnd": "Plus de données"
+      "historyEnd": "Plus de données",
+      "sectionTitle": "Données de mesure",
+      "latestAt": "Dernière mesure : {{time}}",
+      "loadMore": "Voir plus"
     }
   },
   "tabs": {
@@ -253,8 +256,7 @@
     "unreadableLayersHint": "{{count}} couches illisibles faute d'autorisation d'accès",
     "detail": {
       "title": "Détail des données",
-      "noCoordinates": "Aucune coordonnée disponible pour la localisation",
-      "viewFull": "Voir le détail complet"
+      "noCoordinates": "Aucune coordonnée disponible pour la localisation"
     }
   },
   "comingSoon": {
@@ -271,5 +273,36 @@
     "sessionExpiredBanner": "Votre session a expiré, veuillez vous reconnecter",
     "loggedInStatus": "Vous êtes connecté",
     "logoutButton": "Se déconnecter"
+  },
+  "report": {
+    "title": "Exporter un rapport",
+    "layer": "Couche de données",
+    "format": "Format",
+    "kind": "Type de rapport",
+    "kinds": {
+      "byWard": "Par quartier/commune",
+      "byLayer": "Par couche",
+      "byStatus": "Par statut"
+    },
+    "wards": "Quartier/commune",
+    "dateFrom": "Du",
+    "dateTo": "Au",
+    "noLimit": "Sans limite",
+    "clearDate": "Effacer la date",
+    "submit": "Exporter le rapport",
+    "exporting": "Export en cours...",
+    "errors": {
+      "unauthorized": "Connectez-vous dans l’onglet Profil pour exporter.",
+      "forbidden": "Votre compte n’est pas autorisé à exporter des rapports.",
+      "notImplemented": "Ce format n’est pas encore pris en charge.",
+      "error": "Impossible d’exporter le rapport. Réessayez.",
+      "openFailed": "Enregistré dans {{location}}, mais le fichier n’a pas pu être ouvert.",
+      "saveFailed": "Impossible d’enregistrer le rapport sur l’appareil.",
+      "storagePermission": "L’autorisation de stockage est requise pour enregistrer dans Téléchargements.",
+      "noApp": "Enregistré dans {{location}}, mais aucune application ne peut ouvrir ce type de fichier."
+    },
+    "locationAndroid": "Téléchargements/{{folder}}/{{name}}",
+    "locationIos": "Fichiers › Sur mon iPhone › {{folder}} › {{name}}",
+    "savedTo": "Rapport enregistré dans {{location}}"
   }
 }

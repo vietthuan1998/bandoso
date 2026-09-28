@@ -1,4 +1,5 @@
 Luôn sử dụng tiếng việt khi giao tiếp với tôi.
+Tài liệu chi tiết nằm ở docs/api.md
 
 # gstack
 
@@ -11,6 +12,7 @@ Available gstack skills: /office-hours, /plan-ceo-review, /plan-eng-review, /pla
 When the user's request matches an available skill, invoke it via the Skill tool. When in doubt, invoke the skill.
 
 Key routing rules:
+
 - Product ideas/brainstorming → invoke /office-hours
 - Strategy/scope → invoke /plan-ceo-review
 - Architecture → invoke /plan-eng-review

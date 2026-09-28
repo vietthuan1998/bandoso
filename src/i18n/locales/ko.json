@@ -142,7 +142,10 @@
       "historyTitle": "데이터 이력",
       "historyTime": "시간",
       "historyValue": "값",
-      "historyEnd": "더 이상 데이터 없음"
+      "historyEnd": "더 이상 데이터 없음",
+      "sectionTitle": "관측 데이터",
+      "latestAt": "최근 측정: {{time}}",
+      "loadMore": "더 보기"
     }
   },
   "tabs": {
@@ -253,8 +256,7 @@
     "unreadableLayersHint": "{{count}}개 레이어는 접근 권한이 없어 읽을 수 없습니다",
     "detail": {
       "title": "데이터 상세",
-      "noCoordinates": "위치를 표시할 좌표가 없습니다",
-      "viewFull": "전체 상세 보기"
+      "noCoordinates": "위치를 표시할 좌표가 없습니다"
     }
   },
   "comingSoon": {
@@ -271,5 +273,36 @@
     "sessionExpiredBanner": "세션이 만료되었습니다. 다시 로그인해 주세요",
     "loggedInStatus": "로그인되었습니다",
     "logoutButton": "로그아웃"
+  },
+  "report": {
+    "title": "보고서 내보내기",
+    "layer": "데이터 레이어",
+    "format": "형식",
+    "kind": "보고서 유형",
+    "kinds": {
+      "byWard": "동·사별",
+      "byLayer": "레이어별",
+      "byStatus": "상태별"
+    },
+    "wards": "동·사",
+    "dateFrom": "시작일",
+    "dateTo": "종료일",
+    "noLimit": "제한 없음",
+    "clearDate": "날짜 지우기",
+    "submit": "보고서 내보내기",
+    "exporting": "보고서를 내보내는 중...",
+    "errors": {
+      "unauthorized": "보고서를 내보내려면 개인 탭에서 로그인하세요.",
+      "forbidden": "이 계정은 보고서 내보내기 권한이 없습니다.",
+      "notImplemented": "이 형식은 아직 지원되지 않습니다.",
+      "error": "보고서를 내보내지 못했습니다. 다시 시도하세요.",
+      "openFailed": "{{location}}에 저장했지만 파일을 열지 못했습니다.",
+      "saveFailed": "보고서를 기기에 저장하지 못했습니다.",
+      "storagePermission": "다운로드에 저장하려면 저장소 권한이 필요합니다.",
+      "noApp": "{{location}}에 저장했지만 이 파일 형식을 열 수 있는 앱이 없습니다."
+    },
+    "locationAndroid": "다운로드/{{folder}}/{{name}}",
+    "locationIos": "파일 › 나의 iPhone › {{folder}} › {{name}}",
+    "savedTo": "보고서를 {{location}}에 저장했습니다"
   }
 }

@@ -220,7 +220,6 @@ async function load(): Promise<MapRegistryState> {
       ),
       fetchLayerGroups(cached?.groups ?? []),
     ]);
-    console.log(layersResponse);
     const registry: RegistryCache = {
       registryVersion: layersResponse.data.registryVersion,
       layers: layersResponse.data.layers ?? [],

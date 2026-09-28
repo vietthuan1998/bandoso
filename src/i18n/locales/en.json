@@ -142,7 +142,10 @@
       "historyTitle": "Data history",
       "historyTime": "Time",
       "historyValue": "Value",
-      "historyEnd": "No more data"
+      "historyEnd": "No more data",
+      "sectionTitle": "Monitoring data",
+      "latestAt": "Latest reading: {{time}}",
+      "loadMore": "Show more"
     }
   },
   "tabs": {
@@ -253,8 +256,7 @@
     "unreadableLayersHint": "{{count}} layers unreadable due to missing access permission",
     "detail": {
       "title": "Data detail",
-      "noCoordinates": "No coordinates available to locate",
-      "viewFull": "View full detail"
+      "noCoordinates": "No coordinates available to locate"
     }
   },
   "comingSoon": {
@@ -271,5 +273,36 @@
     "sessionExpiredBanner": "Your session has expired, please log in again",
     "loggedInStatus": "You are logged in",
     "logoutButton": "Log out"
+  },
+  "report": {
+    "title": "Export report",
+    "layer": "Data layer",
+    "format": "Format",
+    "kind": "Report type",
+    "kinds": {
+      "byWard": "By ward",
+      "byLayer": "By layer",
+      "byStatus": "By status"
+    },
+    "wards": "Ward",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "noLimit": "No limit",
+    "clearDate": "Clear date",
+    "submit": "Export report",
+    "exporting": "Exporting report...",
+    "errors": {
+      "unauthorized": "Sign in on the Profile tab to export reports.",
+      "forbidden": "Your account is not allowed to export reports.",
+      "notImplemented": "This format is not supported yet.",
+      "error": "Could not export the report. Please try again.",
+      "openFailed": "Saved to {{location}}, but the file could not be opened.",
+      "saveFailed": "Could not save the report on this device.",
+      "storagePermission": "Storage permission is needed to save the report to Downloads.",
+      "noApp": "Saved to {{location}}, but no app on this device can open this file type."
+    },
+    "locationAndroid": "Downloads/{{folder}}/{{name}}",
+    "locationIos": "Files › On My iPhone › {{folder}} › {{name}}",
+    "savedTo": "Report saved to {{location}}"
   }
 }

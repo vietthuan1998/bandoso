@@ -142,7 +142,10 @@
       "historyTitle": "数据历史",
       "historyTime": "时间",
       "historyValue": "数值",
-      "historyEnd": "没有更多数据"
+      "historyEnd": "没有更多数据",
+      "sectionTitle": "监测数据",
+      "latestAt": "最近一次测量：{{time}}",
+      "loadMore": "查看更多"
     }
   },
   "tabs": {
@@ -253,8 +256,7 @@
     "unreadableLayersHint": "{{count}} 个图层因权限不足无法读取",
     "detail": {
       "title": "数据详情",
-      "noCoordinates": "没有可用于定位的坐标",
-      "viewFull": "查看完整详情"
+      "noCoordinates": "没有可用于定位的坐标"
     }
   },
   "comingSoon": {
@@ -271,5 +273,36 @@
     "sessionExpiredBanner": "会话已过期，请重新登录",
     "loggedInStatus": "您已登录",
     "logoutButton": "退出登录"
+  },
+  "report": {
+    "title": "导出报告",
+    "layer": "数据图层",
+    "format": "格式",
+    "kind": "报告类型",
+    "kinds": {
+      "byWard": "按坊/社",
+      "byLayer": "按图层",
+      "byStatus": "按状态"
+    },
+    "wards": "坊/社",
+    "dateFrom": "开始日期",
+    "dateTo": "结束日期",
+    "noLimit": "不限",
+    "clearDate": "清除日期",
+    "submit": "导出报告",
+    "exporting": "正在导出报告...",
+    "errors": {
+      "unauthorized": "请在“个人”标签页登录后导出报告。",
+      "forbidden": "该账户没有导出报告的权限。",
+      "notImplemented": "暂不支持此格式。",
+      "error": "无法导出报告，请重试。",
+      "openFailed": "已保存到 {{location}}，但无法打开该文件。",
+      "saveFailed": "无法将报告保存到设备。",
+      "storagePermission": "需要存储权限才能将报告保存到“下载”。",
+      "noApp": "已保存到 {{location}}，但设备上没有可打开此类文件的应用。"
+    },
+    "locationAndroid": "下载/{{folder}}/{{name}}",
+    "locationIos": "文件 › 我的 iPhone › {{folder}} › {{name}}",
+    "savedTo": "报告已保存到 {{location}}"
   }
 }

@@ -46,6 +46,7 @@ import {
 import type { TrendPoint } from '../../services/statistics/statisticsOverview';
 import { DonutChart } from '../../components/statistics/DonutChart';
 import { TrendChart } from '../../components/statistics/TrendChart';
+import { ReportExportForm } from '../../components/report/ReportExportForm';
 
 /**
  * Màn Thống kê: toàn bộ số liệu lấy từ API /statistics/* của BFF (tài liệu
@@ -126,6 +127,9 @@ export function StatisticsScreen() {
   const [iosDatePickerOpen, setIosDatePickerOpen] = useState(false);
   const [pendingDate, setPendingDate] = useState(() => new Date());
   const [wardsExpanded, setWardsExpanded] = useState(false);
+  // Mỗi lần mở tăng key để form khởi tạo lại theo bộ lọc hiện tại.
+  const [exportKey, setExportKey] = useState(0);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const [wardCatalog, setWardCatalog] = useState<CatalogWard[]>([]);
   useEffect(() => {
@@ -348,9 +352,22 @@ export function StatisticsScreen() {
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('statistics.title')}</Text>
-        {summaryState.status === 'loading' && summary ? (
-          <ActivityIndicator size="small" color={COLORS.primary} />
-        ) : null}
+        <View style={styles.headerActions}>
+          {summaryState.status === 'loading' && summary ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : null}
+          <Pressable
+            onPress={() => {
+              setExportKey(key => key + 1);
+              setExportOpen(true);
+            }}
+            style={styles.exportButton}
+            accessibilityRole="button"
+          >
+            <Icon name="share" size={13} color={COLORS.primary} />
+            <Text style={styles.exportButtonText}>{t('report.title')}</Text>
+          </Pressable>
+        </View>
       </View>
 
       {summaryState.status === 'error' ? (
@@ -604,6 +621,28 @@ export function StatisticsScreen() {
           ) : null}
         </ScrollView>
       )}
+
+      {/* Xuất báo cáo: phạm vi khởi tạo = bộ lọc đang xem trên màn này. */}
+      <BottomSheet
+        visible={exportOpen}
+        onClose={() => setExportOpen(false)}
+        maxHeight={680}
+      >
+        <ReportExportForm
+          key={exportKey}
+          layers={statisticsLayers.map(layer => ({
+            id: layer.id,
+            label: layer.label,
+          }))}
+          initial={{
+            collectionKey: selectedLayerId,
+            wardCode: selectedWardId,
+            dateFrom: null,
+            dateTo,
+          }}
+          onClose={() => setExportOpen(false)}
+        />
+      </BottomSheet>
 
       <BottomSheet
         visible={layerSheetOpen}
@@ -1067,6 +1106,22 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.sm,
   },
   headerTitle: { fontSize: 16, fontWeight: '800', color: COLORS.primaryDark },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 5,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  exportButtonText: { fontSize: 11, fontWeight: '700', color: COLORS.primary },
   centerFill: {
     flex: 1,
     alignItems: 'center',

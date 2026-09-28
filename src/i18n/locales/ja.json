@@ -142,7 +142,10 @@
       "historyTitle": "データ履歴",
       "historyTime": "日時",
       "historyValue": "値",
-      "historyEnd": "これ以上のデータはありません"
+      "historyEnd": "これ以上のデータはありません",
+      "sectionTitle": "観測データ",
+      "latestAt": "最新の計測: {{time}}",
+      "loadMore": "さらに表示"
     }
   },
   "tabs": {
@@ -253,8 +256,7 @@
     "unreadableLayersHint": "{{count}} 件のレイヤーはアクセス権限がなく読み取れません",
     "detail": {
       "title": "データ詳細",
-      "noCoordinates": "位置を特定できる座標がありません",
-      "viewFull": "詳細をすべて見る"
+      "noCoordinates": "位置を特定できる座標がありません"
     }
   },
   "comingSoon": {
@@ -271,5 +273,36 @@
     "sessionExpiredBanner": "セッションの有効期限が切れました。再度ログインしてください",
     "loggedInStatus": "ログイン済みです",
     "logoutButton": "ログアウト"
+  },
+  "report": {
+    "title": "レポートを出力",
+    "layer": "データレイヤー",
+    "format": "形式",
+    "kind": "レポートの種類",
+    "kinds": {
+      "byWard": "区・社別",
+      "byLayer": "レイヤー別",
+      "byStatus": "ステータス別"
+    },
+    "wards": "区・社",
+    "dateFrom": "開始日",
+    "dateTo": "終了日",
+    "noLimit": "指定なし",
+    "clearDate": "日付をクリア",
+    "submit": "レポートを出力",
+    "exporting": "レポートを出力中...",
+    "errors": {
+      "unauthorized": "レポートを出力するには「個人」タブでログインしてください。",
+      "forbidden": "このアカウントにはレポート出力の権限がありません。",
+      "notImplemented": "この形式はまだサポートされていません。",
+      "error": "レポートを出力できませんでした。もう一度お試しください。",
+      "openFailed": "{{location}} に保存しましたが、ファイルを開けませんでした。",
+      "saveFailed": "レポートを端末に保存できませんでした。",
+      "storagePermission": "ダウンロードに保存するにはストレージの権限が必要です。",
+      "noApp": "{{location}} に保存しましたが、この種類のファイルを開けるアプリがありません。"
+    },
+    "locationAndroid": "ダウンロード/{{folder}}/{{name}}",
+    "locationIos": "ファイル › このiPhone内 › {{folder}} › {{name}}",
+    "savedTo": "レポートを {{location}} に保存しました"
   }
 }

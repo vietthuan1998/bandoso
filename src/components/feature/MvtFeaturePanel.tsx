@@ -25,7 +25,8 @@ export function MvtFeaturePanel({
   layer: MvtLayerConfig;
   properties: Record<string, unknown>;
   onClose: () => void;
-  onViewDetail: () => void;
+  /** Không truyền -> ẩn link "Xem chi tiết". */
+  onViewDetail?: () => void;
 }) {
   const { t } = useTranslation();
   const title = resolveFeatureTitle(layer, properties);
@@ -43,14 +44,16 @@ export function MvtFeaturePanel({
       onClose={onClose}
     >
       <FeatureFieldList fields={fields} emptyText={t('mvt.noAttributes')} />
-      <Pressable
-        onPress={onViewDetail}
-        style={styles.detailLink}
-        accessibilityRole="button"
-      >
-        <Text style={styles.detailLinkText}>{t('mvt.viewDetail')}</Text>
-        <Icon name="chevronRight" size={13} color={COLORS.primary} />
-      </Pressable>
+      {onViewDetail ? (
+        <Pressable
+          onPress={onViewDetail}
+          style={styles.detailLink}
+          accessibilityRole="button"
+        >
+          <Text style={styles.detailLinkText}>{t('mvt.viewDetail')}</Text>
+          <Icon name="chevronRight" size={13} color={COLORS.primary} />
+        </Pressable>
+      ) : null}
     </InfoCard>
   );
 }

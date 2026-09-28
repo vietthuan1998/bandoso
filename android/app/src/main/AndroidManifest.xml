@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Nút "vị trí của tôi" (LocateButton) — xin quyền qua
@@ -6,6 +7,16 @@
          Người dùng có thể từ chối, app vẫn chạy bình thường. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Báo cáo xuất ra được lưu vào Tải xuống/HueMaps qua MediaStore: Android 10+
+         không cần quyền; Android 7-9 cần WRITE_EXTERNAL_STORAGE (xin lúc lưu).
+         react-native-blob-util tự khai báo thêm quyền đọc / tải xuống không dùng
+         tới — gỡ khỏi manifest đã gộp. -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"
+        tools:node="replace" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove" />
+    <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" tools:node="remove" />
 
     <application
       android:name=".MainApplication"

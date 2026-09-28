@@ -31,7 +31,6 @@ import { BottomSheet } from '../../components/common/BottomSheet';
 import { CompassButton } from '../../components/map/CompassButton';
 import { DataOverviewFab } from '../../components/map/DataOverviewFab';
 import { DataOverviewPanel } from '../../components/map/DataOverviewPanel';
-import { FeatureDetailScreen } from '../feature/FeatureDetailScreen';
 import { Header, LanguageOption } from '../../components/map/Header';
 import { Icon } from '../../components/common/Icon';
 import { LayersFab } from '../../components/layer/LayersFab';
@@ -90,13 +89,11 @@ export default function HueMapScreen({
     properties: Record<string, unknown>;
     coordinates: [number, number];
   } | null>(null);
-  const [mvtFeatureDetailOpen, setMvtFeatureDetailOpen] = useState(false);
   const [highlightGeometry, setHighlightGeometry] =
     useState<GeoJsonGeometry | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const closeMvtFeature = () => {
     setSelectedMvtFeature(null);
-    setMvtFeatureDetailOpen(false);
     setHighlightGeometry(null);
   };
   const toggleMvtLayer = (id: string, visible: boolean) => {
@@ -419,12 +416,12 @@ export default function HueMapScreen({
           onClose={map.clearSelection}
         />
       ) : null}
-      {selectedMvtFeature && !mvtFeatureDetailOpen ? (
+      {/* FeatureDetailScreen tạm thời không dùng: panel là nơi xem thông tin. */}
+      {selectedMvtFeature ? (
         <MvtFeaturePanel
           layer={selectedMvtFeature.layer}
           properties={selectedMvtFeature.properties}
           onClose={closeMvtFeature}
-          onViewDetail={() => setMvtFeatureDetailOpen(true)}
         />
       ) : null}
 
@@ -493,23 +490,6 @@ export default function HueMapScreen({
           />
         ))}
       </BottomSheet>
-
-      {selectedMvtFeature && mvtFeatureDetailOpen ? (
-        <FeatureDetailScreen
-          layer={selectedMvtFeature.layer}
-          properties={selectedMvtFeature.properties}
-          coordinates={selectedMvtFeature.coordinates}
-          onBack={() => setMvtFeatureDetailOpen(false)}
-          onLocate={coordinates => {
-            setMvtFeatureDetailOpen(false);
-            cameraRef.current?.setStop({
-              center: coordinates,
-              zoom: 17,
-              duration: 900,
-            });
-          }}
-        />
-      ) : null}
     </View>
   );
 }

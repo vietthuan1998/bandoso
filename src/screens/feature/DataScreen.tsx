@@ -23,7 +23,6 @@ import {
   type MapLocateRequest,
 } from '../../services/api/dataRecords';
 import {
-  normalizeFeatureFields,
   pad2,
   type NormalizedFeatureField,
   type NormalizedFeatureLeaf,
@@ -34,7 +33,11 @@ import {
   type WardBreakdownItem,
 } from '../../services/statistics/statisticsOverview';
 import { BottomSheet } from '../../components/common/BottomSheet';
-import { FeatureDetailScreen } from './FeatureDetailScreen';
+import { IotReadingsPanel } from '../../components/feature/IotReadingsPanel';
+import {
+  buildFeatureDetailFields,
+  resolveFeatureTitle,
+} from '../../services/gis/registryFeatureFields';
 import {
   FilterChip,
   PickerOption,
@@ -218,7 +221,6 @@ export function DataScreen({
   };
 
   const [detailRecord, setDetailRecord] = useState<DataRecord | null>(null);
-  const [fullDetailOpen, setFullDetailOpen] = useState(false);
   const detailLayer = useMemo(
     () =>
       detailRecord
@@ -234,19 +236,24 @@ export function DataScreen({
       | undefined;
     return extractRepresentativePoint(geom);
   }, [detailRecord]);
+  // Cùng cách dựng với panel khi chạm trên bản đồ (MvtFeaturePanel): theo
+  // registry detailFields / fieldLabels / valueLabels / objectValueKeys.
   const detailFields = useMemo(() => {
-    if (!detailRecord) return [];
-    return normalizeFeatureFields(detailRecord.properties, {
+    if (!detailRecord || !detailLayer) return [];
+    return buildFeatureDetailFields(detailLayer, detailRecord.properties, {
       yes: t('common.yes'),
       no: t('common.no'),
       male: t('common.male'),
       female: t('common.female'),
     });
-  }, [detailRecord, t]);
+  }, [detailRecord, detailLayer, t]);
+  const detailTitle =
+    detailRecord && detailLayer
+      ? resolveFeatureTitle(detailLayer, detailRecord.properties)
+      : '';
 
   const closeDetail = () => {
     setDetailRecord(null);
-    setFullDetailOpen(false);
   };
 
   const locateRequestFor = (
@@ -445,7 +452,7 @@ export function DataScreen({
       </BottomSheet>
 
       <BottomSheet
-        visible={!!detailRecord && !fullDetailOpen}
+        visible={!!detailRecord}
         onClose={closeDetail}
         maxHeight={680}
       >
@@ -495,7 +502,7 @@ export function DataScreen({
                 </View>
                 <View style={styles.detailTitleCol}>
                   <Text style={styles.detailTitle} numberOfLines={2}>
-                    {detailRecord.title}
+                    {detailTitle}
                   </Text>
                   <Text style={styles.detailSubtitle} numberOfLines={1}>
                     {detailLayer.label}
@@ -536,6 +543,13 @@ export function DataScreen({
                 </View>
               ) : null}
 
+              {/* Trạm IoT: chỉ số + biểu đồ đo đạc lấy từ Directus (lớp khác không hiện). */}
+              <IotReadingsPanel
+                layerId={detailLayer.id}
+                properties={detailRecord.properties}
+                color={detailLayer.color}
+              />
+
               <View style={styles.fieldsCard}>
                 {detailFields.length === 0 ? (
                   <Text style={styles.emptyMessage}>
@@ -552,54 +566,28 @@ export function DataScreen({
                 )}
               </View>
 
-              <View style={styles.detailFooterRow}>
-                {detailCoordinates && onLocateOnMap ? (
+              {detailCoordinates && onLocateOnMap ? (
+                <View style={styles.detailFooterRow}>
                   <Pressable
                     onPress={() => {
                       const request = locateRequestFor(detailCoordinates);
                       if (request) onLocateOnMap(request);
                       closeDetail();
                     }}
-                    style={styles.detailButtonSecondary}
+                    style={styles.detailButtonPrimary}
                     accessibilityRole="button"
                   >
-                    <Icon name="pin" size={14} color={COLORS.primaryDark} />
-                    <Text style={styles.detailButtonSecondaryText}>
+                    <Icon name="pin" size={14} color="#ffffff" />
+                    <Text style={styles.detailButtonPrimaryText}>
                       {t('featureDetail.locateButton')}
                     </Text>
                   </Pressable>
-                ) : null}
-                <Pressable
-                  onPress={() => setFullDetailOpen(true)}
-                  style={styles.detailButtonPrimary}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.detailButtonPrimaryText}>
-                    {t('dataScreen.detail.viewFull')}
-                  </Text>
-                  <Icon name="chevronRight" size={13} color="#ffffff" />
-                </Pressable>
-              </View>
+                </View>
+              ) : null}
             </ScrollView>
           </>
         ) : null}
       </BottomSheet>
-
-      {/* Trang chi tiết đầy đủ — dùng lại nguyên FeatureDetailScreen (đã có
-          sẵn cho HueMapScreen), không dựng lại lần 2. */}
-      {detailRecord && detailLayer && fullDetailOpen ? (
-        <FeatureDetailScreen
-          layer={detailLayer}
-          properties={detailRecord.properties}
-          coordinates={detailCoordinates}
-          onBack={() => setFullDetailOpen(false)}
-          onLocate={coordinates => {
-            const request = locateRequestFor(coordinates);
-            closeDetail();
-            if (request) onLocateOnMap?.(request);
-          }}
-        />
-      ) : null}
     </View>
   );
 }
@@ -989,22 +977,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.sm,
     marginTop: SPACING.sm,
-  },
-  detailButtonSecondary: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 44,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  detailButtonSecondaryText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.primaryDark,
   },
   detailButtonPrimary: {
     flex: 1,
