@@ -37,6 +37,7 @@ export const UserLocation = passthrough('UserLocation');
 
 export const TransformRequestManager = {
   addHeader: () => {},
+  removeHeader: () => {},
 };
 
 // Dùng bởi LocateButton (src/components/HueMapScreen/LocateButton.tsx) — mock

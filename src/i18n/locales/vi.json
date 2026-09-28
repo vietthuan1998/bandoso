@@ -122,29 +122,7 @@
     "operating": "Dự án đã đi vào hoạt động"
   },
   "mvt": {
-    "sectionTitle": "Lớp MVT",
     "hint": "Vẽ trực tiếp từ dcu.huecity.vn theo mục 8 đặc tả kỹ thuật. Nét đứt = lớp định hướng (quy hoạch tương lai).",
-    "thuaDat": "Thửa đất (đất đai, địa chính)",
-    "khuCongNghiepHienTrang": "Hiện trạng khu công nghiệp",
-    "khuCongNghiepDinhHuong": "Định hướng phát triển khu công nghiệp",
-    "xuLyChatThaiHienTrang": "Hiện trạng khu xử lý chất thải",
-    "xuLyChatThaiDinhHuong": "Định hướng khu xử lý chất thải",
-    "nghiaTrangHienTrang": "Hiện trạng nghĩa trang",
-    "nghiaTrangDinhHuong": "Định hướng nghĩa trang",
-    "congNgheCaoDinhHuong": "Định hướng khu công nghệ cao",
-    "coSoKhcnDinhHuong": "Định hướng cơ sở khoa học và công nghệ",
-    "coSoKhcnHienTrang": "Hiện trạng cơ sở khoa học và công nghệ",
-    "congTrinhNgamA": "Quy hoạch công trình ngầm A",
-    "tramBts": "Trạm BTS",
-    "rainWaterStations": "Trạm đo mưa",
-    "waterLevelStation": "Trạm đo mực nước",
-    "iotWindStation": "Trạm đo gió",
-    "groups": {
-      "landData": "Đất đai",
-      "planning": "Quy hoạch",
-      "infrastructure": "Hạ tầng",
-      "iot": "IoT / Trạm quan trắc"
-    },
     "detailsTitle": "Chi tiết đối tượng MVT",
     "noAttributes": "Không có thuộc tính nào trong tile.",
     "viewDetail": "Xem chi tiết"
@@ -169,10 +147,19 @@
   },
   "tabs": {
     "map": "Bản đồ",
+    "template": "Template",
     "data": "Dữ liệu",
     "statistics": "Thống kê",
     "tracking": "Theo dõi",
     "profile": "Cá nhân"
+  },
+  "template": {
+    "badge": "Bản mẫu dựng từ API",
+    "summary": "{{wards}} phường xã · {{layers}} lớp MVT",
+    "wardsError": "Không tải được ranh giới phường xã",
+    "legendTitle": "Số đối tượng theo phường xã",
+    "noData": "Không có dữ liệu",
+    "statsError": "Không tải được số liệu theo phường xã"
   },
   "dataOverview": {
     "openButton": "Xem tổng quan dữ liệu",
@@ -182,18 +169,7 @@
     "groupsSectionTitle": "Phân nhóm dữ liệu",
     "footerNote": "Số liệu được tổng hợp từ các collection Directus đang có quyền đọc.",
     "loading": "Đang tổng hợp số liệu...",
-    "error": "Không tải được số liệu tổng quan.",
-    "groups": {
-      "landParcel": "Thửa đất",
-      "industrialZone": "Khu công nghiệp",
-      "wasteTreatment": "Khu xử lý chất thải",
-      "cemetery": "Nghĩa trang",
-      "highTechZone": "Khu công nghệ cao",
-      "scienceTechFacility": "Cơ sở khoa học công nghệ",
-      "undergroundPlanning": "Quy hoạch công trình ngầm",
-      "btsStation": "Trạm BTS",
-      "monitoringStation": "Trạm quan trắc"
-    }
+    "error": "Không tải được số liệu tổng quan."
   },
   "statistics": {
     "title": "Thống kê dữ liệu",
@@ -272,5 +248,16 @@
   "comingSoon": {
     "title": "Sắp ra mắt",
     "message": "Màn hình này đang được xây dựng theo đặc tả kỹ thuật, sẽ nối dữ liệu thật qua API khi backend sẵn sàng."
+  },
+  "auth": {
+    "usernameLabel": "Tên đăng nhập",
+    "passwordLabel": "Mật khẩu",
+    "loginButton": "Đăng nhập",
+    "loggingIn": "Đang đăng nhập...",
+    "invalidCredentials": "Sai tên đăng nhập hoặc mật khẩu",
+    "networkError": "Không kết nối được máy chủ, thử lại",
+    "sessionExpiredBanner": "Phiên làm việc đã hết hạn, vui lòng đăng nhập lại",
+    "loggedInStatus": "Bạn đã đăng nhập",
+    "logoutButton": "Đăng xuất"
   }
 }

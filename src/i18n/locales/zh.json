@@ -122,29 +122,7 @@
     "operating": "已投入运营的项目"
   },
   "mvt": {
-    "sectionTitle": "MVT 图层（15 个集合）",
     "hint": "按技术规范第 8 节直接从 dcu.huecity.vn 渲染。虚线 = 规划（未来）图层。",
-    "thuaDat": "地块（地籍）",
-    "khuCongNghiepHienTrang": "工业区现状",
-    "khuCongNghiepDinhHuong": "工业区发展规划",
-    "xuLyChatThaiHienTrang": "废物处理区现状",
-    "xuLyChatThaiDinhHuong": "废物处理区规划",
-    "nghiaTrangHienTrang": "墓地现状",
-    "nghiaTrangDinhHuong": "墓地规划",
-    "congNgheCaoDinhHuong": "高新技术区规划",
-    "coSoKhcnDinhHuong": "科技设施规划",
-    "coSoKhcnHienTrang": "科技设施现状",
-    "congTrinhNgamA": "地下工程规划A",
-    "tramBts": "BTS 基站",
-    "rainWaterStations": "雨量监测站",
-    "waterLevelStation": "水位监测站",
-    "iotWindStation": "风力监测站",
-    "groups": {
-      "landData": "土地数据",
-      "planning": "规划",
-      "infrastructure": "基础设施",
-      "iot": "物联网监测站"
-    },
     "detailsTitle": "MVT 要素详情",
     "noAttributes": "该瓦片中没有属性。",
     "viewDetail": "查看详情"
@@ -169,10 +147,19 @@
   },
   "tabs": {
     "map": "地图",
+    "template": "Template",
     "data": "数据",
     "statistics": "统计",
     "tracking": "监测",
     "profile": "我的"
+  },
+  "template": {
+    "badge": "基于 API 的模板",
+    "summary": "{{wards}} 个坊/社 · {{layers}} 个 MVT 图层",
+    "wardsError": "无法加载坊/社边界",
+    "legendTitle": "各坊/社对象数量",
+    "noData": "无数据",
+    "statsError": "无法加载各坊/社统计"
   },
   "dataOverview": {
     "openButton": "查看数据概览",
@@ -182,18 +169,7 @@
     "groupsSectionTitle": "按分组统计",
     "footerNote": "数据来自当前有权限读取的 Directus 集合汇总。",
     "loading": "正在汇总数据...",
-    "error": "无法加载数据概览。",
-    "groups": {
-      "landParcel": "地块",
-      "industrialZone": "工业区",
-      "wasteTreatment": "废物处理区",
-      "cemetery": "墓地",
-      "highTechZone": "高新技术区",
-      "scienceTechFacility": "科技设施",
-      "undergroundPlanning": "地下工程规划",
-      "btsStation": "BTS基站",
-      "monitoringStation": "监测站"
-    }
+    "error": "无法加载数据概览。"
   },
   "statistics": {
     "title": "数据统计",
@@ -272,5 +248,16 @@
   "comingSoon": {
     "title": "即将上线",
     "message": "该界面正按技术规范开发中，后端就绪后将通过 API 接入真实数据。"
+  },
+  "auth": {
+    "usernameLabel": "用户名",
+    "passwordLabel": "密码",
+    "loginButton": "登录",
+    "loggingIn": "正在登录...",
+    "invalidCredentials": "用户名或密码错误",
+    "networkError": "无法连接服务器，请重试",
+    "sessionExpiredBanner": "会话已过期，请重新登录",
+    "loggedInStatus": "您已登录",
+    "logoutButton": "退出登录"
   }
 }

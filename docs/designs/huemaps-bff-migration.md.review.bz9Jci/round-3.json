@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "round": 3,
+  "document": "/Users/duongvietthuan/Project/untitled folder 2/HueMaps/docs/designs/huemaps-bff-migration.md",
+  "quality_score": 8,
+  "dimensions": {
+    "completeness": "ISSUES",
+    "consistency": "ISSUES",
+    "clarity": "PASS",
+    "scope": "PASS",
+    "feasibility": "ISSUES"
+  },
+  "findings": [
+    {
+      "id": "R3-1",
+      "dimension": "consistency",
+      "problem": "Premises #1 vẫn ghi 'vá lỗ hổng token (khẩn cấp, độc lập, ước tính 1-2 ngày kể cả xây luồng đăng nhập — xem The Assignment)', và Recommended Approach ghi 'Effort: M (vá, như Approach A)' — coi effort của Approach C giống hệt Approach A. Nhưng Recommended Approach (Bước 0, thêm mới ở round này để giải quyết R2-2) yêu cầu một spike bắt buộc nửa ngày là điều kiện tiên quyết TRƯỚC KHI được cam kết mốc '1-2 ngày' đó, và Approach A không có bước này. Tổng thời gian thực tế (spike + vá) là khoảng 1.5-2.5 ngày, nhưng Premises #1 — phần đầu tài liệu người phê duyệt đọc trước — vẫn nêu '1-2 ngày' như một con số trọn vẹn, không phản ánh bước spike mới thêm.",
+      "remedy": "Cập nhật Premises #1 (và dòng 'Effort: M... như Approach A' trong Recommended Approach) để nêu rõ tổng thời gian gồm cả spike bắt buộc nửa ngày cộng với 1-2 ngày vá, tránh để người chỉ đọc Premises hiểu nhầm tổng cam kết chỉ là 1-2 ngày."
+    },
+    {
+      "id": "R3-2",
+      "dimension": "completeness",
+      "problem": "Recommended Approach và Success Criteria không nói `accessToken`/`refreshToken` mới sẽ được lưu ở đâu trên thiết bị (Keychain/Keystore/SecureStore an toàn hay AsyncStorage/localStorage dạng plaintext). Toàn bộ động lực của việc vá lần này là token tĩnh bị bake vào bundle JS và có thể bị trích xuất từ APK; nếu accessToken/refreshToken mới lại được lưu plaintext trên thiết bị, kẻ tấn công có quyền truy cập file hệ thống (rooted device, backup không mã hoá, debug bridge...) vẫn trích xuất được phiên đăng nhập của cán bộ — tái tạo một lớp rủi ro tương tự dù không còn nằm trong bundle JS, và Success Criteria bullet 1 (grep bundle) sẽ không phát hiện được lỗ hổng loại này vì nó không còn ở trong bundle.",
+      "remedy": "Thêm vào Bước 1-2 của Recommended Approach yêu cầu lưu accessToken/refreshToken bằng cơ chế lưu trữ an toàn của nền tảng (Keychain trên iOS, EncryptedSharedPreferences/Keystore trên Android, hoặc thư viện như react-native-keychain/expo-secure-store), và bổ sung một tiêu chí kiểm tra tương ứng vào Success Criteria."
+    },
+    {
+      "id": "R3-3",
+      "dimension": "completeness",
+      "problem": "Bước 1-2 (round này) định nghĩa hành vi cụ thể khi refresh token thất bại (đưa về màn đăng nhập với thông báo tiếng Việt, giữ nguyên dữ liệu cache đã tải), nhưng Success Criteria bullet 5 (checklist QA thủ công + hỏi trực tiếp cán bộ) không liệt kê việc xác minh riêng hành vi mới này. Đây là hành vi hoàn toàn mới (app chưa từng có màn đăng nhập/luồng auth nào trước đây), nên nếu không có tiêu chí kiểm thử rõ ràng, lỗi trong luồng này (ví dụ app trắng trơn hoặc mất cache khi phiên hết hạn) có thể lọt qua trước khi phát hành — đúng chính rủi ro mà R2-4 ban đầu nêu ra, dù hành vi đã được định nghĩa.",
+      "remedy": "Thêm một dòng cụ thể vào Success Criteria yêu cầu kiểm thử trực tiếp kịch bản refresh token thất bại/hết hạn (mô phỏng offline lâu ngày hoặc thu hồi phiên phía server) và xác nhận app quay về màn đăng nhập kèm dữ liệu cache vẫn còn, đúng hành vi đã định nghĩa ở Bước 1-2."
+    },
+    {
+      "id": "R3-4",
+      "dimension": "feasibility",
+      "problem": "The Assignment gộp chung hai việc khác bản chất vào cùng một khung 'spike nửa ngày': (1) một spike kỹ thuật nằm trong tầm kiểm soát của kỹ sư (xác nhận SDK MapLibre gắn được header trên Android + iOS), và (2) một xác nhận liên-đội phụ thuộc thời gian phản hồi của đội vận hành BFF/Directus (tài khoản đăng nhập cho cán bộ trial đã tồn tại chưa). Chính tài liệu ở nơi khác ('Điều kiện tiên quyết chưa xác nhận', Dependencies bullet 3) thừa nhận việc xác nhận/cấp tài khoản liên-đội có thể 'tốn thời gian hơn nhiều' — mâu thuẫn với việc gộp nó vào cùng khung nửa ngày trong The Assignment, khiến mốc khởi đầu của toàn bộ kế hoạch phụ thuộc vào một yếu tố ngoài tầm kiểm soát mà tài liệu tự thừa nhận có thể chậm hơn nhiều.",
+      "remedy": "Tách khung thời gian: giữ 'spike nửa ngày' chỉ cho phần kỹ thuật (xác nhận header trên Android/iOS), và liệt kê việc xác nhận tài khoản với đội vận hành BFF như một tác vụ song song không bị ràng buộc bởi khung nửa ngày đó — có thể tiếp tục sau khi spike kỹ thuật xong nếu đội vận hành chưa phản hồi kịp, không chặn việc bắt đầu code vá bảo mật."
+    }
+  ],
+  "prior": [
+    {
+      "id": "R2-1",
+      "status": "resolved",
+      "evidence": "Bước 0 của Recommended Approach nay giải thích rõ: tài liệu BFF phân biệt Web (bắt buộc proxy cùng origin, vì MapLibre tải tile trong Web Worker không gắn được custom header) và Mobile (được phép chọn gắn header Authorization trực tiếp HOẶC dùng proxy); và nói rõ yêu cầu 'tile phải đi qua proxy cùng origin' ở Problem Statement là yêu cầu áp dụng cho Web, còn Mobile có nhánh gắn header trực tiếp — mâu thuẫn ban đầu đã được lý giải bằng phân biệt platform cụ thể.",
+      "current_id": null
+    },
+    {
+      "id": "R2-2",
+      "status": "resolved",
+      "evidence": "Recommended Approach nay có Bước 0 nêu tên cụ thể SDK bản đồ đang dùng ('@maplibre/maplibre-react-native', xác nhận qua package.json) và yêu cầu spike nửa ngày xác nhận khả năng gắn custom Authorization header trên cả Android lẫn iOS TRƯỚC KHI cam kết mốc 1-2 ngày; nếu không hỗ trợ trên một nền tảng, tài liệu nêu rõ chuyển sang nhánh proxy cùng origin và cập nhật lại effort — không còn là giả định chưa kiểm chứng.",
+      "current_id": null
+    },
+    {
+      "id": "R2-3",
+      "status": "resolved",
+      "evidence": "Recommended Approach thêm mục 'Điều kiện tiên quyết chưa xác nhận' nêu rõ kế hoạch giả định cán bộ trial đã có tài khoản, tài liệu BFF chỉ mô tả auth phân quyền theo địa bàn như một năng lực chứ không xác nhận tài khoản đã cấp, và nếu chưa có thì việc cấp/phân phát là việc liên-đội không tính trong mốc 1-2 ngày; Dependencies bullet 3 và The Assignment đều thêm bước xác nhận với đội vận hành BFF trước khi vá.",
+      "current_id": null
+    },
+    {
+      "id": "R2-4",
+      "status": "resolved",
+      "evidence": "Bước 1-2 nay định nghĩa cụ thể: khi POST /auth/refresh thất bại (phiên bị thu hồi, refresh token hết hạn, hoặc offline lâu ngày), app đưa người dùng về màn đăng nhập với thông báo tiếng Việt rõ ràng, giữ nguyên dữ liệu cache đã tải (registry, ranh giới phường xã), và coi đây là một lần 401 bình thường theo tài liệu BFF chứ không phải lỗi.",
+      "current_id": null
+    }
+  ]
+}

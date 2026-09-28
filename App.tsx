@@ -10,7 +10,8 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import AppShell from './src/components/AppShell';
+import AppShell from './src/screens/AppShell';
+import { useAuthGate } from './src/hooks/useAuthGate';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -28,10 +29,14 @@ function AppContent() {
   // chỉ cần gọi hook này để đảm bảo SafeAreaProvider đã sẵn sàng trước khi
   // render.
   useSafeAreaInsets();
+  // Hệ thống dùng được khi chưa đăng nhập (bản đồ + dữ liệu công khai qua
+  // /map/*, /catalog/* không cần token) — auth chỉ gate tab "Tài khoản",
+  // không chặn cả app. Xem AppShell -> AccountScreen.
+  const auth = useAuthGate();
 
   return (
     <View style={styles.container}>
-      <AppShell />
+      <AppShell auth={auth} />
     </View>
   );
 }

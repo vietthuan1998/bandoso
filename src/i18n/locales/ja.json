@@ -122,29 +122,7 @@
     "operating": "稼働中のプロジェクト"
   },
   "mvt": {
-    "sectionTitle": "MVTレイヤー（15コレクション）",
     "hint": "技術仕様の第8項に基づきdcu.huecity.vnから直接描画。破線＝定向（将来計画）レイヤー。",
-    "thuaDat": "地籍（土地区画）",
-    "khuCongNghiepHienTrang": "工業団地の現況",
-    "khuCongNghiepDinhHuong": "工業団地開発計画",
-    "xuLyChatThaiHienTrang": "廃棄物処理区域の現況",
-    "xuLyChatThaiDinhHuong": "廃棄物処理区域計画",
-    "nghiaTrangHienTrang": "墓地の現況",
-    "nghiaTrangDinhHuong": "墓地計画",
-    "congNgheCaoDinhHuong": "ハイテク区域計画",
-    "coSoKhcnDinhHuong": "科学技術施設計画",
-    "coSoKhcnHienTrang": "科学技術施設の現況",
-    "congTrinhNgamA": "地下工作物計画A",
-    "tramBts": "BTS基地局",
-    "rainWaterStations": "雨量観測局",
-    "waterLevelStation": "水位観測局",
-    "iotWindStation": "風況観測局",
-    "groups": {
-      "landData": "地籍データ",
-      "planning": "都市計画",
-      "infrastructure": "インフラ",
-      "iot": "IoT観測局"
-    },
     "detailsTitle": "MVTフィーチャーの詳細",
     "noAttributes": "このタイルに属性はありません。",
     "viewDetail": "詳細を見る"
@@ -169,10 +147,19 @@
   },
   "tabs": {
     "map": "地図",
+    "template": "Template",
     "data": "データ",
     "statistics": "統計",
     "tracking": "モニタリング",
     "profile": "マイページ"
+  },
+  "template": {
+    "badge": "APIベースのテンプレート",
+    "summary": "区・社 {{wards}} 件 · MVT レイヤー {{layers}} 件",
+    "wardsError": "区・社の境界を読み込めませんでした",
+    "legendTitle": "区・社ごとのオブジェクト数",
+    "noData": "データなし",
+    "statsError": "区・社ごとの統計を読み込めませんでした"
   },
   "dataOverview": {
     "openButton": "データ概要を見る",
@@ -182,18 +169,7 @@
     "groupsSectionTitle": "グループ別データ",
     "footerNote": "現在アクセス可能なDirectusコレクションから集計した数値です。",
     "loading": "集計中...",
-    "error": "データ概要を読み込めませんでした。",
-    "groups": {
-      "landParcel": "地籍地",
-      "industrialZone": "工業団地",
-      "wasteTreatment": "廃棄物処理区域",
-      "cemetery": "墓地",
-      "highTechZone": "ハイテク区域",
-      "scienceTechFacility": "科学技術施設",
-      "undergroundPlanning": "地下工作物計画",
-      "btsStation": "BTS基地局",
-      "monitoringStation": "観測局"
-    }
+    "error": "データ概要を読み込めませんでした。"
   },
   "statistics": {
     "title": "データ統計",
@@ -272,5 +248,16 @@
   "comingSoon": {
     "title": "近日公開",
     "message": "この画面は技術仕様に基づき開発中です。バックエンド準備後にAPI経由で実データに接続します。"
+  },
+  "auth": {
+    "usernameLabel": "ユーザー名",
+    "passwordLabel": "パスワード",
+    "loginButton": "ログイン",
+    "loggingIn": "ログイン中...",
+    "invalidCredentials": "ユーザー名またはパスワードが正しくありません",
+    "networkError": "サーバーに接続できません。もう一度お試しください",
+    "sessionExpiredBanner": "セッションの有効期限が切れました。再度ログインしてください",
+    "loggedInStatus": "ログイン済みです",
+    "logoutButton": "ログアウト"
   }
 }

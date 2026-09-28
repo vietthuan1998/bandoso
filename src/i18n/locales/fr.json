@@ -122,29 +122,7 @@
     "operating": "Projets en activité"
   },
   "mvt": {
-    "sectionTitle": "Couches MVT (15 collections)",
     "hint": "Rendu directement depuis dcu.huecity.vn selon la section 8 de la spécification. Pointillés = couche prévue (planification future).",
-    "thuaDat": "Parcelles (cadastre)",
-    "khuCongNghiepHienTrang": "Zone industrielle - état actuel",
-    "khuCongNghiepDinhHuong": "Développement de zone industrielle - prévu",
-    "xuLyChatThaiHienTrang": "Zone de traitement des déchets - état actuel",
-    "xuLyChatThaiDinhHuong": "Zone de traitement des déchets - prévue",
-    "nghiaTrangHienTrang": "Cimetière - état actuel",
-    "nghiaTrangDinhHuong": "Cimetière - prévu",
-    "congNgheCaoDinhHuong": "Zone de haute technologie - prévue",
-    "coSoKhcnDinhHuong": "Installation scientifique et technologique - prévue",
-    "coSoKhcnHienTrang": "Installation scientifique et technologique - état actuel",
-    "congTrinhNgamA": "Planification des ouvrages souterrains A",
-    "tramBts": "Station BTS",
-    "rainWaterStations": "Station pluviométrique",
-    "waterLevelStation": "Station de niveau d'eau",
-    "iotWindStation": "Station de vent",
-    "groups": {
-      "landData": "Foncier",
-      "planning": "Planification",
-      "infrastructure": "Infrastructure",
-      "iot": "Stations IoT"
-    },
     "detailsTitle": "Détails de l'entité MVT",
     "noAttributes": "Aucun attribut dans cette tuile.",
     "viewDetail": "Voir les détails"
@@ -169,10 +147,19 @@
   },
   "tabs": {
     "map": "Carte",
+    "template": "Template",
     "data": "Données",
     "statistics": "Statistiques",
     "tracking": "Suivi",
     "profile": "Profil"
+  },
+  "template": {
+    "badge": "Modèle basé sur l’API",
+    "summary": "{{wards}} quartiers/communes · {{layers}} couches MVT",
+    "wardsError": "Impossible de charger les limites des quartiers",
+    "legendTitle": "Objets par quartier/commune",
+    "noData": "Aucune donnée",
+    "statsError": "Impossible de charger les statistiques par quartier"
   },
   "dataOverview": {
     "openButton": "Voir l'aperçu des données",
@@ -182,18 +169,7 @@
     "groupsSectionTitle": "Données par groupe",
     "footerNote": "Chiffres agrégés à partir des collections Directus actuellement accessibles.",
     "loading": "Agrégation des chiffres...",
-    "error": "Impossible de charger l'aperçu des données.",
-    "groups": {
-      "landParcel": "Parcelles de terrain",
-      "industrialZone": "Zones industrielles",
-      "wasteTreatment": "Zones de traitement des déchets",
-      "cemetery": "Cimetières",
-      "highTechZone": "Zones de haute technologie",
-      "scienceTechFacility": "Installations scientifiques et technologiques",
-      "undergroundPlanning": "Planification des ouvrages souterrains",
-      "btsStation": "Stations BTS",
-      "monitoringStation": "Stations de surveillance"
-    }
+    "error": "Impossible de charger l'aperçu des données."
   },
   "statistics": {
     "title": "Statistiques des données",
@@ -272,5 +248,16 @@
   "comingSoon": {
     "title": "Bientôt disponible",
     "message": "Cet écran est en cours de développement selon la spécification technique et se connectera aux données réelles via l'API une fois le backend prêt."
+  },
+  "auth": {
+    "usernameLabel": "Nom d'utilisateur",
+    "passwordLabel": "Mot de passe",
+    "loginButton": "Se connecter",
+    "loggingIn": "Connexion en cours...",
+    "invalidCredentials": "Nom d'utilisateur ou mot de passe incorrect",
+    "networkError": "Impossible de contacter le serveur, veuillez réessayer",
+    "sessionExpiredBanner": "Votre session a expiré, veuillez vous reconnecter",
+    "loggedInStatus": "Vous êtes connecté",
+    "logoutButton": "Se déconnecter"
   }
 }
