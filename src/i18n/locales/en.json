@@ -147,19 +147,10 @@
   },
   "tabs": {
     "map": "Map",
-    "template": "Template",
     "data": "Data",
     "statistics": "Statistics",
     "tracking": "Tracking",
     "profile": "Profile"
-  },
-  "template": {
-    "badge": "API-driven template",
-    "summary": "{{wards}} wards · {{layers}} MVT layers",
-    "wardsError": "Could not load ward boundaries",
-    "legendTitle": "Objects per ward",
-    "noData": "No data",
-    "statsError": "Could not load per-ward statistics"
   },
   "dataOverview": {
     "openButton": "View data overview",
@@ -173,55 +164,76 @@
   },
   "statistics": {
     "title": "Data statistics",
+    "loading": "Loading statistics...",
+    "error": "Could not load statistics.",
+    "needLogin": "Sign in on the Profile tab to view statistics.",
+    "forbidden": "Your account is not allowed to view statistics.",
     "filters": {
       "allLayers": "All layers",
       "allWards": "All wards",
-      "today": "Today",
-      "asOfLabel": "Data as of",
-      "searchPlaceholder": "Search collections...",
-      "noResults": "No collections found"
+      "today": "Up to today",
+      "dateTo": "Up to {{date}}"
     },
     "detail": {
-      "unreadable": "Unreadable",
       "lastUpdated": "Last updated: {{date}}"
     },
     "totalCard": "Total records",
+    "unknownWard": "Ward not identified",
+    "notesTitle": "Data notes",
     "status": {
       "sectionTitle": "By status",
+      "total": "Total",
       "recent": "Recently updated",
       "stale": "Needs update",
-      "unknown": "Not tracked",
-      "total": "Total",
-      "recentHint": "date_updated within the last 7 days",
-      "staleHint": "date_updated older than 7 days",
-      "unknownHint": "No reliable update timestamp available"
+      "unknown": "Not tracked"
+    },
+    "processing": {
+      "sectionTitle": "Processing status",
+      "notMeasured": "Not measured yet: layers have no processing status field.",
+      "completed": "Completed",
+      "inProgress": "In progress",
+      "error": "Error",
+      "overdue": "Overdue"
     },
     "ward": {
       "sectionTitle": "By ward",
-      "geometricNote": "Computed from real coordinates (point-in-polygon), combined across data layers",
+      "hint": "Tap a ward to filter",
       "viewAll": "View all {{count}} wards",
       "collapse": "Collapse",
-      "unassigned": "Unassigned to a ward",
-      "empty": "No ward data yet"
+      "empty": "No ward data yet",
+      "clearFilter": "Clear filter"
+    },
+    "layers": {
+      "sectionTitle": "By data layer",
+      "hint": "Tap a layer for details"
     },
     "trend": {
-      "sectionTitle": "Update trend",
-      "note": "Daily total across layers with real update timestamps: land parcels, BTS stations",
-      "range7": "7 days",
-      "range14": "14 days",
-      "range30": "30 days",
+      "sectionTitle": "Trend",
+      "day": "By day",
+      "month": "By month",
+      "quarter": "By quarter",
       "empty": "No trend data yet",
-      "notAvailable": "This layer has no update timestamp",
-      "notWardFiltered": "Not filtered by ward"
+      "selectLayer": "Select a layer to see its trend"
     },
-    "topLayers": {
-      "sectionTitle": "Top data layers",
-      "viewAll": "View all",
-      "collapse": "Collapse",
-      "unreadable": "Unreadable"
+    "measures": {
+      "sectionTitle": "Measures",
+      "sum": "Total",
+      "avg": "Average",
+      "min": "Minimum",
+      "max": "Maximum",
+      "error": "Could not load measures."
     },
-    "loading": "Loading statistics...",
-    "error": "Unable to load statistics from Directus."
+    "groups": {
+      "sectionTitle": "Grouped by dimension",
+      "ward": "Ward",
+      "status": "Status",
+      "unit": "Unit",
+      "updatedAt": "Update time",
+      "unknown": "Unknown",
+      "field": "Field: {{field}}",
+      "empty": "No group data yet",
+      "error": "Could not load grouped data."
+    }
   },
   "dataScreen": {
     "title": "Digitized data",

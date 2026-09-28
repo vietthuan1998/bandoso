@@ -14,14 +14,19 @@ export function dcuHeaders(): { Authorization: string } | undefined {
 type RetriableConfig = AxiosRequestConfig & { _dcuRetried?: boolean };
 
 /**
- * Chưa đăng nhập (không có header từ dcuHeaders) mà request tới API_BASE_URL
- * -> gắn token tĩnh API_ACCESS_TOKEN nếu có. Không đụng request tới host
- * khác (vd. BFF dcudata.cgb.vn) — token tĩnh chỉ dành cho API_BASE_URL.
+ * Request tới API_BASE_URL (Directus dcu.huecity.vn) luôn dùng token tĩnh
+ * API_ACCESS_TOKEN: Directus không nhận accessToken phiên BFF (dcudata.cgb.vn)
+ * — gửi token phiên sang đó bị 401. Call site vẫn truyền dcuHeaders() nên
+ * phải ghi đè ở đây. Không có token tĩnh -> bỏ header (403 như khách) thay vì
+ * gửi token phiên chắc chắn bị từ chối. Request tới host khác (BFF) giữ nguyên.
  */
 dcuAxios.interceptors.request.use(config => {
+  if (!isApiBaseUrl(config.url)) return config;
   const staticToken = getStaticApiToken();
-  if (staticToken && !config.headers?.Authorization && isApiBaseUrl(config.url)) {
+  if (staticToken) {
     config.headers.Authorization = `Bearer ${staticToken}`;
+  } else {
+    delete config.headers.Authorization;
   }
   return config;
 });
@@ -37,7 +42,14 @@ dcuAxios.interceptors.response.use(
   async error => {
     const config = error?.config as RetriableConfig | undefined;
     const status = error?.response?.status;
-    if (!config || status !== 401 || config._dcuRetried) {
+    // 401 từ Directus (API_BASE_URL) không liên quan phiên BFF — refresh
+    // không giúp gì mà còn tiêu refresh token xoay vòng.
+    if (
+      !config ||
+      status !== 401 ||
+      config._dcuRetried ||
+      isApiBaseUrl(config.url)
+    ) {
       return Promise.reject(error);
     }
     try {

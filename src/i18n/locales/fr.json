@@ -147,19 +147,10 @@
   },
   "tabs": {
     "map": "Carte",
-    "template": "Template",
     "data": "Données",
     "statistics": "Statistiques",
     "tracking": "Suivi",
     "profile": "Profil"
-  },
-  "template": {
-    "badge": "Modèle basé sur l’API",
-    "summary": "{{wards}} quartiers/communes · {{layers}} couches MVT",
-    "wardsError": "Impossible de charger les limites des quartiers",
-    "legendTitle": "Objets par quartier/commune",
-    "noData": "Aucune donnée",
-    "statsError": "Impossible de charger les statistiques par quartier"
   },
   "dataOverview": {
     "openButton": "Voir l'aperçu des données",
@@ -173,55 +164,76 @@
   },
   "statistics": {
     "title": "Statistiques des données",
+    "loading": "Chargement des statistiques...",
+    "error": "Impossible de charger les statistiques.",
+    "needLogin": "Connectez-vous dans l’onglet Profil pour voir les statistiques.",
+    "forbidden": "Votre compte n’est pas autorisé à voir les statistiques.",
     "filters": {
       "allLayers": "Toutes les couches",
       "allWards": "Tous les quartiers",
-      "today": "Aujourd'hui",
-      "asOfLabel": "Données au",
-      "searchPlaceholder": "Rechercher une collection...",
-      "noResults": "Aucune collection trouvée"
+      "today": "Jusqu’à aujourd’hui",
+      "dateTo": "Jusqu’au {{date}}"
     },
     "detail": {
-      "unreadable": "Illisible",
       "lastUpdated": "Dernière mise à jour : {{date}}"
     },
-    "totalCard": "Total des données",
+    "totalCard": "Nombre total d’enregistrements",
+    "unknownWard": "Quartier/commune non identifié",
+    "notesTitle": "Notes sur les données",
     "status": {
       "sectionTitle": "Par statut",
+      "total": "Total",
       "recent": "Mis à jour récemment",
       "stale": "À mettre à jour",
-      "unknown": "Non suivi",
-      "total": "Total",
-      "recentHint": "date_updated dans les 7 derniers jours",
-      "staleHint": "date_updated de plus de 7 jours",
-      "unknownHint": "Aucun horodatage de mise à jour fiable disponible"
+      "unknown": "Non suivi"
+    },
+    "processing": {
+      "sectionTitle": "État de traitement",
+      "notMeasured": "Pas encore mesuré : les couches n’ont pas de champ d’état.",
+      "completed": "Terminé",
+      "inProgress": "En cours",
+      "error": "Erreur",
+      "overdue": "En retard"
     },
     "ward": {
-      "sectionTitle": "Par quartier",
-      "geometricNote": "Calculé à partir des coordonnées réelles (point dans polygone), cumulé sur toutes les couches",
-      "viewAll": "Voir les {{count}} quartiers",
+      "sectionTitle": "Par quartier/commune",
+      "hint": "Touchez un quartier pour filtrer",
+      "viewAll": "Voir les {{count}} quartiers/communes",
       "collapse": "Réduire",
-      "unassigned": "Non rattaché à un quartier",
-      "empty": "Aucune donnée par quartier pour le moment"
+      "empty": "Aucune donnée par quartier",
+      "clearFilter": "Retirer le filtre"
+    },
+    "layers": {
+      "sectionTitle": "Par couche de données",
+      "hint": "Touchez une couche pour le détail"
     },
     "trend": {
-      "sectionTitle": "Tendance des mises à jour",
-      "note": "Total quotidien sur les couches avec un horodatage réel : parcelles, stations BTS",
-      "range7": "7 jours",
-      "range14": "14 jours",
-      "range30": "30 jours",
-      "empty": "Aucune donnée de tendance pour le moment",
-      "notAvailable": "Cette couche n'a pas d'horodatage de mise à jour",
-      "notWardFiltered": "Non filtré par quartier"
+      "sectionTitle": "Tendance",
+      "day": "Par jour",
+      "month": "Par mois",
+      "quarter": "Par trimestre",
+      "empty": "Aucune donnée de tendance",
+      "selectLayer": "Choisissez une couche pour voir sa tendance"
     },
-    "topLayers": {
-      "sectionTitle": "Principales couches de données",
-      "viewAll": "Tout voir",
-      "collapse": "Réduire",
-      "unreadable": "Illisible"
+    "measures": {
+      "sectionTitle": "Mesures",
+      "sum": "Total",
+      "avg": "Moyenne",
+      "min": "Minimum",
+      "max": "Maximum",
+      "error": "Impossible de charger les mesures."
     },
-    "loading": "Chargement des statistiques...",
-    "error": "Impossible de charger les statistiques depuis Directus."
+    "groups": {
+      "sectionTitle": "Regroupement par dimension",
+      "ward": "Quartier/commune",
+      "status": "Statut",
+      "unit": "Unité",
+      "updatedAt": "Date de mise à jour",
+      "unknown": "Indéterminé",
+      "field": "Champ : {{field}}",
+      "empty": "Aucune donnée groupée",
+      "error": "Impossible de charger les regroupements."
+    }
   },
   "dataScreen": {
     "title": "Données numérisées",

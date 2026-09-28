@@ -1,7 +1,1 @@
-export type AppTabId =
-  | 'map'
-  | 'template'
-  | 'data'
-  | 'statistics'
-  | 'tracking'
-  | 'profile';
+export type AppTabId = 'map' | 'data' | 'statistics' | 'tracking' | 'profile';

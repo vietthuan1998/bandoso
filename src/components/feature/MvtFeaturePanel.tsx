@@ -35,7 +35,6 @@ export function MvtFeaturePanel({
     male: t('common.male'),
     female: t('common.female'),
   });
-  console.log(layer, properties);
   return (
     <InfoCard
       title={title}

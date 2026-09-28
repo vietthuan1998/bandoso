@@ -9,7 +9,6 @@ import { COLORS } from '../constants/theme';
 import type { MapLocateRequest } from '../services/api/dataRecords';
 import { useHueMap } from '../hooks/useHueMap';
 import { StatisticsScreen } from './statistics/StatisticsScreen';
-import { TemplateMapScreen } from './template/TemplateMapScreen';
 import { BottomTabBar } from '../components/common/BottomTabBar';
 import { PlaceholderScreen } from '../components/common/PlaceholderScreen';
 import type { AppTabId } from '../types/navigation';
@@ -38,7 +37,6 @@ export default function AppShell({ auth }: { auth: AuthGateState }) {
             onFocusHandled={clearMapFocusRequest}
           />
         ) : null}
-        {activeTab === 'template' ? <TemplateMapScreen /> : null}
         {activeTab === 'data' ? (
           <DataScreen onLocateOnMap={requestMapFocus} />
         ) : null}

@@ -68,6 +68,7 @@ describe('normalizeRegistryLayer', () => {
       minzoom: 10,
       maxzoom: 12,
       updatedAtField: 'date_updated',
+      measureFields: [],
       featureIdField: 'id',
       titleFields: ['station_code'],
       detailFields: ['station_code', 'operation_status'],

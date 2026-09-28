@@ -34,7 +34,7 @@ export type RegistryLayer = {
   capabilities?: Partial<
     Record<'list' | 'detail' | 'search' | 'statistics', boolean>
   >;
-  dimensions?: { updatedAtField?: string | null };
+  dimensions?: { updatedAtField?: string | null; measureFields?: string[] };
   featureIdField?: string;
   titleFields?: string[];
   detailFields?: string[];
@@ -103,6 +103,7 @@ export function normalizeRegistryLayer(raw: RegistryLayer): MvtLayerConfig {
     minzoom: raw.minZoom,
     maxzoom: raw.maxZoom,
     updatedAtField: raw.dimensions?.updatedAtField ?? null,
+    measureFields: raw.dimensions?.measureFields ?? [],
     featureIdField: raw.featureIdField || 'id',
     titleFields: raw.titleFields ?? [],
     detailFields: raw.detailFields ?? [],
@@ -219,6 +220,7 @@ async function load(): Promise<MapRegistryState> {
       ),
       fetchLayerGroups(cached?.groups ?? []),
     ]);
+    console.log(layersResponse);
     const registry: RegistryCache = {
       registryVersion: layersResponse.data.registryVersion,
       layers: layersResponse.data.layers ?? [],

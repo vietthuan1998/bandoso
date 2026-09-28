@@ -35,11 +35,20 @@ import {
 } from '../../services/statistics/statisticsOverview';
 import { BottomSheet } from '../../components/common/BottomSheet';
 import { FeatureDetailScreen } from './FeatureDetailScreen';
-import { FilterChip, PickerOption } from '../../components/filter/FilterControls';
-import { FRESHNESS_COLOR, FRESHNESS_ICON } from '../../components/common/freshnessUi';
+import {
+  FilterChip,
+  PickerOption,
+} from '../../components/filter/FilterControls';
+import {
+  FRESHNESS_COLOR,
+  FRESHNESS_ICON,
+} from '../../components/common/freshnessUi';
 import { Icon } from '../../components/common/Icon';
 import { COLORS, RADIUS, SPACING } from '../../constants/theme';
-import { DataRecordMiniMap, DataRecordMiniMapPlaceholder } from '../../components/map/MiniMap';
+import {
+  DataRecordMiniMap,
+  DataRecordMiniMapPlaceholder,
+} from '../../components/map/MiniMap';
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 350;
@@ -165,7 +174,13 @@ export function DataScreen({
         if (requestKeyRef.current === key) setLoading(false);
       }
     })();
-  }, [selectedLayer, selectedWard, debouncedSearch, registryPending, registry.status]);
+  }, [
+    selectedLayer,
+    selectedWard,
+    debouncedSearch,
+    registryPending,
+    registry.status,
+  ]);
 
   const canLoadMore = !!selectedLayer && !loading && records.length < total;
   const loadMore = () => {

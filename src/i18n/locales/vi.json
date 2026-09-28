@@ -147,19 +147,10 @@
   },
   "tabs": {
     "map": "Bản đồ",
-    "template": "Template",
     "data": "Dữ liệu",
     "statistics": "Thống kê",
     "tracking": "Theo dõi",
     "profile": "Cá nhân"
-  },
-  "template": {
-    "badge": "Bản mẫu dựng từ API",
-    "summary": "{{wards}} phường xã · {{layers}} lớp MVT",
-    "wardsError": "Không tải được ranh giới phường xã",
-    "legendTitle": "Số đối tượng theo phường xã",
-    "noData": "Không có dữ liệu",
-    "statsError": "Không tải được số liệu theo phường xã"
   },
   "dataOverview": {
     "openButton": "Xem tổng quan dữ liệu",
@@ -173,55 +164,76 @@
   },
   "statistics": {
     "title": "Thống kê dữ liệu",
+    "loading": "Đang tải số liệu thống kê...",
+    "error": "Không tải được số liệu thống kê.",
+    "needLogin": "Đăng nhập ở tab Cá nhân để xem số liệu thống kê.",
+    "forbidden": "Tài khoản chưa được cấp quyền xem thống kê.",
     "filters": {
       "allLayers": "Tất cả lớp",
       "allWards": "Tất cả phường, xã",
-      "today": "Hôm nay",
-      "asOfLabel": "Dữ liệu tính đến ngày",
-      "searchPlaceholder": "Tìm collection...",
-      "noResults": "Không tìm thấy collection nào"
+      "today": "Đến hôm nay",
+      "dateTo": "Đến {{date}}"
     },
     "detail": {
-      "unreadable": "Không đọc được",
       "lastUpdated": "Cập nhật lần cuối: {{date}}"
     },
-    "totalCard": "Tổng dữ liệu",
+    "totalCard": "Tổng số bản ghi",
+    "unknownWard": "Chưa xác định phường, xã",
+    "notesTitle": "Ghi chú số liệu",
     "status": {
       "sectionTitle": "Theo trạng thái",
+      "total": "Tổng cộng",
       "recent": "Cập nhật gần đây",
       "stale": "Cần cập nhật",
-      "unknown": "Không theo dõi được",
-      "total": "Tổng cộng",
-      "recentHint": "date_updated trong 7 ngày gần nhất",
-      "staleHint": "date_updated cũ hơn 7 ngày",
-      "unknownHint": "Không có mốc thời gian cập nhật đáng tin cậy"
+      "unknown": "Không theo dõi được"
+    },
+    "processing": {
+      "sectionTitle": "Tình trạng xử lý",
+      "notMeasured": "Chưa đo được: các lớp hiện chưa có trường trạng thái xử lý.",
+      "completed": "Hoàn thành",
+      "inProgress": "Đang xử lý",
+      "error": "Lỗi",
+      "overdue": "Quá hạn"
     },
     "ward": {
       "sectionTitle": "Theo phường, xã",
-      "geometricNote": "Tính theo toạ độ thật (point-in-polygon), cộng dồn qua các lớp dữ liệu",
+      "hint": "Chạm vào một phường, xã để lọc",
       "viewAll": "Xem tất cả {{count}} phường, xã",
       "collapse": "Thu gọn",
-      "unassigned": "Chưa gán phường/xã",
-      "empty": "Chưa có dữ liệu phường, xã"
+      "empty": "Chưa có dữ liệu phường, xã",
+      "clearFilter": "Bỏ lọc"
+    },
+    "layers": {
+      "sectionTitle": "Theo lớp dữ liệu",
+      "hint": "Chạm vào một lớp để xem chi tiết"
     },
     "trend": {
-      "sectionTitle": "Xu hướng cập nhật",
-      "note": "Tổng theo ngày trên các lớp có mốc cập nhật thật: thửa đất, trạm BTS",
-      "range7": "7 ngày",
-      "range14": "14 ngày",
-      "range30": "30 ngày",
+      "sectionTitle": "Xu hướng",
+      "day": "Theo ngày",
+      "month": "Theo tháng",
+      "quarter": "Theo quý",
       "empty": "Chưa có dữ liệu xu hướng",
-      "notAvailable": "Lớp này không có mốc thời gian cập nhật",
-      "notWardFiltered": "Không lọc theo phường, xã"
+      "selectLayer": "Chọn một lớp để xem xu hướng"
     },
-    "topLayers": {
-      "sectionTitle": "Top lớp dữ liệu",
-      "viewAll": "Xem tất cả",
-      "collapse": "Thu gọn",
-      "unreadable": "Không đọc được"
+    "measures": {
+      "sectionTitle": "Đo lường",
+      "sum": "Tổng",
+      "avg": "Trung bình",
+      "min": "Nhỏ nhất",
+      "max": "Lớn nhất",
+      "error": "Không tải được số liệu đo lường."
     },
-    "loading": "Đang tải số liệu thống kê...",
-    "error": "Không tải được số liệu thống kê từ Directus."
+    "groups": {
+      "sectionTitle": "Nhóm theo chiều",
+      "ward": "Phường, xã",
+      "status": "Trạng thái",
+      "unit": "Đơn vị",
+      "updatedAt": "Thời gian cập nhật",
+      "unknown": "Không xác định",
+      "field": "Trường: {{field}}",
+      "empty": "Chưa có dữ liệu nhóm",
+      "error": "Không tải được số liệu nhóm."
+    }
   },
   "dataScreen": {
     "title": "Dữ liệu số hóa",

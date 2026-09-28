@@ -6,7 +6,6 @@ import type { AppTabId } from '../../types/navigation';
 
 const TABS: Array<{ id: AppTabId; icon: IconName; labelKey: string }> = [
   { id: 'map', icon: 'map', labelKey: 'tabs.map' },
-  { id: 'template', icon: 'template', labelKey: 'tabs.template' },
   { id: 'data', icon: 'database', labelKey: 'tabs.data' },
   { id: 'statistics', icon: 'statistics', labelKey: 'tabs.statistics' },
   { id: 'tracking', icon: 'tracking', labelKey: 'tabs.tracking' },

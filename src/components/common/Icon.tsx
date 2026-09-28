@@ -21,7 +21,6 @@ const GLYPHS = {
   layers: 'layers',
 
   map: 'map',
-  template: 'compare',
   database: 'database',
   statistics: 'chart-bar',
   tracking: 'access-point',

@@ -28,6 +28,7 @@ jest.mock('../../config/apiAccessToken', () => ({
   isApiBaseUrl: (url?: string) => !!url && url.startsWith('https://dcu.huecity.vn/'),
 }));
 
+import { getStaticApiToken } from '../../config/apiAccessToken';
 import { dcuAxios, dcuHeaders } from './dcuClient';
 
 const mockInstance = dcuAxios as unknown as {
@@ -49,18 +50,35 @@ describe('dcuAxios static token interceptor', () => {
     expect(config.headers.Authorization).toBe('Bearer static-token');
   });
 
-  it('keeps the session token and never touches other hosts', () => {
+  it('replaces the BFF session token with the static token on API_BASE_URL (Directus rejects it with 401)', () => {
     const logged = requestHandler({
       url: 'https://dcu.huecity.vn/items/bts',
       headers: { Authorization: 'Bearer access-session' },
     });
-    expect(logged.headers.Authorization).toBe('Bearer access-session');
+    expect(logged.headers.Authorization).toBe('Bearer static-token');
+  });
 
+  it('drops the session token on API_BASE_URL when there is no static token', () => {
+    (getStaticApiToken as jest.Mock).mockReturnValueOnce(null);
+    const config = requestHandler({
+      url: 'https://dcu.huecity.vn/items/bts',
+      headers: { Authorization: 'Bearer access-session' },
+    });
+    expect(config.headers.Authorization).toBeUndefined();
+  });
+
+  it('never touches other hosts', () => {
     const bff = requestHandler({
+      url: 'https://dcudata.cgb.vn/api/v1/statistics/summary',
+      headers: { Authorization: 'Bearer access-session' },
+    });
+    expect(bff.headers.Authorization).toBe('Bearer access-session');
+
+    const guest = requestHandler({
       url: 'https://dcudata.cgb.vn/api/v1/statistics/summary',
       headers: {},
     });
-    expect(bff.headers.Authorization).toBeUndefined();
+    expect(guest.headers.Authorization).toBeUndefined();
   });
 });
 
@@ -124,6 +142,23 @@ describe('dcuAxios 401 interceptor', () => {
     await expect(responseErrorHandler(unauthorizedError)).rejects.toBe(
       unauthorizedError,
     );
+    expect(mockInstance.request).not.toHaveBeenCalled();
+  });
+
+  it('does not refresh the BFF session on a 401 from API_BASE_URL (Directus)', async () => {
+    await Keychain.setGenericPassword('refreshToken', 'refresh-old', {
+      service: 'huemaps-refresh-token',
+    });
+    const directusError = {
+      isAxiosError: true,
+      config: { url: 'https://dcu.huecity.vn/items/bts', headers: {} },
+      response: { status: 401 },
+    };
+
+    await expect(responseErrorHandler(directusError)).rejects.toBe(
+      directusError,
+    );
+    expect(mockedAxios.post).not.toHaveBeenCalled();
     expect(mockInstance.request).not.toHaveBeenCalled();
   });
 

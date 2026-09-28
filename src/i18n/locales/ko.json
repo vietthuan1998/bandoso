@@ -147,19 +147,10 @@
   },
   "tabs": {
     "map": "지도",
-    "template": "Template",
     "data": "데이터",
     "statistics": "통계",
     "tracking": "모니터링",
     "profile": "내 정보"
-  },
-  "template": {
-    "badge": "API 기반 템플릿",
-    "summary": "동·사 {{wards}}개 · MVT 레이어 {{layers}}개",
-    "wardsError": "동·사 경계를 불러오지 못했습니다",
-    "legendTitle": "동·사별 객체 수",
-    "noData": "데이터 없음",
-    "statsError": "동·사별 통계를 불러오지 못했습니다"
   },
   "dataOverview": {
     "openButton": "데이터 개요 보기",
@@ -173,55 +164,76 @@
   },
   "statistics": {
     "title": "데이터 통계",
+    "loading": "통계를 불러오는 중...",
+    "error": "통계를 불러오지 못했습니다.",
+    "needLogin": "통계를 보려면 개인 탭에서 로그인하세요.",
+    "forbidden": "이 계정은 통계 조회 권한이 없습니다.",
     "filters": {
       "allLayers": "모든 레이어",
       "allWards": "모든 동/사",
-      "today": "오늘",
-      "asOfLabel": "데이터 기준일",
-      "searchPlaceholder": "컬렉션 검색...",
-      "noResults": "컬렉션을 찾을 수 없습니다"
+      "today": "오늘까지",
+      "dateTo": "{{date}}까지"
     },
     "detail": {
-      "unreadable": "읽을 수 없음",
       "lastUpdated": "마지막 업데이트: {{date}}"
     },
-    "totalCard": "총 데이터 건수",
+    "totalCard": "전체 레코드 수",
+    "unknownWard": "동·사 미확인",
+    "notesTitle": "데이터 참고 사항",
     "status": {
       "sectionTitle": "상태별",
+      "total": "합계",
       "recent": "최근 업데이트됨",
       "stale": "업데이트 필요",
-      "unknown": "추적 불가",
-      "total": "합계",
-      "recentHint": "date_updated가 최근 7일 이내",
-      "staleHint": "date_updated가 7일보다 오래됨",
-      "unknownHint": "신뢰할 수 있는 업데이트 시각이 없음"
+      "unknown": "추적 불가"
+    },
+    "processing": {
+      "sectionTitle": "처리 현황",
+      "notMeasured": "아직 측정되지 않음: 레이어에 처리 상태 필드가 없습니다.",
+      "completed": "완료",
+      "inProgress": "처리 중",
+      "error": "오류",
+      "overdue": "기한 초과"
     },
     "ward": {
-      "sectionTitle": "동/사별",
-      "geometricNote": "실제 좌표 기반 계산(point-in-polygon), 모든 레이어 합산",
-      "viewAll": "{{count}}개 동/사 모두 보기",
+      "sectionTitle": "동·사별",
+      "hint": "동·사를 눌러 필터링",
+      "viewAll": "전체 {{count}}개 동·사 보기",
       "collapse": "접기",
-      "unassigned": "동/사 미지정",
-      "empty": "아직 동/사별 데이터가 없습니다"
+      "empty": "동·사 데이터가 없습니다",
+      "clearFilter": "필터 해제"
+    },
+    "layers": {
+      "sectionTitle": "데이터 레이어별",
+      "hint": "레이어를 눌러 자세히 보기"
     },
     "trend": {
-      "sectionTitle": "업데이트 추이",
-      "note": "실제 업데이트 시각이 있는 레이어(필지, BTS 기지국)의 일별 합계",
-      "range7": "7일",
-      "range14": "14일",
-      "range30": "30일",
-      "empty": "아직 추이 데이터가 없습니다",
-      "notAvailable": "이 레이어에는 업데이트 시각이 없습니다",
-      "notWardFiltered": "동/사로 필터링되지 않음"
+      "sectionTitle": "추이",
+      "day": "일별",
+      "month": "월별",
+      "quarter": "분기별",
+      "empty": "추이 데이터가 없습니다",
+      "selectLayer": "추이를 보려면 레이어를 선택하세요"
     },
-    "topLayers": {
-      "sectionTitle": "상위 데이터 레이어",
-      "viewAll": "전체 보기",
-      "collapse": "접기",
-      "unreadable": "읽을 수 없음"
+    "measures": {
+      "sectionTitle": "측정값",
+      "sum": "합계",
+      "avg": "평균",
+      "min": "최소",
+      "max": "최대",
+      "error": "측정값을 불러오지 못했습니다."
     },
-    "loading": "통계 데이터를 불러오는 중...",
-    "error": "Directus에서 통계 데이터를 불러올 수 없습니다."
+    "groups": {
+      "sectionTitle": "차원별 그룹",
+      "ward": "동·사",
+      "status": "상태",
+      "unit": "단위",
+      "updatedAt": "업데이트 시기",
+      "unknown": "미확인",
+      "field": "필드: {{field}}",
+      "empty": "그룹 데이터가 없습니다",
+      "error": "그룹 데이터를 불러오지 못했습니다."
+    }
   },
   "dataScreen": {
     "title": "디지털 데이터",

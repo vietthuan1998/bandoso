@@ -147,19 +147,10 @@
   },
   "tabs": {
     "map": "地图",
-    "template": "Template",
     "data": "数据",
     "statistics": "统计",
     "tracking": "监测",
     "profile": "我的"
-  },
-  "template": {
-    "badge": "基于 API 的模板",
-    "summary": "{{wards}} 个坊/社 · {{layers}} 个 MVT 图层",
-    "wardsError": "无法加载坊/社边界",
-    "legendTitle": "各坊/社对象数量",
-    "noData": "无数据",
-    "statsError": "无法加载各坊/社统计"
   },
   "dataOverview": {
     "openButton": "查看数据概览",
@@ -173,55 +164,76 @@
   },
   "statistics": {
     "title": "数据统计",
+    "loading": "正在加载统计...",
+    "error": "无法加载统计数据。",
+    "needLogin": "请在“个人”标签页登录后查看统计。",
+    "forbidden": "该账户没有查看统计的权限。",
     "filters": {
       "allLayers": "全部图层",
       "allWards": "全部坊/社",
-      "today": "今天",
-      "asOfLabel": "数据截至",
-      "searchPlaceholder": "搜索集合...",
-      "noResults": "未找到集合"
+      "today": "截至今天",
+      "dateTo": "截至 {{date}}"
     },
     "detail": {
-      "unreadable": "无法读取",
       "lastUpdated": "最后更新：{{date}}"
     },
-    "totalCard": "数据总量",
+    "totalCard": "记录总数",
+    "unknownWard": "未确定坊/社",
+    "notesTitle": "数据说明",
     "status": {
       "sectionTitle": "按状态",
+      "total": "合计",
       "recent": "近期已更新",
       "stale": "需要更新",
-      "unknown": "无法追踪",
-      "total": "合计",
-      "recentHint": "date_updated 在最近7天内",
-      "staleHint": "date_updated 超过7天",
-      "unknownHint": "没有可靠的更新时间戳"
+      "unknown": "无法追踪"
+    },
+    "processing": {
+      "sectionTitle": "处理情况",
+      "notMeasured": "尚未统计：图层暂无处理状态字段。",
+      "completed": "已完成",
+      "inProgress": "处理中",
+      "error": "错误",
+      "overdue": "逾期"
     },
     "ward": {
       "sectionTitle": "按坊/社",
-      "geometricNote": "根据真实坐标计算（point-in-polygon），汇总所有图层",
+      "hint": "点击坊/社进行筛选",
       "viewAll": "查看全部 {{count}} 个坊/社",
       "collapse": "收起",
-      "unassigned": "未分配坊/社",
-      "empty": "暂无坊/社数据"
+      "empty": "暂无坊/社数据",
+      "clearFilter": "清除筛选"
+    },
+    "layers": {
+      "sectionTitle": "按数据图层",
+      "hint": "点击图层查看详情"
     },
     "trend": {
-      "sectionTitle": "更新趋势",
-      "note": "按天汇总有真实更新时间戳的图层：地块、BTS基站",
-      "range7": "7天",
-      "range14": "14天",
-      "range30": "30天",
+      "sectionTitle": "趋势",
+      "day": "按日",
+      "month": "按月",
+      "quarter": "按季度",
       "empty": "暂无趋势数据",
-      "notAvailable": "该图层没有更新时间戳",
-      "notWardFiltered": "未按坊/社筛选"
+      "selectLayer": "选择一个图层以查看趋势"
     },
-    "topLayers": {
-      "sectionTitle": "热门数据图层",
-      "viewAll": "查看全部",
-      "collapse": "收起",
-      "unreadable": "无法读取"
+    "measures": {
+      "sectionTitle": "度量",
+      "sum": "总计",
+      "avg": "平均",
+      "min": "最小",
+      "max": "最大",
+      "error": "无法加载度量数据。"
     },
-    "loading": "正在加载统计数据...",
-    "error": "无法从Directus加载统计数据。"
+    "groups": {
+      "sectionTitle": "按维度分组",
+      "ward": "坊/社",
+      "status": "状态",
+      "unit": "单位",
+      "updatedAt": "更新时间",
+      "unknown": "未确定",
+      "field": "字段：{{field}}",
+      "empty": "暂无分组数据",
+      "error": "无法加载分组数据。"
+    }
   },
   "dataScreen": {
     "title": "数字化数据",

@@ -147,19 +147,10 @@
   },
   "tabs": {
     "map": "地図",
-    "template": "Template",
     "data": "データ",
     "statistics": "統計",
     "tracking": "モニタリング",
     "profile": "マイページ"
-  },
-  "template": {
-    "badge": "APIベースのテンプレート",
-    "summary": "区・社 {{wards}} 件 · MVT レイヤー {{layers}} 件",
-    "wardsError": "区・社の境界を読み込めませんでした",
-    "legendTitle": "区・社ごとのオブジェクト数",
-    "noData": "データなし",
-    "statsError": "区・社ごとの統計を読み込めませんでした"
   },
   "dataOverview": {
     "openButton": "データ概要を見る",
@@ -173,55 +164,76 @@
   },
   "statistics": {
     "title": "データ統計",
+    "loading": "統計を読み込み中...",
+    "error": "統計を読み込めませんでした。",
+    "needLogin": "統計を見るには「個人」タブでログインしてください。",
+    "forbidden": "このアカウントには統計の閲覧権限がありません。",
     "filters": {
       "allLayers": "すべてのレイヤー",
       "allWards": "すべての行政区",
-      "today": "今日",
-      "asOfLabel": "データ基準日",
-      "searchPlaceholder": "コレクションを検索...",
-      "noResults": "コレクションが見つかりません"
+      "today": "今日まで",
+      "dateTo": "{{date}}まで"
     },
     "detail": {
-      "unreadable": "読み取り不可",
       "lastUpdated": "最終更新: {{date}}"
     },
-    "totalCard": "総データ件数",
+    "totalCard": "レコード総数",
+    "unknownWard": "区・社不明",
+    "notesTitle": "データに関する注記",
     "status": {
       "sectionTitle": "ステータス別",
+      "total": "合計",
       "recent": "最近更新",
       "stale": "更新が必要",
-      "unknown": "追跡不可",
-      "total": "合計",
-      "recentHint": "date_updatedが直近7日以内",
-      "staleHint": "date_updatedが7日より前",
-      "unknownHint": "信頼できる更新日時がありません"
+      "unknown": "追跡不可"
+    },
+    "processing": {
+      "sectionTitle": "処理状況",
+      "notMeasured": "未計測：レイヤーに処理状況のフィールドがありません。",
+      "completed": "完了",
+      "inProgress": "処理中",
+      "error": "エラー",
+      "overdue": "期限超過"
     },
     "ward": {
-      "sectionTitle": "行政区別",
-      "geometricNote": "実際の座標から算出（point-in-polygon）、全レイヤー合算",
-      "viewAll": "{{count}}件の行政区をすべて表示",
+      "sectionTitle": "区・社別",
+      "hint": "区・社をタップして絞り込み",
+      "viewAll": "全{{count}}区・社を表示",
       "collapse": "折りたたむ",
-      "unassigned": "行政区未割り当て",
-      "empty": "行政区データはまだありません"
+      "empty": "区・社のデータがありません",
+      "clearFilter": "絞り込み解除"
+    },
+    "layers": {
+      "sectionTitle": "データレイヤー別",
+      "hint": "レイヤーをタップして詳細を表示"
     },
     "trend": {
-      "sectionTitle": "更新の推移",
-      "note": "実際の更新日時を持つレイヤー（地籍、BTS基地局）の日別合計",
-      "range7": "7日間",
-      "range14": "14日間",
-      "range30": "30日間",
-      "empty": "推移データはまだありません",
-      "notAvailable": "このレイヤーには更新日時がありません",
-      "notWardFiltered": "行政区で絞り込まれていません"
+      "sectionTitle": "推移",
+      "day": "日別",
+      "month": "月別",
+      "quarter": "四半期別",
+      "empty": "推移データがありません",
+      "selectLayer": "推移を見るにはレイヤーを選択してください"
     },
-    "topLayers": {
-      "sectionTitle": "上位データレイヤー",
-      "viewAll": "すべて表示",
-      "collapse": "折りたたむ",
-      "unreadable": "読み取り不可"
+    "measures": {
+      "sectionTitle": "計測値",
+      "sum": "合計",
+      "avg": "平均",
+      "min": "最小",
+      "max": "最大",
+      "error": "計測値を読み込めませんでした。"
     },
-    "loading": "統計データを読み込み中...",
-    "error": "Directusから統計データを読み込めません。"
+    "groups": {
+      "sectionTitle": "次元別の集計",
+      "ward": "区・社",
+      "status": "ステータス",
+      "unit": "単位",
+      "updatedAt": "更新時期",
+      "unknown": "不明",
+      "field": "フィールド: {{field}}",
+      "empty": "集計データがありません",
+      "error": "集計データを読み込めませんでした。"
+    }
   },
   "dataScreen": {
     "title": "デジタル化データ",

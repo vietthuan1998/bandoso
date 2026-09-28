@@ -23,6 +23,8 @@ export type MvtLayerConfig = {
   maxzoom?: number;
   /** Trường ngày cập nhật (dimensions.updatedAtField), null nếu lớp không theo dõi. */
   updatedAtField: string | null;
+  /** Trường số được phép gửi cho /statistics/{key}/measures (dimensions.measureFields). */
+  measureFields: string[];
   /** Khoá của feature trong tile (9 lớp gisportal_* dùng "objectid", không phải "id"). */
   featureIdField: string;
   /** Tiêu đề = giá trị khác rỗng đầu tiên theo thứ tự các trường này. */

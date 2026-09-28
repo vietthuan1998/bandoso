@@ -1,6 +1,5 @@
 import { DCU_HOST_PATTERN, MAP_TILE_AUTH_HEADER, MAP_TILE_AUTH_HOST_PATTERN } from '@env';
 import { getStaticApiToken } from '../../config/apiAccessToken';
-import { getAccessToken } from '../auth/authClient';
 
 export type TileAuthRule = {
   id: string;
@@ -16,19 +15,14 @@ export const TILE_AUTH_RULE_IDS = [
 ] as const;
 
 /**
- * Host tile dcu.huecity.vn trả 403 cho request không có Authorization. Token
- * dùng: token phiên đăng nhập, nếu chưa đăng nhập thì token tĩnh
- * API_ACCESS_TOKEN trong .env (xem config/apiAccessToken.ts); không có cả hai
- * thì không có luật -> tile bị 403.
- *
- * Đọc lại mỗi lần gọi (không phải mảng tĩnh tính một lần khi load module) —
- * accessToken đổi theo phiên đăng nhập/refresh, không còn là secret tĩnh
- * DCU_BEARER_TOKEN nữa. Gọi lại hàm này (và đăng ký lại qua
- * TransformRequestManager.addHeader — addHeader cập nhật in-place theo id)
- * sau mỗi lần đăng nhập/refresh thành công.
+ * Host tile dcu.huecity.vn trả 403 cho request không có Authorization và 401
+ * cho token nó không nhận ra — kể cả accessToken phiên đăng nhập BFF
+ * (dcudata.cgb.vn), vì hai hệ thống xác thực tách rời. Nên tile luôn dùng
+ * token tĩnh API_ACCESS_TOKEN trong .env (xem config/apiAccessToken.ts),
+ * dù đã đăng nhập hay chưa; không có token tĩnh thì không có luật -> 403.
  */
 export function getTileAuthRules(): TileAuthRule[] {
-  const accessToken = getAccessToken() ?? getStaticApiToken();
+  const staticToken = getStaticApiToken();
   return [
     MAP_TILE_AUTH_HOST_PATTERN && MAP_TILE_AUTH_HEADER
       ? {
@@ -38,12 +32,12 @@ export function getTileAuthRules(): TileAuthRule[] {
           headerValue: MAP_TILE_AUTH_HEADER,
         }
       : null,
-    DCU_HOST_PATTERN && accessToken
+    DCU_HOST_PATTERN && staticToken
       ? {
           id: 'dcu-huecity-auth',
           hostPattern: DCU_HOST_PATTERN,
           headerName: 'Authorization',
-          headerValue: `Bearer ${accessToken}`,
+          headerValue: `Bearer ${staticToken}`,
         }
       : null,
   ].filter((rule): rule is TileAuthRule => rule !== null);
