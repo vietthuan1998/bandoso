@@ -8,8 +8,8 @@ import { dcuAxios } from '../api/dcuClient';
 import {
   buildReportExportBody,
   exportReport,
+  describeReportError,
   parseReportFilename,
-  reportErrorKind,
 } from './reportApi';
 
 const mockedPost = dcuAxios.post as jest.Mock;
@@ -22,6 +22,10 @@ class FakeFileReader {
   onerror: (() => void) | null = null;
   readAsDataURL(blob: { base64: string }) {
     this.result = `data:application/octet-stream;base64,${blob.base64}`;
+    this.onload?.();
+  }
+  readAsText(blob: { json: string }) {
+    this.result = blob.json;
     this.onload?.();
   }
 }
@@ -127,11 +131,37 @@ describe('exportReport', () => {
   });
 });
 
-describe('reportErrorKind', () => {
-  it('maps login, permission and not-implemented (pdf) errors', () => {
-    expect(reportErrorKind(httpError(401))).toBe('unauthorized');
-    expect(reportErrorKind(httpError(403))).toBe('forbidden');
-    expect(reportErrorKind(httpError(501))).toBe('notImplemented');
-    expect(reportErrorKind(new Error('offline'))).toBe('error');
+describe('describeReportError', () => {
+  it('maps login, permission and not-implemented (pdf) errors', async () => {
+    const kind = async (error: unknown) =>
+      (await describeReportError(error)).kind;
+    expect(await kind(httpError(401))).toBe('unauthorized');
+    expect(await kind(httpError(403))).toBe('forbidden');
+    expect(await kind(httpError(501))).toBe('notImplemented');
+    expect(await kind(new Error('offline'))).toBe('error');
+  });
+
+  it('branches on error.code read from a Blob body (responseType blob)', async () => {
+    const error = httpError(404);
+    const g = globalThis as unknown as { Blob: unknown };
+    const OriginalBlob = g.Blob;
+    // Blob giả: parseApiErrorAsync chỉ cần instanceof Blob + FileReader.readAsText.
+    class FakeBlob {
+      constructor(public json: string) {}
+    }
+    g.Blob = FakeBlob;
+    error.response!.data = new FakeBlob(
+      JSON.stringify({
+        error: { code: 'NOT_IMPLEMENTED', message: 'Chưa hỗ trợ PDF.', requestId: 'x1' },
+      }),
+    );
+    try {
+      const { kind, info } = await describeReportError(error);
+      expect(kind).toBe('notImplemented');
+      expect(info.message).toBe('Chưa hỗ trợ PDF.');
+      expect(info.requestId).toBe('x1');
+    } finally {
+      g.Blob = OriginalBlob;
+    }
   });
 });

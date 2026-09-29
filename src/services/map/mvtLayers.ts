@@ -27,8 +27,16 @@ export type MvtLayerConfig = {
   measureFields: string[];
   /** Khoá của feature trong tile (9 lớp gisportal_* dùng "objectid", không phải "id"). */
   featureIdField: string;
+  /** Khoá bản ghi trong Directus (items/{collection}/{id}). */
+  directusIdField: string;
+  /** Trường hình học của bản ghi Directus. */
+  geometryField: string;
   /** Tiêu đề = giá trị khác rỗng đầu tiên theo thứ tự các trường này. */
   titleFields: string[];
+  /** Trường đưa vào ô tìm kiếm. */
+  searchableFields: string[];
+  /** Cột hiển thị trong danh sách. */
+  listFields: string[];
   /** Thứ tự + danh sách trường của panel chi tiết. */
   detailFields: string[];
   /** Trường không bao giờ được hiển thị (hình học, id, trường hệ thống...). */

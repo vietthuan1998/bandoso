@@ -16,15 +16,18 @@ export function BottomTabBar({
   activeTab,
   onChangeTab,
   bottomInset,
+  hiddenTabs = [],
 }: {
   activeTab: AppTabId;
   onChangeTab: (tab: AppTabId) => void;
   bottomInset: number;
+  /** Tab ẩn theo quyền của tài khoản (vd. thiếu statistics.read). */
+  hiddenTabs?: AppTabId[];
 }) {
   const { t } = useTranslation();
   return (
     <View style={[styles.wrap, { paddingBottom: Math.max(bottomInset, 8) }]}>
-      {TABS.map(tab => {
+      {TABS.filter(tab => !hiddenTabs.includes(tab.id)).map(tab => {
         const active = tab.id === activeTab;
         const color = active ? COLORS.primary : COLORS.textFaint;
         return (

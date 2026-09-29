@@ -19,10 +19,15 @@ import { PROJECT_CATEGORIES } from '../../services/map/projectLayers';
 import { useMapRegistry } from '../../services/map/mapRegistry';
 import type { MvtLayerConfig } from '../../services/map/mvtLayers';
 import {
-  fetchRecordById,
+  fetchDataRecordsPage,
+  fetchFeatureRecord,
+  type DataRecord,
   type MapLocateRequest,
 } from '../../services/api/dataRecords';
 import { getFeatureId } from '../../services/gis/registryFeatureFields';
+import { extractRepresentativePoint } from '../../services/statistics/statisticsOverview';
+import { useAuthProfile } from '../../hooks/useAuthProfile';
+import { EMPTY_FILTERS } from '../../hooks/useSharedFilters';
 import {
   boundsOfGeometry,
   type GeoJsonGeometry,
@@ -47,6 +52,18 @@ import { MvtFeaturePanel } from '../../components/feature/MvtFeaturePanel';
 import { SearchSheet, type SearchResult } from '../search/SearchSheet';
 import { COLORS, SPACING } from '../../constants/theme';
 
+const FEATURE_SEARCH_DEBOUNCE_MS = 350;
+const FEATURE_SEARCH_PER_LAYER = 3;
+
+function formatSyncTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())} ${pad(d.getDate())}/${pad(
+    d.getMonth() + 1,
+  )}/${d.getFullYear()}`;
+}
+
 const COMBINING_DIACRITICS = /[̀-ͯ]/g;
 
 function normalizeSearchText(value: string): string {
@@ -61,10 +78,17 @@ function normalizeSearchText(value: string): string {
 
 export default function HueMapScreen({
   map,
+  mvtLayersVisible,
+  onMvtLayersVisibleChange: setMvtLayersVisible,
   focusRequest,
   onFocusHandled,
 }: {
   map: ReturnType<typeof useHueMap>;
+  /** Lớp chưa có trong map = đang tắt (registry tải bất đồng bộ). */
+  mvtLayersVisible: Record<string, boolean>;
+  onMvtLayersVisibleChange: (
+    update: (current: Record<string, boolean>) => Record<string, boolean>,
+  ) => void;
   focusRequest?: (MapLocateRequest & { token: number }) | null;
   onFocusHandled?: () => void;
 }) {
@@ -79,15 +103,21 @@ export default function HueMapScreen({
   const [dataOverviewOpen, setDataOverviewOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  const { layers: mvtLayers } = useMapRegistry();
-  // Lớp chưa có trong map = đang tắt (registry tải bất đồng bộ).
-  const [mvtLayersVisible, setMvtLayersVisible] = useState<
-    Record<string, boolean>
-  >({});
+  const registry = useMapRegistry();
+  const mvtLayers = registry.layers;
+  const profile = useAuthProfile();
+  const scopeLabel = profile
+    ? t('scope.label', {
+        scope:
+          profile.wardScope.type === 'all'
+            ? t('scope.all')
+            : t('scope.wards', { count: profile.wardScope.wardIds.length }),
+      })
+    : undefined;
   const [selectedMvtFeature, setSelectedMvtFeature] = useState<{
     layer: MvtLayerConfig;
     properties: Record<string, unknown>;
-    coordinates: [number, number];
+    coordinates: [number, number] | null;
   } | null>(null);
   const [highlightGeometry, setHighlightGeometry] =
     useState<GeoJsonGeometry | null>(null);
@@ -105,7 +135,7 @@ export default function HueMapScreen({
   const selectFeature = (
     layer: MvtLayerConfig,
     properties: Record<string, unknown>,
-    coordinates: [number, number],
+    coordinates: [number, number] | null,
     alreadyFull: boolean,
   ) => {
     const token = ++selectionTokenRef.current;
@@ -119,7 +149,7 @@ export default function HueMapScreen({
       const bounds = boundsOfGeometry(geometry);
       if (bounds) {
         focusBounds(bounds);
-      } else if (flyToPointIfNoBounds) {
+      } else if (flyToPointIfNoBounds && coordinates) {
         cameraRef.current?.setStop({
           center: coordinates,
           zoom: 17,
@@ -129,19 +159,19 @@ export default function HueMapScreen({
     };
 
     if (alreadyFull) {
-      applyGeom(properties.geom, true);
+      applyGeom(properties[layer.geometryField], true);
       return;
     }
     const id = getFeatureId(layer, properties);
     if (!id) return;
-    fetchRecordById(layer, id).then(full => {
+    fetchFeatureRecord(layer, id).then(full => {
       if (selectionTokenRef.current !== token || !full) return;
       setSelectedMvtFeature(current =>
         current && current.layer.id === layer.id
           ? { ...current, properties: full }
           : current,
       );
-      applyGeom(full.geom, false);
+      applyGeom(full[layer.geometryField], false);
     });
   };
 
@@ -151,6 +181,54 @@ export default function HueMapScreen({
   const resetBearing = () => {
     cameraRef.current?.setStop({ bearing: 0, pitch: 0, duration: 300 });
   };
+
+  // Tìm trong các lớp registry theo searchableFields (tài liệu mục 4).
+  const [featureMatches, setFeatureMatches] = useState<
+    Array<{ layer: MvtLayerConfig; record: DataRecord }>
+  >([]);
+  const [featureSearching, setFeatureSearching] = useState(false);
+  useEffect(() => {
+    const query = search.trim();
+    const searchLayers = mvtLayers.filter(
+      layer => layer.capabilities.search && layer.searchableFields.length > 0,
+    );
+    if (query.length < 2 || searchLayers.length === 0) {
+      setFeatureMatches([]);
+      setFeatureSearching(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setFeatureSearching(true);
+    const timer = setTimeout(() => {
+      const labels = {
+        yes: t('common.yes'),
+        no: t('common.no'),
+        male: t('common.male'),
+        female: t('common.female'),
+      };
+      Promise.all(
+        searchLayers.map(layer =>
+          fetchDataRecordsPage({
+            layer,
+            search: query,
+            filters: EMPTY_FILTERS,
+            labels,
+            pageSize: FEATURE_SEARCH_PER_LAYER,
+          }).then(page => page.items.map(record => ({ layer, record }))),
+        ),
+      )
+        .then(results => {
+          if (!cancelled) setFeatureMatches(results.flat());
+        })
+        .finally(() => {
+          if (!cancelled) setFeatureSearching(false);
+        });
+    }, FEATURE_SEARCH_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [search, mvtLayers, t]);
 
   const searchResults = useMemo<SearchResult[]>(() => {
     const query = normalizeSearchText(search);
@@ -229,8 +307,17 @@ export default function HueMapScreen({
         color: project.color,
       }));
 
-    return [...wardResults, ...projectResults];
-  }, [language, map.projects, map.wards, search, t]);
+    const featureResults = featureMatches.map(({ layer, record }) => ({
+      id: `${layer.id}:${record.id}`,
+      kind: 'feature' as const,
+      title: record.title,
+      layer: layer.label,
+      detail: record.lines.map(line => line.value).join(' · '),
+      color: layer.color,
+    }));
+
+    return [...wardResults, ...projectResults, ...featureResults];
+  }, [featureMatches, language, map.projects, map.wards, search, t]);
 
   useEffect(() => {
     if (!focusRequest) return undefined;
@@ -288,6 +375,26 @@ export default function HueMapScreen({
     if (result.kind === 'ward') {
       const ward = map.wards.find(item => item.id === result.id);
       if (ward) selectWardAndFocus(ward);
+      return;
+    }
+    if (result.kind === 'feature') {
+      const match = featureMatches.find(
+        ({ layer, record }) => `${layer.id}:${record.id}` === result.id,
+      );
+      if (!match) return;
+      const { layer, record } = match;
+      toggleMvtLayer(layer.id, true);
+      selectFeature(
+        layer,
+        record.properties,
+        extractRepresentativePoint(
+          record.properties[layer.geometryField] as
+            | { type: string; coordinates: unknown }
+            | null
+            | undefined,
+        ),
+        true,
+      );
       return;
     }
     const separator = result.id.indexOf(':');
@@ -348,6 +455,7 @@ export default function HueMapScreen({
       <Header
         language={language}
         topInset={insets.top}
+        scopeLabel={scopeLabel}
         onSearchPress={() => setSearchOpen(true)}
         onLanguagePress={() => setLanguageSheetOpen(true)}
       />
@@ -430,6 +538,17 @@ export default function HueMapScreen({
         onClose={() => setDataOverviewOpen(false)}
       />
 
+      {registry.stale && registry.syncedAt && !(map.error && !map.loading) ? (
+        <View style={[styles.staleBanner, { top: insets.top + 64 }]}>
+          <Icon name="info" size={14} color={COLORS.warningText} />
+          <Text style={styles.staleText} numberOfLines={2}>
+            {t('map.registryStale', {
+              time: formatSyncTime(registry.syncedAt),
+            })}
+          </Text>
+        </View>
+      ) : null}
+
       {!map.loading && map.error ? (
         <View style={[styles.errorBanner, { top: insets.top + 64 }]}>
           <Icon name="info" size={14} color={COLORS.critical} />
@@ -464,8 +583,9 @@ export default function HueMapScreen({
         onClose={() => setSearchOpen(false)}
         query={search}
         onQueryChange={setSearch}
-        results={searchResults.slice(0, 12)}
+        results={searchResults.slice(0, 20)}
         totalCount={searchResults.length}
+        searching={featureSearching}
         onSelect={handleSearchSelect}
       />
 
@@ -533,6 +653,21 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
   },
   errorText: { flex: 1, fontSize: 11, color: COLORS.critical },
+  staleBanner: {
+    position: 'absolute',
+    left: SPACING.lg,
+    right: SPACING.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: 'rgba(255,248,230,0.97)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#f3dfa9',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  staleText: { flex: 1, fontSize: 11, color: COLORS.warningText },
   compassButton: { position: 'absolute', right: SPACING.md },
   langSheetHeader: {
     flexDirection: 'row',

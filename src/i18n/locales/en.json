@@ -20,7 +20,8 @@
     "no": "No",
     "male": "Male",
     "female": "Female",
-    "back": "Back"
+    "back": "Back",
+    "requestId": "(Reference: {{id}})"
   },
   "header": {
     "title": "Hue City Digital Map System",
@@ -49,7 +50,8 @@
     "unnamedProject": "Unnamed project",
     "resetBearing": "Reset map to north",
     "locateMe": "My location",
-    "locationUnavailable": "Unable to determine your location"
+    "locationUnavailable": "Unable to determine your location",
+    "registryStale": "Using saved layer configuration · last synced {{time}}"
   },
   "search": {
     "administrativeLayer": "Administrative boundaries",
@@ -159,11 +161,12 @@
     "openButton": "View data overview",
     "title": "Data overview",
     "totalObjects": "Total objects",
-    "collectionsReadable": "Collections readable",
     "groupsSectionTitle": "Data by group",
-    "footerNote": "Figures aggregated from the Directus collections currently accessible.",
+    "footerNote": "Figures are finalised by the statistics server (/statistics/summary), not computed on the device.",
     "loading": "Aggregating figures...",
-    "error": "Could not load the data overview."
+    "error": "Could not load the data overview.",
+    "unknownWard": "Ward not determined",
+    "otherGroup": "Other"
   },
   "statistics": {
     "title": "Data statistics",
@@ -174,7 +177,6 @@
     "filters": {
       "allLayers": "All layers",
       "allWards": "All wards",
-      "today": "Up to today",
       "dateTo": "Up to {{date}}"
     },
     "detail": {
@@ -185,10 +187,7 @@
     "notesTitle": "Data notes",
     "status": {
       "sectionTitle": "By status",
-      "total": "Total",
-      "recent": "Recently updated",
-      "stale": "Needs update",
-      "unknown": "Not tracked"
+      "total": "Total"
     },
     "processing": {
       "sectionTitle": "Processing status",
@@ -250,14 +249,17 @@
     "emptyTitle": "No matching data",
     "emptyMessage": "Try a different keyword or filter.",
     "loadMore": "Load more",
-    "wardUnsupportedHint": "This layer has no reliable ward data to filter by.",
+    "wardUnsupportedHint": "This layer's list cannot be filtered by ward yet (no ward field, or sign-in required). See ward figures in the Statistics tab.",
     "unreadableTitle": "No access permission",
     "unreadableMessage": "This account is not yet granted read access to this layer's data.",
     "unreadableLayersHint": "{{count}} layers unreadable due to missing access permission",
     "detail": {
       "title": "Data detail",
       "noCoordinates": "No coordinates available to locate"
-    }
+    },
+    "dateUnsupportedHint": "This layer has no update-time field, so it cannot be filtered by time.",
+    "searchUnsupportedHint": "This layer does not support search.",
+    "unsupportedLayersHint": "{{count}} layers do not support the current filters and are hidden"
   },
   "comingSoon": {
     "title": "Coming soon",
@@ -304,5 +306,34 @@
     "locationAndroid": "Downloads/{{folder}}/{{name}}",
     "locationIos": "Files › On My iPhone › {{folder}} › {{name}}",
     "savedTo": "Report saved to {{location}}"
+  },
+  "scope": {
+    "label": "Scope: {{scope}}",
+    "all": "Whole city",
+    "wards": "{{count}} wards/communes"
+  },
+  "account": {
+    "fullName": "Full name",
+    "username": "Username",
+    "unit": "Unit",
+    "roles": "Roles",
+    "scope": "Data scope",
+    "roleNames": {
+      "guest": "Guest / public",
+      "ward_officer": "Ward officer",
+      "specialist": "Specialist",
+      "city_leader": "City leader",
+      "data_admin": "Data administrator",
+      "system_admin": "System administrator"
+    }
+  },
+  "filters": {
+    "wardCount": "{{count}} wards/communes",
+    "dateRange": "{{from}} – {{to}}",
+    "dateFrom": "From {{date}}",
+    "anyTime": "Any time",
+    "wardsTitle": "Select wards/communes",
+    "dateTitle": "Time range",
+    "done": "Done"
   }
 }

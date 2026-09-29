@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { classifyFreshness, type LayerFreshness } from '../../utils/freshness';
 import {
   fetchIotHistoryPage,
   fetchIotStationDetail,
@@ -21,14 +20,13 @@ import {
   type IotStationDetail,
 } from '../../services/api/iotReadings';
 import type { MvtLayerConfig } from '../../services/map/mvtLayers';
+import { pad2 } from '../../services/gis/normalizeFeatureFields';
 import {
-  normalizeFeatureFields,
-  pad2,
-  pickFeatureTitle,
-} from '../../services/gis/normalizeFeatureFields';
+  buildFeatureDetailFields,
+  resolveFeatureTitle,
+} from '../../services/gis/registryFeatureFields';
 import { TrendChart } from '../../components/statistics/TrendChart';
 import { FeatureFieldList } from '../../components/feature/FeatureFieldList';
-import { FRESHNESS_COLOR, FRESHNESS_ICON } from '../../components/common/freshnessUi';
 import { Icon } from '../../components/common/Icon';
 import { CHART_WIDTH, COLORS, RADIUS, SPACING } from '../../constants/theme';
 
@@ -63,24 +61,28 @@ export function FeatureDetailScreen({
   const insets = useSafeAreaInsets();
 
   const layerLabel = layer.label;
-  const title = pickFeatureTitle(properties) ?? layerLabel;
+  // Theo registry: titleFields, detailFields, hiddenFields... (tài liệu mục 4).
+  const title = resolveFeatureTitle(layer, properties);
   const fields = useMemo(
     () =>
-      normalizeFeatureFields(properties, {
+      buildFeatureDetailFields(layer, properties, {
         yes: t('common.yes'),
         no: t('common.no'),
         male: t('common.male'),
         female: t('common.female'),
       }),
-    [properties, t],
+    [layer, properties, t],
   );
 
-  const rawUpdatedAt = properties.date_updated;
+  // Chỉ hiển thị mốc cập nhật; không tự phân loại "mới/cũ" — công thức "đã
+  // cập nhật" chưa được chốt (tài liệu mục 12).
+  const rawUpdatedAt = layer.updatedAtField
+    ? properties[layer.updatedAtField]
+    : null;
   const updatedAtIso =
     typeof rawUpdatedAt === 'string' && rawUpdatedAt.trim()
       ? rawUpdatedAt
       : null;
-  const freshness = updatedAtIso ? classifyFreshness(updatedAtIso) : null;
 
   const iotKind = iotParameterForLayer(layer.id);
   const iotStationId = iotKind
@@ -232,7 +234,6 @@ export function FeatureDetailScreen({
                 layer={layer}
                 title={title}
                 layerLabel={layerLabel}
-                freshness={freshness}
                 updatedAtIso={updatedAtIso}
               />
 
@@ -336,7 +337,6 @@ export function FeatureDetailScreen({
             layer={layer}
             title={title}
             layerLabel={layerLabel}
-            freshness={freshness}
             updatedAtIso={updatedAtIso}
           />
 
@@ -408,13 +408,11 @@ function HeroCard({
   layer,
   title,
   layerLabel,
-  freshness,
   updatedAtIso,
 }: {
   layer: MvtLayerConfig;
   title: string;
   layerLabel: string;
-  freshness: LayerFreshness | null;
   updatedAtIso: string | null;
 }) {
   const { t } = useTranslation();
@@ -434,35 +432,13 @@ function HeroCard({
         </View>
       </View>
 
-      {freshness ? (
+      {updatedAtIso ? (
         <View style={styles.heroStatusRow}>
-          <View
-            style={[
-              styles.freshnessBadge,
-              { backgroundColor: `${FRESHNESS_COLOR[freshness]}1f` },
-            ]}
-          >
-            <Icon
-              name={FRESHNESS_ICON[freshness]}
-              size={12}
-              color={FRESHNESS_COLOR[freshness]}
-            />
-            <Text
-              style={[
-                styles.freshnessBadgeText,
-                { color: FRESHNESS_COLOR[freshness] },
-              ]}
-            >
-              {t(`statistics.status.${freshness}`)}
-            </Text>
-          </View>
-          {updatedAtIso ? (
-            <Text style={styles.heroUpdatedText} numberOfLines={1}>
-              {t('statistics.detail.lastUpdated', {
-                date: formatDateTime(updatedAtIso),
-              })}
-            </Text>
-          ) : null}
+          <Text style={styles.heroUpdatedText} numberOfLines={1}>
+            {t('statistics.detail.lastUpdated', {
+              date: formatDateTime(updatedAtIso),
+            })}
+          </Text>
         </View>
       ) : null}
     </View>
@@ -567,15 +543,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.borderSoft,
   },
-  freshnessBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: 999,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-  },
-  freshnessBadgeText: { fontSize: 11, fontWeight: '700' },
   heroUpdatedText: { fontSize: 11, color: COLORS.textFaint, flexShrink: 1 },
 
   section: {

@@ -31,6 +31,7 @@ import {
   TILE_AUTH_RULE_IDS,
 } from '../../services/map/mapTileAuth';
 import { subscribeToAccessTokenChange } from '../../services/auth/authClient';
+import { subscribeToDirectusAuthChange } from '../../services/api/directusAuth';
 import { useMapRegistry } from '../../services/map/mapRegistry';
 import {
   PROJECT_CATEGORIES,
@@ -74,12 +75,10 @@ const EMPTY_FEATURE_COLLECTION: GeoJSON.FeatureCollection = {
 };
 
 /**
- * Đăng ký lại header xác thực tile với accessToken hiện tại.
+ * Đăng ký lại header xác thực tile theo token hiện hành (mapTileAuth.ts).
  * TransformRequestManager.addHeader cập nhật in-place theo id (giữ nguyên
- * thứ tự pipeline), nên gọi lại an toàn — không có guard "chỉ chạy một lần"
- * như trước, vì accessToken đổi theo phiên đăng nhập/refresh (không còn là
- * secret tĩnh DCU_BEARER_TOKEN nữa). Gọi hàm này lúc mount, sau khi đăng
- * nhập thành công, và sau mỗi lần refresh token thành công.
+ * thứ tự pipeline), nên gọi lại an toàn. Gọi lúc mount, khi accessToken đổi
+ * (đăng nhập/refresh/đăng xuất) và khi biết host tile có nhận accessToken không.
  */
 export function ensureTileAuthHeader() {
   const rules = getTileAuthRules();
@@ -103,6 +102,10 @@ export function ensureTileAuthHeader() {
 // tile mỗi khi accessToken đổi (đăng nhập lần đầu hoặc refresh âm thầm),
 // kể cả khi không có màn hình bản đồ nào đang mount lúc đó xảy ra.
 subscribeToAccessTokenChange(() => {
+  ensureTileAuthHeader();
+});
+// Host tile vừa xác nhận nhận / không nhận accessToken (directusAuth.ts).
+subscribeToDirectusAuthChange(() => {
   ensureTileAuthHeader();
 });
 

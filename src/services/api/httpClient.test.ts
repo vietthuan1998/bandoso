@@ -1,4 +1,3 @@
-jest.mock('../auth/persistToken', () => ({ getToken: jest.fn(async () => null) }));
 jest.mock('../../config/apiAccessToken', () => ({
   getStaticApiToken: () => 'static-token',
   isApiBaseUrl: (url?: string) => !!url && url.startsWith('https://dcu.huecity.vn/'),

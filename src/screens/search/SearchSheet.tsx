@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import {
+  ActivityIndicator,
   FlatList,
   Pressable,
   StyleSheet,
@@ -17,7 +18,7 @@ function Separator() {
 
 export type SearchResult = {
   id: string;
-  kind: 'ward' | 'project';
+  kind: 'ward' | 'project' | 'feature';
   title: string;
   layer: string;
   detail: string;
@@ -32,6 +33,7 @@ export function SearchSheet({
   results,
   totalCount,
   onSelect,
+  searching = false,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -40,6 +42,8 @@ export function SearchSheet({
   results: SearchResult[];
   totalCount: number;
   onSelect: (result: SearchResult) => void;
+  /** Đang tìm trong các lớp dữ liệu (gọi mạng). */
+  searching?: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -77,9 +81,14 @@ export function SearchSheet({
             <Text style={styles.resultsHeaderText}>
               {t('header.searchResults')}
             </Text>
-            <Text style={styles.resultsHeaderText}>
-              {t('header.resultCount', { count: totalCount })}
-            </Text>
+            <View style={styles.resultsHeaderRight}>
+              {searching ? (
+                <ActivityIndicator size="small" color={COLORS.primary} />
+              ) : null}
+              <Text style={styles.resultsHeaderText}>
+                {t('header.resultCount', { count: totalCount })}
+              </Text>
+            </View>
           </View>
           <FlatList
             data={results}
@@ -115,13 +124,11 @@ export function SearchSheet({
             )}
             ItemSeparatorComponent={Separator}
             ListFooterComponent={
-              totalCount > results.length
-                ? () => (
-                    <Text style={styles.footerText}>
-                      {t('header.showingFirst', { count: results.length })}
-                    </Text>
-                  )
-                : undefined
+              totalCount > results.length ? (
+                <Text style={styles.footerText}>
+                  {t('header.showingFirst', { count: results.length })}
+                </Text>
+              ) : undefined
             }
           />
         </>
@@ -164,6 +171,7 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.borderSoft,
   },
   resultsHeaderText: { fontSize: 10, color: COLORS.textFaint },
+  resultsHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   list: { flexGrow: 0 },
   resultRow: {
     flexDirection: 'row',

@@ -9,18 +9,28 @@ export function Header({
   onSearchPress,
   onLanguagePress,
   topInset,
+  scopeLabel,
 }: {
   language: SupportedLanguage;
   onSearchPress: () => void;
   onLanguagePress: () => void;
   topInset: number;
+  /** Phạm vi dữ liệu của tài khoản (wardScope, tài liệu mục 10). */
+  scopeLabel?: string;
 }) {
   const { t } = useTranslation();
   return (
     <View style={[styles.wrap, { paddingTop: topInset + SPACING.sm }]}>
-      <Text style={styles.title} numberOfLines={1}>
-        {t('header.title')}
-      </Text>
+      <View style={styles.titleCol}>
+        <Text style={styles.title} numberOfLines={1}>
+          {t('header.title')}
+        </Text>
+        {scopeLabel ? (
+          <Text style={styles.scope} numberOfLines={1}>
+            {scopeLabel}
+          </Text>
+        ) : null}
+      </View>
       <Pressable
         onPress={onLanguagePress}
         style={styles.langButton}
@@ -98,8 +108,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  titleCol: { flex: 1 },
+  scope: { fontSize: 10, color: COLORS.textMuted, marginTop: 1 },
   title: {
-    flex: 1,
     fontSize: 14,
     fontWeight: '800',
     color: COLORS.primaryDark,

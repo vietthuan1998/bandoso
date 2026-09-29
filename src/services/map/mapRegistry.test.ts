@@ -11,6 +11,16 @@ import {
 
 jest.mock('axios', () => ({ __esModule: true, default: { get: jest.fn() } }));
 
+let mockAccessToken: string | null = null;
+let mockTokenListener: ((token: string | null) => void) | null = null;
+jest.mock('../auth/authClient', () => ({
+  getAccessToken: () => mockAccessToken,
+  subscribeToAccessTokenChange: (listener: (token: string | null) => void) => {
+    mockTokenListener = listener;
+    return () => {};
+  },
+}));
+
 const mockedGet = axios.get as jest.Mock;
 
 const BTS: RegistryLayer = {
@@ -70,7 +80,11 @@ describe('normalizeRegistryLayer', () => {
       updatedAtField: 'date_updated',
       measureFields: [],
       featureIdField: 'id',
+      directusIdField: 'id',
+      geometryField: 'geom',
       titleFields: ['station_code'],
+      searchableFields: [],
+      listFields: [],
       detailFields: ['station_code', 'operation_status'],
       hiddenFields: ['id', 'geom'],
       fieldLabels: { station_code: 'Mã trạm', operation_status: 'Trạng thái' },
@@ -118,6 +132,7 @@ describe('loadMapRegistry', () => {
   beforeEach(async () => {
     resetMapRegistryForTests();
     mockedGet.mockReset();
+    mockAccessToken = null;
     await AsyncStorage.clear();
   });
 
@@ -145,8 +160,11 @@ describe('loadMapRegistry', () => {
     resetMapRegistryForTests();
     mockedGet.mockRejectedValue(new Error('offline'));
 
-    const { layers } = await getMapRegistry();
-    expect(layers.map(layer => layer.id)).toEqual(['bts']);
+    const result = await getMapRegistry();
+    expect(result.layers.map(layer => layer.id)).toEqual(['bts']);
+    // Đang dùng bản đã lưu -> phải báo và kèm thời điểm đồng bộ gần nhất.
+    expect(result.stale).toBe(true);
+    expect(result.syncedAt).toEqual(expect.any(String));
   });
 
   it('reports an error when there is neither network nor cache', async () => {
@@ -155,5 +173,36 @@ describe('loadMapRegistry', () => {
     const result = await loadMapRegistry();
 
     expect(result).toEqual({ status: 'error', layers: [], groups: [] });
+  });
+
+  it('sends the access token when signed in and never reuses the public cache', async () => {
+    mockRegistryResponses('r1', [BTS]);
+    await loadMapRegistry();
+
+    mockAccessToken = 'access-1';
+    mockedGet.mockClear();
+    mockRegistryResponses('r1', [BTS]);
+    mockTokenListener?.('access-1');
+    await loadMapRegistry();
+
+    const layersCall = mockedGet.mock.calls.find(([url]) =>
+      String(url).endsWith('/map/layers'),
+    );
+    // Cùng registryVersion nhưng khác đối tượng -> vẫn tải lại /map/layers.
+    expect(layersCall).toBeDefined();
+    expect(layersCall?.[1].headers).toEqual({
+      Authorization: 'Bearer access-1',
+    });
+  });
+
+  it('refreshes the sync time without rebuilding layers when the version is unchanged', async () => {
+    mockRegistryResponses('r1', [BTS]);
+    const first = await loadMapRegistry();
+    const layers = first.layers;
+
+    const second = await loadMapRegistry();
+
+    expect(second.layers).toBe(layers);
+    expect(second.stale).toBe(false);
   });
 });

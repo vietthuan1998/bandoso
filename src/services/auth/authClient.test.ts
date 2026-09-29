@@ -4,6 +4,9 @@ import {
   AuthError,
   bootstrapSession,
   getAccessToken,
+  getProfile,
+  hasPermission,
+  loadProfile,
   login,
   logout,
   refreshAccessToken,
@@ -164,6 +167,53 @@ describe('refreshAccessToken', () => {
   });
 });
 
+describe('refreshAccessToken on transient failures', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    await Keychain.setGenericPassword('refreshToken', 'refresh-keep', {
+      service: 'huemaps-refresh-token',
+    });
+  });
+
+  it('keeps the refresh token and does not end the session when the network is down', async () => {
+    mockedAxios.isAxiosError.mockReturnValue(true);
+    mockedAxios.post.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: undefined,
+    });
+    const expiry = jest.fn();
+    const unsubscribe = subscribeToSessionExpiry(expiry);
+
+    await expect(refreshAccessToken()).rejects.toMatchObject({
+      kind: 'network',
+    });
+
+    const stored = await Keychain.getGenericPassword({
+      service: 'huemaps-refresh-token',
+    });
+    expect(stored !== false && stored.password).toBe('refresh-keep');
+    expect(expiry).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it('keeps the refresh token on a 5xx from the server', async () => {
+    mockedAxios.isAxiosError.mockReturnValue(true);
+    mockedAxios.post.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 502, data: { error: { code: 'UPSTREAM_ERROR' } } },
+    });
+
+    await expect(refreshAccessToken()).rejects.toMatchObject({
+      kind: 'unknown',
+    });
+
+    const stored = await Keychain.getGenericPassword({
+      service: 'huemaps-refresh-token',
+    });
+    expect(stored !== false && stored.password).toBe('refresh-keep');
+  });
+});
+
 describe('logout', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -198,6 +248,84 @@ describe('logout', () => {
       service: 'huemaps-refresh-token',
     });
     expect(stored).toBe(false);
+  });
+
+  it('sends the access token and refresh token so the server can revoke the session', async () => {
+    mockedAxios.post.mockResolvedValueOnce({});
+
+    await logout();
+
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/logout'),
+      { refreshToken: 'refresh-old' },
+      expect.objectContaining({
+        headers: { Authorization: 'Bearer access-123' },
+      }),
+    );
+  });
+});
+
+describe('profile (/auth/me)', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    await Keychain.resetGenericPassword({ service: 'huemaps-refresh-token' });
+  });
+
+  it('exposes permissions from the login response immediately, then the /auth/me profile', async () => {
+    mockedAxios.get.mockReturnValue(new Promise(() => {}));
+    mockedAxios.post.mockResolvedValueOnce({
+      data: {
+        data: {
+          accessToken: 'access-p',
+          refreshToken: 'refresh-p',
+          tokenType: 'Bearer',
+          expiresIn: 3600,
+          roles: ['ward_officer'],
+          permissions: ['data.read', 'statistics.read'],
+          wardScopeType: 'ward',
+        },
+      },
+    });
+
+    await login('canbo01', 'matkhau');
+
+    expect(hasPermission(getProfile(), 'statistics.read')).toBe(true);
+    expect(hasPermission(getProfile(), 'report.export')).toBe(false);
+    expect(getProfile()?.wardScope.type).toBe('ward');
+
+    mockedAxios.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          id: 'u1',
+          username: 'canbo01',
+          fullName: 'Nguyễn Văn A',
+          unit: 'UBND phường Thuận An',
+          roles: ['ward_officer'],
+          permissions: ['data.read', 'statistics.read'],
+          wardScope: { type: 'ward', wardIds: ['19900', '19858'] },
+          allowedCollections: ['thua_dat'],
+        },
+      },
+    });
+    const profile = await loadProfile();
+
+    expect(mockedAxios.get).toHaveBeenLastCalledWith(
+      expect.stringContaining('/auth/me'),
+      expect.objectContaining({
+        headers: { Authorization: 'Bearer access-p' },
+      }),
+    );
+    expect(profile?.fullName).toBe('Nguyễn Văn A');
+    expect(profile?.wardScope).toEqual({
+      type: 'ward',
+      wardIds: ['19900', '19858'],
+    });
+  });
+
+  it('clears the profile on logout', async () => {
+    mockedAxios.post.mockResolvedValueOnce({});
+    await logout();
+    expect(getProfile()).toBeNull();
   });
 });
 

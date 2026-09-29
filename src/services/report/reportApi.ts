@@ -1,6 +1,11 @@
-import axios from 'axios';
 import { DCU_API_BASE_URL } from '../../config/dcuAuthConfig';
 import { dcuAxios, dcuHeaders } from '../api/dcuClient';
+import {
+  isForbidden,
+  isUnauthorized,
+  parseApiErrorAsync,
+  type ApiErrorInfo,
+} from '../api/apiError';
 
 /**
  * POST /reports/export (tài liệu mục 8, cần quyền report.export) — trả file
@@ -120,12 +125,22 @@ export type ReportErrorKind =
   | 'notImplemented'
   | 'error';
 
-export function reportErrorKind(error: unknown): ReportErrorKind {
-  if (axios.isAxiosError(error)) {
-    const status = error.response?.status;
-    if (status === 401) return 'unauthorized';
-    if (status === 403) return 'forbidden';
-    if (status === 501) return 'notImplemented';
+export function reportErrorKind(info: ApiErrorInfo): ReportErrorKind {
+  if (isUnauthorized(info)) return 'unauthorized';
+  if (isForbidden(info)) return 'forbidden';
+  if (info.code === 'NOT_IMPLEMENTED' || (!info.code && info.status === 501)) {
+    return 'notImplemented';
   }
   return 'error';
+}
+
+/**
+ * Lỗi xuất báo cáo: thân lỗi nằm trong Blob (responseType 'blob') nên phải
+ * đọc bất đồng bộ để lấy error.code / message / requestId.
+ */
+export async function describeReportError(
+  error: unknown,
+): Promise<{ kind: ReportErrorKind; info: ApiErrorInfo }> {
+  const info = await parseApiErrorAsync(error);
+  return { kind: reportErrorKind(info), info };
 }

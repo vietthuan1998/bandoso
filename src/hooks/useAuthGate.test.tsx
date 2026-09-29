@@ -7,7 +7,13 @@ jest.mock('axios', () => {
   const actualAxios = jest.requireActual('axios');
   return {
     __esModule: true,
-    default: { ...actualAxios, post: jest.fn(), isAxiosError: actualAxios.isAxiosError },
+    default: {
+      ...actualAxios,
+      post: jest.fn(),
+      // /auth/me: không gọi mạng thật trong test.
+      get: jest.fn(() => Promise.reject(new Error('offline'))),
+      isAxiosError: actualAxios.isAxiosError,
+    },
   };
 });
 const mockedAxios = require('axios').default;

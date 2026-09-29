@@ -20,7 +20,8 @@
     "no": "いいえ",
     "male": "男性",
     "female": "女性",
-    "back": "戻る"
+    "back": "戻る",
+    "requestId": "(照会番号: {{id}})"
   },
   "header": {
     "title": "フエ市デジタル地図システム",
@@ -49,7 +50,8 @@
     "unnamedProject": "名称未設定のプロジェクト",
     "resetBearing": "地図を北向きに戻す",
     "locateMe": "現在地",
-    "locationUnavailable": "現在地を取得できません"
+    "locationUnavailable": "現在地を取得できません",
+    "registryStale": "保存済みのレイヤー設定を使用中 · 最終同期 {{time}}"
   },
   "search": {
     "administrativeLayer": "行政境界",
@@ -159,11 +161,12 @@
     "openButton": "データ概要を見る",
     "title": "データ概要",
     "totalObjects": "オブジェクト総数",
-    "collectionsReadable": "読み取り可能なコレクション",
     "groupsSectionTitle": "グループ別データ",
-    "footerNote": "現在アクセス可能なDirectusコレクションから集計した数値です。",
+    "footerNote": "数値は統計サーバー(/statistics/summary)で確定したもので、端末では計算していません。",
     "loading": "集計中...",
-    "error": "データ概要を読み込めませんでした。"
+    "error": "データ概要を読み込めませんでした。",
+    "unknownWard": "区・社未確定",
+    "otherGroup": "その他"
   },
   "statistics": {
     "title": "データ統計",
@@ -174,7 +177,6 @@
     "filters": {
       "allLayers": "すべてのレイヤー",
       "allWards": "すべての行政区",
-      "today": "今日まで",
       "dateTo": "{{date}}まで"
     },
     "detail": {
@@ -185,10 +187,7 @@
     "notesTitle": "データに関する注記",
     "status": {
       "sectionTitle": "ステータス別",
-      "total": "合計",
-      "recent": "最近更新",
-      "stale": "更新が必要",
-      "unknown": "追跡不可"
+      "total": "合計"
     },
     "processing": {
       "sectionTitle": "処理状況",
@@ -250,14 +249,17 @@
     "emptyTitle": "該当するデータがありません",
     "emptyMessage": "別のキーワードやフィルターをお試しください。",
     "loadMore": "もっと見る",
-    "wardUnsupportedHint": "このレイヤーには信頼できる行政区データがありません。",
+    "wardUnsupportedHint": "このレイヤーの一覧はまだ区・社で絞り込めません(区・社フィールドがないか、ログインが必要です)。区・社別の数値は統計タブで確認してください。",
     "unreadableTitle": "アクセス権限がありません",
     "unreadableMessage": "このアカウントはこのレイヤーのデータ読み取り権限がまだ付与されていません。",
     "unreadableLayersHint": "{{count}} 件のレイヤーはアクセス権限がなく読み取れません",
     "detail": {
       "title": "データ詳細",
       "noCoordinates": "位置を特定できる座標がありません"
-    }
+    },
+    "dateUnsupportedHint": "このレイヤーには更新日時フィールドがないため、期間で絞り込めません。",
+    "searchUnsupportedHint": "このレイヤーは検索に対応していません。",
+    "unsupportedLayersHint": "{{count}} 件のレイヤーは現在の絞り込みに対応していないため表示されません"
   },
   "comingSoon": {
     "title": "近日公開",
@@ -304,5 +306,34 @@
     "locationAndroid": "ダウンロード/{{folder}}/{{name}}",
     "locationIos": "ファイル › このiPhone内 › {{folder}} › {{name}}",
     "savedTo": "レポートを {{location}} に保存しました"
+  },
+  "scope": {
+    "label": "範囲: {{scope}}",
+    "all": "市全域",
+    "wards": "{{count}} 区・社"
+  },
+  "account": {
+    "fullName": "氏名",
+    "username": "ユーザー名",
+    "unit": "所属",
+    "roles": "役割",
+    "scope": "データ範囲",
+    "roleNames": {
+      "guest": "ゲスト / 一般",
+      "ward_officer": "区・社職員",
+      "specialist": "専門職員",
+      "city_leader": "市指導部",
+      "data_admin": "データ管理者",
+      "system_admin": "システム管理者"
+    }
+  },
+  "filters": {
+    "wardCount": "{{count}} 区・社",
+    "dateRange": "{{from}} – {{to}}",
+    "dateFrom": "{{date}} 以降",
+    "anyTime": "全期間",
+    "wardsTitle": "区・社を選択",
+    "dateTitle": "期間",
+    "done": "完了"
   }
 }

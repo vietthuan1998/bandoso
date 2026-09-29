@@ -1,4 +1,3 @@
-import { dcuAxios, dcuHeaders, dcuItemsUrl } from '../api/dcuClient';
 import type { MvtLayerConfig } from '../map/mvtLayers';
 
 /**
@@ -15,49 +14,6 @@ export function layerHasDateField(layer: MvtLayerConfig): boolean {
 }
 
 export type TrendPoint = { date: string; label: string; count: number };
-
-const WARD_COLLECTION = 'thua_dat';
-const WARD_GROUP_FIELD = 'ten_xa';
-
-export type WardBreakdownItem = {
-  ward: string;
-  fullName: string;
-  count: number;
-};
-
-function formatWardShortName(tenXa: string): string {
-  return tenXa.replace(/^(Phường|Xã|Thị trấn)\s+/i, '');
-}
-
-/** Danh sách phường xã có trong thửa đất (lọc màn Dữ liệu theo ten_xa). */
-export async function fetchWardDirectory(): Promise<WardBreakdownItem[]> {
-  try {
-    const response = await dcuAxios.get<{
-      data: Array<{ [WARD_GROUP_FIELD]: string; count: string }>;
-    }>(dcuItemsUrl(WARD_COLLECTION), {
-      params: {
-        'aggregate[count]': '*',
-        'groupBy[]': WARD_GROUP_FIELD,
-        'sort[]': '-count',
-      },
-      headers: dcuHeaders(),
-    });
-
-    const items: WardBreakdownItem[] = [];
-    for (const row of response.data.data ?? []) {
-      const name = (row[WARD_GROUP_FIELD] ?? '').trim();
-      if (!name) continue;
-      items.push({
-        ward: formatWardShortName(name),
-        fullName: name,
-        count: Number(row.count) || 0,
-      });
-    }
-    return items.sort((a, b) => b.count - a.count);
-  } catch {
-    return [];
-  }
-}
 
 export function extractRepresentativePoint(
   geom: { type: string; coordinates: unknown } | null | undefined,

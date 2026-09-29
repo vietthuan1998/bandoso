@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,9 +9,6 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import DateTimePicker, {
-  DateTimePickerAndroid,
-} from '@react-native-community/datetimepicker';
 import { BottomSheet } from '../../components/common/BottomSheet';
 import {
   FilterChip,
@@ -23,10 +19,25 @@ import { CHART_WIDTH, COLORS, RADIUS, SPACING } from '../../constants/theme';
 import { MEASURE_UNITS } from '../../constants/measureUnits';
 import { useMapRegistry } from '../../services/map/mapRegistry';
 import {
+  fetchCatalogStatuses,
   fetchCatalogWards,
+  type CatalogStatus,
   type CatalogWard,
 } from '../../services/api/catalogApi';
-import { pad2 } from '../../services/gis/normalizeFeatureFields';
+import {
+  describeApiError,
+  parseApiError,
+  type ApiErrorInfo,
+} from '../../services/api/apiError';
+import { hasPermission } from '../../services/auth/authClient';
+import { useAuthProfile } from '../../hooks/useAuthProfile';
+import { useSharedFilters } from '../../hooks/useSharedFilters';
+import {
+  DateRangeSheet,
+  WardFilterSheet,
+  dateRangeLabel,
+  wardFilterLabel,
+} from '../../components/filter/FilterSheets';
 import {
   fetchStatisticsGroups,
   fetchStatisticsMeasures,
@@ -75,17 +86,9 @@ const PROCESSING_COLOR: Record<(typeof PROCESSING_KEYS)[number], string> = {
   error: COLORS.critical,
   overdue: COLORS.warn,
 };
-const STATUS_PALETTE = [
-  '#0878bd',
-  '#16a34a',
-  '#f59e0b',
-  '#dc2626',
-  '#8b5cf6',
-  '#0d9488',
-  '#f97316',
-  '#c026d3',
-  '#64748b',
-];
+// Màu trạng thái lấy từ /catalog/statuses (tài liệu mục 6); mã chưa có
+// trong danh mục thì tô trung tính thay vì tự đặt bảng màu.
+const UNKNOWN_STATUS_COLOR = '#94a3b8';
 
 function formatNumber(value: number | null | undefined): string {
   return value === null || value === undefined
@@ -98,34 +101,32 @@ function formatPercent(value: number, fractionDigits = 1): string {
     maximumFractionDigits: fractionDigits,
   })}%`;
 }
-function formatDateIso(iso: string): string {
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
-}
-function toIsoDate(d: Date): string {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-}
 
 type SummaryState =
   | { status: 'loading'; result: StatisticsSummaryResult | null }
   | { status: 'ready'; result: StatisticsSummaryResult }
-  | { status: 'error'; kind: StatisticsErrorKind };
+  | { status: 'error'; kind: StatisticsErrorKind; info: ApiErrorInfo };
 
 export function StatisticsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const registry = useMapRegistry();
+  const profile = useAuthProfile();
+  const canExport = hasPermission(profile, 'report.export');
 
-  // Bộ lọc: collectionKey, mã ĐVHC, ngày kết thúc (dateTo).
-  const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
-  const [selectedWardId, setSelectedWardId] = useState<string | null>(null);
-  const [dateTo, setDateTo] = useState<string | null>(null);
+  // Bộ lọc dùng chung với màn Dữ liệu (collections, wards, dateFrom, dateTo),
+  // giữ nguyên khi chuyển tab (tài liệu mục 11).
+  const { filters: shared, updateFilters } = useSharedFilters();
+  const selectedLayerId = shared.collections[0] ?? null;
+  const selectedWardIds = shared.wards;
+  const setSelectedLayerId = (id: string | null) =>
+    updateFilters({ collections: id ? [id] : [] });
+  const setSelectedWardIds = (wards: string[]) => updateFilters({ wards });
 
   const [layerSheetOpen, setLayerSheetOpen] = useState(false);
   const [wardSheetOpen, setWardSheetOpen] = useState(false);
+  const [dateSheetOpen, setDateSheetOpen] = useState(false);
   const [bucketSheetOpen, setBucketSheetOpen] = useState(false);
-  const [iosDatePickerOpen, setIosDatePickerOpen] = useState(false);
-  const [pendingDate, setPendingDate] = useState(() => new Date());
   const [wardsExpanded, setWardsExpanded] = useState(false);
   // Mỗi lần mở tăng key để form khởi tạo lại theo bộ lọc hiện tại.
   const [exportKey, setExportKey] = useState(0);
@@ -156,12 +157,29 @@ export function StatisticsScreen() {
 
   const filters = useMemo<StatisticsFilters>(
     () => ({
-      collections: selectedLayerId ? [selectedLayerId] : undefined,
-      wards: selectedWardId ? [selectedWardId] : undefined,
-      dateTo,
+      collections: shared.collections.length ? shared.collections : undefined,
+      wards: shared.wards.length ? shared.wards : undefined,
+      dateFrom: shared.dateFrom,
+      dateTo: shared.dateTo,
     }),
-    [selectedLayerId, selectedWardId, dateTo],
+    [shared.collections, shared.wards, shared.dateFrom, shared.dateTo],
   );
+
+  const [statuses, setStatuses] = useState<CatalogStatus[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetchCatalogStatuses(selectedLayerId).then(
+      items => {
+        if (!cancelled) setStatuses(items);
+      },
+      () => {
+        if (!cancelled) setStatuses([]);
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLayerId]);
 
   // ===== Tổng hợp (/statistics/summary) =====
   const [summaryState, setSummaryState] = useState<SummaryState>({
@@ -184,6 +202,7 @@ export function StatisticsScreen() {
           setSummaryState({
             status: 'error',
             kind: statisticsErrorKind(error),
+            info: parseApiError(error),
           });
         }
       },
@@ -305,8 +324,9 @@ export function StatisticsScreen() {
     () => [...(summary?.byWard ?? [])].sort((a, b) => b.total - a.total),
     [summary],
   );
-  const visibleWards = selectedWardId
-    ? sortedWards.filter(ward => ward.wardId === selectedWardId)
+  const wardFiltered = selectedWardIds.length > 0;
+  const visibleWards = wardFiltered
+    ? sortedWards.filter(ward => selectedWardIds.includes(ward.wardId))
     : wardsExpanded
     ? sortedWards
     : sortedWards.slice(0, WARD_PREVIEW_COUNT);
@@ -323,28 +343,14 @@ export function StatisticsScreen() {
 
   const scopeLabel = [
     selectedLayer?.label,
-    selectedWardId ? wardName(selectedWardId) : null,
+    wardFiltered
+      ? selectedWardIds.length === 1
+        ? wardName(selectedWardIds[0])
+        : wardFilterLabel(selectedWardIds, wardCatalog, t)
+      : null,
   ]
     .filter(Boolean)
     .join(' · ');
-
-  function openDatePicker() {
-    const currentValue = dateTo ? new Date(`${dateTo}T00:00:00`) : new Date();
-    if (Platform.OS === 'android') {
-      DateTimePickerAndroid.open({
-        value: currentValue,
-        mode: 'date',
-        maximumDate: new Date(),
-        onValueChange: (_event, selectedDate) => {
-          const iso = toIsoDate(selectedDate);
-          setDateTo(iso === toIsoDate(new Date()) ? null : iso);
-        },
-      });
-      return;
-    }
-    setPendingDate(currentValue);
-    setIosDatePickerOpen(true);
-  }
 
   const trendPoints = selectedLayerId ? layerTrend.points : summaryTrend;
 
@@ -356,23 +362,27 @@ export function StatisticsScreen() {
           {summaryState.status === 'loading' && summary ? (
             <ActivityIndicator size="small" color={COLORS.primary} />
           ) : null}
-          <Pressable
-            onPress={() => {
-              setExportKey(key => key + 1);
-              setExportOpen(true);
-            }}
-            style={styles.exportButton}
-            accessibilityRole="button"
-          >
-            <Icon name="share" size={13} color={COLORS.primary} />
-            <Text style={styles.exportButtonText}>{t('report.title')}</Text>
-          </Pressable>
+          {/* Nút ẩn/hiện theo quyền report.export — server vẫn kiểm tra lại. */}
+          {canExport ? (
+            <Pressable
+              onPress={() => {
+                setExportKey(key => key + 1);
+                setExportOpen(true);
+              }}
+              style={styles.exportButton}
+              accessibilityRole="button"
+            >
+              <Icon name="share" size={13} color={COLORS.primary} />
+              <Text style={styles.exportButtonText}>{t('report.title')}</Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
       {summaryState.status === 'error' ? (
         <StatisticsError
           kind={summaryState.kind}
+          info={summaryState.info}
           onRetry={() => setReloadToken(token => token + 1)}
         />
       ) : !summary ? (
@@ -392,23 +402,13 @@ export function StatisticsScreen() {
             />
             <FilterChip
               icon="pin"
-              label={
-                selectedWardId
-                  ? wardName(selectedWardId)
-                  : t('statistics.filters.allWards')
-              }
+              label={wardFilterLabel(selectedWardIds, wardCatalog, t)}
               onPress={() => setWardSheetOpen(true)}
             />
             <FilterChip
               icon="calendar"
-              label={
-                dateTo
-                  ? t('statistics.filters.dateTo', {
-                      date: formatDateIso(dateTo),
-                    })
-                  : t('statistics.filters.today')
-              }
-              onPress={openDatePicker}
+              label={dateRangeLabel(shared.dateFrom, shared.dateTo, t)}
+              onPress={() => setDateSheetOpen(true)}
             />
           </View>
 
@@ -454,7 +454,7 @@ export function StatisticsScreen() {
 
           {summary.byStatus.length > 0 ? (
             <Section title={t('statistics.status.sectionTitle')}>
-              <StatusBreakdown items={summary.byStatus} />
+              <StatusBreakdown items={summary.byStatus} statuses={statuses} />
             </Section>
           ) : null}
 
@@ -462,7 +462,7 @@ export function StatisticsScreen() {
             <Section
               title={t('statistics.groups.sectionTitle')}
               hint={
-                dimension === 'ward' && !selectedWardId
+                dimension === 'ward' && !wardFiltered
                   ? t('statistics.ward.hint')
                   : undefined
               }
@@ -496,8 +496,8 @@ export function StatisticsScreen() {
                 state={groups}
                 // Drill-down theo tài liệu: key của nhóm phường xã -> ?wards=.
                 onDrillDown={
-                  dimension === 'ward' && !selectedWardId
-                    ? key => setSelectedWardId(key)
+                  dimension === 'ward' && !wardFiltered
+                    ? key => setSelectedWardIds([key])
                     : undefined
                 }
               />
@@ -505,12 +505,12 @@ export function StatisticsScreen() {
           ) : (
             <Section
               title={t('statistics.ward.sectionTitle')}
-              hint={selectedWardId ? undefined : t('statistics.ward.hint')}
+              hint={wardFiltered ? undefined : t('statistics.ward.hint')}
               action={
-                selectedWardId
+                wardFiltered
                   ? {
                       label: t('statistics.ward.clearFilter'),
-                      onPress: () => setSelectedWardId(null),
+                      onPress: () => setSelectedWardIds([]),
                     }
                   : sortedWards.length > WARD_PREVIEW_COUNT
                   ? {
@@ -536,9 +536,9 @@ export function StatisticsScreen() {
                     count={ward.total}
                     maxCount={wardMax}
                     onPress={
-                      selectedWardId
+                      wardFiltered
                         ? undefined
-                        : () => setSelectedWardId(ward.wardId)
+                        : () => setSelectedWardIds([ward.wardId])
                     }
                   />
                 ))
@@ -636,9 +636,9 @@ export function StatisticsScreen() {
           }))}
           initial={{
             collectionKey: selectedLayerId,
-            wardCode: selectedWardId,
-            dateFrom: null,
-            dateTo,
+            wardCodes: selectedWardIds,
+            dateFrom: shared.dateFrom,
+            dateTo: shared.dateTo,
           }}
           onClose={() => setExportOpen(false)}
         />
@@ -672,39 +672,27 @@ export function StatisticsScreen() {
         </ScrollView>
       </BottomSheet>
 
-      <BottomSheet
+      <WardFilterSheet
         visible={wardSheetOpen}
         onClose={() => setWardSheetOpen(false)}
-        maxHeight={560}
-      >
-        <ScrollView>
-          <PickerOption
-            label={t('statistics.filters.allWards')}
-            active={selectedWardId === null}
-            onPress={() => {
-              setSelectedWardId(null);
-              setWardSheetOpen(false);
-            }}
-          />
-          {wardCatalog.map(ward => {
-            const total = summary?.byWard.find(
-              item => item.wardId === ward.code,
-            )?.total;
-            return (
-              <PickerOption
-                key={ward.code}
-                label={ward.name}
-                hint={total === undefined ? undefined : formatNumber(total)}
-                active={selectedWardId === ward.code}
-                onPress={() => {
-                  setSelectedWardId(ward.code);
-                  setWardSheetOpen(false);
-                }}
-              />
-            );
-          })}
-        </ScrollView>
-      </BottomSheet>
+        wards={wardCatalog}
+        selected={selectedWardIds}
+        onChange={setSelectedWardIds}
+        hintFor={code => {
+          const total = summary?.byWard.find(
+            item => item.wardId === code,
+          )?.total;
+          return total === undefined ? undefined : formatNumber(total);
+        }}
+      />
+
+      <DateRangeSheet
+        visible={dateSheetOpen}
+        onClose={() => setDateSheetOpen(false)}
+        dateFrom={shared.dateFrom}
+        dateTo={shared.dateTo}
+        onChange={range => updateFilters(range)}
+      />
 
       <BottomSheet
         visible={bucketSheetOpen}
@@ -723,69 +711,32 @@ export function StatisticsScreen() {
           />
         ))}
       </BottomSheet>
-
-      {Platform.OS === 'ios' ? (
-        <BottomSheet
-          visible={iosDatePickerOpen}
-          onClose={() => setIosDatePickerOpen(false)}
-          maxHeight={440}
-        >
-          <DateTimePicker
-            value={pendingDate}
-            mode="date"
-            display="inline"
-            maximumDate={new Date()}
-            onValueChange={(_event, selectedDate) => {
-              if (selectedDate) setPendingDate(selectedDate);
-            }}
-          />
-          <View style={styles.datePickerActions}>
-            <Pressable
-              onPress={() => {
-                setDateTo(null);
-                setIosDatePickerOpen(false);
-              }}
-              style={styles.datePickerActionSecondary}
-              accessibilityRole="button"
-            >
-              <Text style={styles.datePickerActionSecondaryText}>
-                {t('statistics.filters.today')}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                const iso = toIsoDate(pendingDate);
-                setDateTo(iso === toIsoDate(new Date()) ? null : iso);
-                setIosDatePickerOpen(false);
-              }}
-              style={styles.datePickerActionPrimary}
-              accessibilityRole="button"
-            >
-              <Text style={styles.datePickerActionPrimaryText}>
-                {t('common.confirm')}
-              </Text>
-            </Pressable>
-          </View>
-        </BottomSheet>
-      ) : null}
     </View>
   );
 }
 
 function StatisticsError({
   kind,
+  info,
   onRetry,
 }: {
   kind: StatisticsErrorKind;
+  info: ApiErrorInfo;
   onRetry: () => void;
 }) {
   const { t } = useTranslation();
+  // Khách chưa đăng nhập: nhắc đăng nhập. Còn lại hiển thị thẳng thông điệp
+  // tiếng Việt của server kèm mã tra cứu (tài liệu mục 2).
   const message =
     kind === 'unauthorized'
       ? t('statistics.needLogin')
-      : kind === 'forbidden'
-      ? t('statistics.forbidden')
-      : t('statistics.error');
+      : describeApiError(
+          info,
+          kind === 'forbidden'
+            ? t('statistics.forbidden')
+            : t('statistics.error'),
+          id => t('common.requestId', { id }),
+        );
   return (
     <View style={styles.centerFill}>
       <Icon
@@ -840,28 +791,32 @@ function ProcessingSection({ totals }: { totals: StatisticsTotals }) {
 
 function StatusBreakdown({
   items,
+  statuses,
 }: {
   items: Array<{ status: string; label: string; count: number }>;
+  statuses: CatalogStatus[];
 }) {
   const { t } = useTranslation();
   const total = items.reduce((sum, item) => sum + item.count, 0);
+  const colorOf = (code: string) =>
+    statuses.find(status => status.code === code)?.color ??
+    UNKNOWN_STATUS_COLOR;
   return (
     <View style={styles.statusBody}>
       <DonutChart
-        segments={items.map((item, index) => ({
-          color: STATUS_PALETTE[index % STATUS_PALETTE.length],
+        segments={items.map(item => ({
+          color: colorOf(item.status),
           value: item.count,
         }))}
       />
       <View style={styles.legendCol}>
-        {items.map((item, index) => (
+        {items.map(item => (
           <View key={item.status} style={styles.legendRow}>
             <View
               style={[
                 styles.legendDot,
                 {
-                  backgroundColor:
-                    STATUS_PALETTE[index % STATUS_PALETTE.length],
+                  backgroundColor: colorOf(item.status),
                 },
               ]}
             />
@@ -1196,41 +1151,6 @@ const styles = StyleSheet.create({
   statusTileDot: { width: 8, height: 8, borderRadius: 4 },
   statusTileLabel: { fontSize: 10, color: COLORS.textMuted, minHeight: 26 },
   statusTileValue: { fontSize: 15, fontWeight: '800', color: COLORS.text },
-
-  datePickerActions: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.sm,
-    paddingBottom: SPACING.md,
-  },
-  datePickerActionSecondary: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 40,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  datePickerActionSecondaryText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  datePickerActionPrimary: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 40,
-    borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.primary,
-  },
-  datePickerActionPrimaryText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
 
   section: {
     marginHorizontal: SPACING.lg,

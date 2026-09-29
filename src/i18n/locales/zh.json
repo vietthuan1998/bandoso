@@ -20,7 +20,8 @@
     "no": "否",
     "male": "男",
     "female": "女",
-    "back": "返回"
+    "back": "返回",
+    "requestId": "(查询编号:{{id}})"
   },
   "header": {
     "title": "顺化市数字地图系统",
@@ -49,7 +50,8 @@
     "unnamedProject": "未命名项目",
     "resetBearing": "将地图重置为正北方向",
     "locateMe": "我的位置",
-    "locationUnavailable": "无法确定您的位置"
+    "locationUnavailable": "无法确定您的位置",
+    "registryStale": "正在使用已保存的图层配置 · 上次同步 {{time}}"
   },
   "search": {
     "administrativeLayer": "行政边界",
@@ -159,11 +161,12 @@
     "openButton": "查看数据概览",
     "title": "数据概览",
     "totalObjects": "对象总数",
-    "collectionsReadable": "可读取的集合",
     "groupsSectionTitle": "按分组统计",
-    "footerNote": "数据来自当前有权限读取的 Directus 集合汇总。",
+    "footerNote": "数据由统计服务器(/statistics/summary)确定,不在设备上计算。",
     "loading": "正在汇总数据...",
-    "error": "无法加载数据概览。"
+    "error": "无法加载数据概览。",
+    "unknownWard": "未确定坊/社",
+    "otherGroup": "其他"
   },
   "statistics": {
     "title": "数据统计",
@@ -174,7 +177,6 @@
     "filters": {
       "allLayers": "全部图层",
       "allWards": "全部坊/社",
-      "today": "截至今天",
       "dateTo": "截至 {{date}}"
     },
     "detail": {
@@ -185,10 +187,7 @@
     "notesTitle": "数据说明",
     "status": {
       "sectionTitle": "按状态",
-      "total": "合计",
-      "recent": "近期已更新",
-      "stale": "需要更新",
-      "unknown": "无法追踪"
+      "total": "合计"
     },
     "processing": {
       "sectionTitle": "处理情况",
@@ -250,14 +249,17 @@
     "emptyTitle": "没有匹配的数据",
     "emptyMessage": "请尝试其他关键词或筛选条件。",
     "loadMore": "加载更多",
-    "wardUnsupportedHint": "该图层没有可靠的坊/乡数据可供筛选。",
+    "wardUnsupportedHint": "该图层列表暂不能按坊/社筛选(图层没有坊/社字段或需要登录)。按坊/社的统计请查看“统计”标签页。",
     "unreadableTitle": "没有访问权限",
     "unreadableMessage": "该账号尚未获得读取此图层数据的权限。",
     "unreadableLayersHint": "{{count}} 个图层因权限不足无法读取",
     "detail": {
       "title": "数据详情",
       "noCoordinates": "没有可用于定位的坐标"
-    }
+    },
+    "dateUnsupportedHint": "该图层没有更新时间字段,无法按时间筛选。",
+    "searchUnsupportedHint": "该图层不支持搜索。",
+    "unsupportedLayersHint": "{{count}} 个图层不支持当前筛选条件,未显示"
   },
   "comingSoon": {
     "title": "即将上线",
@@ -304,5 +306,34 @@
     "locationAndroid": "下载/{{folder}}/{{name}}",
     "locationIos": "文件 › 我的 iPhone › {{folder}} › {{name}}",
     "savedTo": "报告已保存到 {{location}}"
+  },
+  "scope": {
+    "label": "范围:{{scope}}",
+    "all": "全市",
+    "wards": "{{count}} 个坊/社"
+  },
+  "account": {
+    "fullName": "姓名",
+    "username": "用户名",
+    "unit": "单位",
+    "roles": "角色",
+    "scope": "数据范围",
+    "roleNames": {
+      "guest": "访客 / 公众",
+      "ward_officer": "坊社干部",
+      "specialist": "专业干部",
+      "city_leader": "市领导",
+      "data_admin": "数据管理员",
+      "system_admin": "系统管理员"
+    }
+  },
+  "filters": {
+    "wardCount": "{{count}} 个坊/社",
+    "dateRange": "{{from}} – {{to}}",
+    "dateFrom": "自 {{date}}",
+    "anyTime": "全部时间",
+    "wardsTitle": "选择坊/社",
+    "dateTitle": "时间范围",
+    "done": "完成"
   }
 }

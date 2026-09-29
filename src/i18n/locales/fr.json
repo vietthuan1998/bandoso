@@ -20,7 +20,8 @@
     "no": "Non",
     "male": "Homme",
     "female": "Femme",
-    "back": "Retour"
+    "back": "Retour",
+    "requestId": "(Référence : {{id}})"
   },
   "header": {
     "title": "Système de cartographie numérique de Hué",
@@ -49,7 +50,8 @@
     "unnamedProject": "Projet sans nom",
     "resetBearing": "Réorienter la carte vers le nord",
     "locateMe": "Ma position",
-    "locationUnavailable": "Impossible de déterminer votre position"
+    "locationUnavailable": "Impossible de déterminer votre position",
+    "registryStale": "Configuration des couches enregistrée utilisée · dernière synchronisation {{time}}"
   },
   "search": {
     "administrativeLayer": "Limites administratives",
@@ -159,11 +161,12 @@
     "openButton": "Voir l'aperçu des données",
     "title": "Aperçu des données",
     "totalObjects": "Total d'objets",
-    "collectionsReadable": "Collections accessibles",
     "groupsSectionTitle": "Données par groupe",
-    "footerNote": "Chiffres agrégés à partir des collections Directus actuellement accessibles.",
+    "footerNote": "Chiffres arrêtés par le serveur de statistiques (/statistics/summary), non calculés sur l'appareil.",
     "loading": "Agrégation des chiffres...",
-    "error": "Impossible de charger l'aperçu des données."
+    "error": "Impossible de charger l'aperçu des données.",
+    "unknownWard": "Quartier non déterminé",
+    "otherGroup": "Autres"
   },
   "statistics": {
     "title": "Statistiques des données",
@@ -174,7 +177,6 @@
     "filters": {
       "allLayers": "Toutes les couches",
       "allWards": "Tous les quartiers",
-      "today": "Jusqu’à aujourd’hui",
       "dateTo": "Jusqu’au {{date}}"
     },
     "detail": {
@@ -185,10 +187,7 @@
     "notesTitle": "Notes sur les données",
     "status": {
       "sectionTitle": "Par statut",
-      "total": "Total",
-      "recent": "Mis à jour récemment",
-      "stale": "À mettre à jour",
-      "unknown": "Non suivi"
+      "total": "Total"
     },
     "processing": {
       "sectionTitle": "État de traitement",
@@ -250,14 +249,17 @@
     "emptyTitle": "Aucune donnée correspondante",
     "emptyMessage": "Essayez un autre mot-clé ou filtre.",
     "loadMore": "Charger plus",
-    "wardUnsupportedHint": "Cette couche n'a pas de donnée de quartier fiable pour filtrer.",
+    "wardUnsupportedHint": "La liste de cette couche ne peut pas encore être filtrée par quartier (pas de champ quartier, ou connexion requise). Voir les chiffres par quartier dans l'onglet Statistiques.",
     "unreadableTitle": "Accès non autorisé",
     "unreadableMessage": "Ce compte n'a pas encore l'autorisation de lire les données de cette couche.",
     "unreadableLayersHint": "{{count}} couches illisibles faute d'autorisation d'accès",
     "detail": {
       "title": "Détail des données",
       "noCoordinates": "Aucune coordonnée disponible pour la localisation"
-    }
+    },
+    "dateUnsupportedHint": "Cette couche n'a pas de champ de date de mise à jour et ne peut pas être filtrée par période.",
+    "searchUnsupportedHint": "Cette couche ne prend pas en charge la recherche.",
+    "unsupportedLayersHint": "{{count}} couches ne prennent pas en charge les filtres actuels et sont masquées"
   },
   "comingSoon": {
     "title": "Bientôt disponible",
@@ -304,5 +306,34 @@
     "locationAndroid": "Téléchargements/{{folder}}/{{name}}",
     "locationIos": "Fichiers › Sur mon iPhone › {{folder}} › {{name}}",
     "savedTo": "Rapport enregistré dans {{location}}"
+  },
+  "scope": {
+    "label": "Périmètre : {{scope}}",
+    "all": "Toute la ville",
+    "wards": "{{count}} quartiers/communes"
+  },
+  "account": {
+    "fullName": "Nom complet",
+    "username": "Nom d'utilisateur",
+    "unit": "Unité",
+    "roles": "Rôles",
+    "scope": "Périmètre des données",
+    "roleNames": {
+      "guest": "Invité / public",
+      "ward_officer": "Agent de quartier",
+      "specialist": "Spécialiste",
+      "city_leader": "Direction de la ville",
+      "data_admin": "Administrateur des données",
+      "system_admin": "Administrateur système"
+    }
+  },
+  "filters": {
+    "wardCount": "{{count}} quartiers/communes",
+    "dateRange": "{{from}} – {{to}}",
+    "dateFrom": "Depuis le {{date}}",
+    "anyTime": "Toute période",
+    "wardsTitle": "Choisir les quartiers/communes",
+    "dateTitle": "Période",
+    "done": "OK"
   }
 }

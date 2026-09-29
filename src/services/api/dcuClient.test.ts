@@ -15,6 +15,7 @@ jest.mock('axios', () => {
       ...actualAxios,
       create: jest.fn(() => mockInstance),
       post: jest.fn(),
+      get: jest.fn(),
       isAxiosError: actualAxios.isAxiosError,
     },
   };
@@ -30,6 +31,8 @@ jest.mock('../../config/apiAccessToken', () => ({
 
 import { getStaticApiToken } from '../../config/apiAccessToken';
 import { dcuAxios, dcuHeaders } from './dcuClient';
+import { getSessionTokenAcceptance } from './directusAuth';
+import { login } from '../auth/authClient';
 
 const mockInstance = dcuAxios as unknown as {
   interceptors: { request: { use: jest.Mock }; response: { use: jest.Mock } };
@@ -41,28 +44,24 @@ const responseErrorHandler =
   mockInstance.interceptors.response.use.mock.calls[0][1];
 const requestHandler = mockInstance.interceptors.request.use.mock.calls[0][0];
 
-describe('dcuAxios static token interceptor', () => {
-  it('adds the static token to API_BASE_URL requests that carry no Authorization', () => {
+const responseSuccessHandler =
+  mockInstance.interceptors.response.use.mock.calls[0][0];
+
+describe('dcuAxios Directus credential (guest)', () => {
+  it('falls back to the static token on API_BASE_URL when nobody is signed in', () => {
     const config = requestHandler({
       url: 'https://dcu.huecity.vn/items/bts',
       headers: {},
     });
     expect(config.headers.Authorization).toBe('Bearer static-token');
+    expect(config._dcuCredential).toBe('static');
   });
 
-  it('replaces the BFF session token with the static token on API_BASE_URL (Directus rejects it with 401)', () => {
-    const logged = requestHandler({
-      url: 'https://dcu.huecity.vn/items/bts',
-      headers: { Authorization: 'Bearer access-session' },
-    });
-    expect(logged.headers.Authorization).toBe('Bearer static-token');
-  });
-
-  it('drops the session token on API_BASE_URL when there is no static token', () => {
+  it('drops the Authorization header when there is no token at all', () => {
     (getStaticApiToken as jest.Mock).mockReturnValueOnce(null);
     const config = requestHandler({
       url: 'https://dcu.huecity.vn/items/bts',
-      headers: { Authorization: 'Bearer access-session' },
+      headers: { Authorization: 'Bearer stale' },
     });
     expect(config.headers.Authorization).toBeUndefined();
   });
@@ -79,6 +78,68 @@ describe('dcuAxios static token interceptor', () => {
       headers: {},
     });
     expect(guest.headers.Authorization).toBeUndefined();
+  });
+});
+
+describe('dcuAxios Directus credential (signed in)', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    mockedAxios.post.mockResolvedValueOnce({
+      data: {
+        data: {
+          accessToken: 'access-session',
+          refreshToken: 'refresh-1',
+          tokenType: 'Bearer',
+          expiresIn: 3600,
+        },
+      },
+    });
+    mockedAxios.get = jest.fn().mockRejectedValue(new Error('no /auth/me'));
+    await login('canbo01', 'matkhau');
+  });
+
+  it('tries the session access token first (no token in the client if the host accepts it)', () => {
+    const config = requestHandler({
+      url: 'https://dcu.huecity.vn/items/bts',
+      headers: {},
+    });
+    expect(config.headers.Authorization).toBe('Bearer access-session');
+    expect(config._dcuCredential).toBe('session');
+  });
+
+  it('remembers that the host accepts the session token so tiles can switch to it', () => {
+    responseSuccessHandler({
+      config: { url: 'https://dcu.huecity.vn/items/bts', _dcuCredential: 'session' },
+    });
+    expect(getSessionTokenAcceptance()).toBe('accepted');
+  });
+
+  it('retries once with the static token on a 401 for the session token, then sticks to it', async () => {
+    mockInstance.request.mockResolvedValueOnce({ data: { ok: true } });
+    mockedAxios.post.mockClear();
+    const config = requestHandler({
+      url: 'https://dcu.huecity.vn/items/bts',
+      headers: {},
+    });
+
+    const result = await responseErrorHandler({
+      config,
+      response: { status: 401 },
+    });
+
+    expect(result).toEqual({ data: { ok: true } });
+    expect(mockedAxios.post).not.toHaveBeenCalled(); // không đụng refresh token BFF
+    const retried = mockInstance.request.mock.calls[0][0];
+    expect(retried._dcuStaticFallback).toBe(true);
+    expect(requestHandler(retried).headers.Authorization).toBe(
+      'Bearer static-token',
+    );
+    expect(getSessionTokenAcceptance()).toBe('rejected');
+    // Request sau dùng thẳng token tĩnh, không thử lại token phiên.
+    expect(
+      requestHandler({ url: 'https://dcu.huecity.vn/items/x', headers: {} })
+        .headers.Authorization,
+    ).toBe('Bearer static-token');
   });
 });
 

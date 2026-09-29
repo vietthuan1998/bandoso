@@ -23,7 +23,7 @@ import {
   exportReport,
   REPORT_FORMATS,
   REPORT_KINDS,
-  reportErrorKind,
+  describeReportError,
   type ReportFormat,
   type ReportKind,
 } from '../../services/report/reportApi';
@@ -34,6 +34,8 @@ import {
   saveReportToDevice,
   type SavedReport,
 } from '../../services/report/reportFile';
+import { describeApiError } from '../../services/api/apiError';
+import { toggleInList } from '../../hooks/useSharedFilters';
 
 function toIsoDate(date: Date): string {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(
@@ -50,7 +52,8 @@ type DateField = 'dateFrom' | 'dateTo';
 /** Giá trị ban đầu — lấy từ bộ lọc đang xem (null = tất cả / không giới hạn). */
 export type ReportExportInitial = {
   collectionKey: string | null;
-  wardCode: string | null;
+  /** Mã ĐVHC; rỗng = mọi phường xã. */
+  wardCodes: string[];
   dateFrom: string | null;
   dateTo: string | null;
   report?: ReportKind;
@@ -74,7 +77,7 @@ export function ReportExportForm({
   const [format, setFormat] = useState<ReportFormat>('xlsx');
   const [report, setReport] = useState<ReportKind>(initial.report ?? 'byWard');
   const [collectionKey, setCollectionKey] = useState(initial.collectionKey);
-  const [wardCode, setWardCode] = useState(initial.wardCode);
+  const [wardCodes, setWardCodes] = useState<string[]>(initial.wardCodes);
   const [dateFrom, setDateFrom] = useState(initial.dateFrom);
   const [dateTo, setDateTo] = useState(initial.dateTo);
 
@@ -142,7 +145,7 @@ export function ReportExportForm({
         format,
         report,
         collections: collectionKey ? [collectionKey] : [],
-        wards: wardCode ? [wardCode] : [],
+        wards: wardCodes,
         dateFrom,
         dateTo,
       });
@@ -179,9 +182,16 @@ export function ReportExportForm({
         });
       }
     } catch (error) {
+      // Theo error.code; thông điệp tiếng Việt của server + mã tra cứu nếu có.
+      const { kind, info } = await describeReportError(error);
       setMessage({
         error: true,
-        text: t(`report.errors.${reportErrorKind(error)}`),
+        text:
+          kind === 'unauthorized'
+            ? t('report.errors.unauthorized')
+            : describeApiError(info, t(`report.errors.${kind}`), id =>
+                t('common.requestId', { id }),
+              ),
       });
     } finally {
       setExporting(false);
@@ -251,9 +261,12 @@ export function ReportExportForm({
         <SelectField
           icon="pin"
           label={
-            wardCode
-              ? wards.find(ward => ward.code === wardCode)?.name ?? wardCode
-              : t('statistics.filters.allWards')
+            wardCodes.length === 0
+              ? t('statistics.filters.allWards')
+              : wardCodes.length === 1
+              ? wards.find(ward => ward.code === wardCodes[0])?.name ??
+                wardCodes[0]
+              : t('filters.wardCount', { count: wardCodes.length })
           }
           open={openList === 'ward'}
           onToggle={() => toggleList('ward')}
@@ -261,11 +274,15 @@ export function ReportExportForm({
             { value: null, label: t('statistics.filters.allWards') },
             ...wards.map(ward => ({ value: ward.code, label: ward.name })),
           ]}
-          value={wardCode}
-          onChange={value => {
-            setWardCode(value);
-            setOpenList(null);
-          }}
+          isActive={value =>
+            value === null ? wardCodes.length === 0 : wardCodes.includes(value)
+          }
+          onChange={value =>
+            // Chọn nhiều: chạm để bật/tắt, "Tất cả" xoá lựa chọn.
+            setWardCodes(current =>
+              value === null ? [] : toggleInList(current, value),
+            )
+          }
         />
 
         <View style={styles.dateRow}>
@@ -358,6 +375,7 @@ function SelectField({
   onToggle,
   options,
   value,
+  isActive = option => option === value,
   onChange,
 }: {
   icon: IconName;
@@ -365,7 +383,9 @@ function SelectField({
   open: boolean;
   onToggle: () => void;
   options: Array<{ value: string | null; label: string }>;
-  value: string | null;
+  value?: string | null;
+  /** Mặc định: đang chọn khi bằng `value`. Chọn nhiều thì truyền hàm riêng. */
+  isActive?: (value: string | null) => boolean;
   onChange: (value: string | null) => void;
 }) {
   return (
@@ -389,7 +409,7 @@ function SelectField({
         <View style={styles.optionList}>
           <ScrollView nestedScrollEnabled>
             {options.map(option => {
-              const active = option.value === value;
+              const active = isActive(option.value);
               return (
                 <Pressable
                   key={option.value ?? 'all'}

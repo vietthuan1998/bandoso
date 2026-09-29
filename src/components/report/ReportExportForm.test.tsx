@@ -25,6 +25,7 @@ jest.mock('../../services/report/reportFile', () => {
 jest.mock('../../services/api/catalogApi', () => ({
   fetchCatalogWards: jest.fn(async () => [
     { code: '19858', name: 'Phường Phong Thái', type: 'phuong' },
+    { code: '19900', name: 'Phường Thuận An', type: 'phuong' },
   ]),
 }));
 
@@ -66,7 +67,7 @@ async function render(
         layers={LAYERS}
         initial={{
           collectionKey: 'thua_dat',
-          wardCode: null,
+          wardCodes: [],
           dateFrom: null,
           dateTo: null,
           ...initial,
@@ -154,7 +155,7 @@ describe('ReportExportForm', () => {
     mockExportReport.mockRejectedValue(new Error('stop'));
     await render({
       collectionKey: 'bts',
-      wardCode: '19858',
+      wardCodes: ['19858'],
       dateTo: '2026-09-01',
     });
 
@@ -194,5 +195,45 @@ describe('ReportExportForm', () => {
     await press('Xuất báo cáo');
 
     expect(texts()).toContain('Tài khoản chưa được cấp quyền xuất báo cáo.');
+  });
+
+  it('lets the user pick several wards (?wards= is a list)', async () => {
+    mockExportReport.mockRejectedValue(new Error('stop'));
+    await render({ wardCodes: ['19858'] });
+
+    await press('Phường Phong Thái');
+    await press('Phường Thuận An');
+    expect(texts()).toContain('2 phường, xã');
+    await press('Xuất báo cáo');
+
+    expect(mockExportReport).toHaveBeenCalledWith(
+      expect.objectContaining({ wards: ['19858', '19900'] }),
+    );
+  });
+
+  it('shows the server message with its requestId', async () => {
+    const config = { headers: new AxiosHeaders() };
+    mockExportReport.mockRejectedValue(
+      new AxiosError('422', '422', config, null, {
+        status: 422,
+        statusText: '',
+        headers: {},
+        config,
+        data: {
+          error: {
+            code: 'VALIDATION_FAILED',
+            message: 'Khoảng thời gian không hợp lệ.',
+            requestId: 'r-42',
+          },
+        },
+      }),
+    );
+    await render();
+
+    await press('Xuất báo cáo');
+
+    expect(texts()).toContain(
+      'Khoảng thời gian không hợp lệ. (Mã tra cứu: r-42)',
+    );
   });
 });

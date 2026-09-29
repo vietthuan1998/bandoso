@@ -4,6 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { IconName } from '../../components/common/Icon';
 import { DCU_API_BASE_URL } from '../../config/dcuAuthConfig';
 import { TIMEOUT } from '../../constants/url';
+import {
+  getAccessToken,
+  subscribeToAccessTokenChange,
+} from '../auth/authClient';
 import type {
   MvtGeometryKind,
   MvtGroupConfig,
@@ -22,6 +26,7 @@ type RegistryGeometryType =
 export type RegistryLayer = {
   collectionKey: string;
   directusCollection?: string;
+  directusIdField?: string;
   sourceLayer?: string;
   tileUrl: string;
   label?: string;
@@ -36,7 +41,10 @@ export type RegistryLayer = {
   >;
   dimensions?: { updatedAtField?: string | null; measureFields?: string[] };
   featureIdField?: string;
+  geometryField?: string;
   titleFields?: string[];
+  searchableFields?: string[];
+  listFields?: string[];
   detailFields?: string[];
   hiddenFields?: string[];
   fieldLabels?: Record<string, string>;
@@ -47,13 +55,23 @@ export type RegistryLayer = {
 /** Một entry của GET /catalog/layer-groups. */
 export type RegistryLayerGroup = { key: string; label: string; icon?: string };
 
+/**
+ * `public` = registry tải khi chưa đăng nhập; `auth` = tải kèm token (danh
+ * sách lớp có thể hẹp lại theo quyền — tài liệu mục 1 bước 4, mục 10). Cache
+ * của đối tượng này không được dùng cho đối tượng kia.
+ */
+type RegistryAudience = 'public' | 'auth';
+
 type RegistryCache = {
   registryVersion: string;
+  audience: RegistryAudience;
+  /** Lần cuối xác nhận registry khớp server (ISO 8601). */
+  syncedAt: string;
   layers: RegistryLayer[];
   groups: RegistryLayerGroup[];
 };
 
-const REGISTRY_CACHE_KEY = '@huemaps/map-registry-cache-v2';
+const REGISTRY_CACHE_KEY = '@huemaps/map-registry-cache-v3';
 
 // Registry trả tên icon theo bộ Google Material Icons; app dùng Material
 // Design Icons nên ánh xạ sang tên icon ngữ nghĩa của app (components/common/Icon).
@@ -105,7 +123,11 @@ export function normalizeRegistryLayer(raw: RegistryLayer): MvtLayerConfig {
     updatedAtField: raw.dimensions?.updatedAtField ?? null,
     measureFields: raw.dimensions?.measureFields ?? [],
     featureIdField: raw.featureIdField || 'id',
+    directusIdField: raw.directusIdField || raw.featureIdField || 'id',
+    geometryField: raw.geometryField || 'geom',
     titleFields: raw.titleFields ?? [],
+    searchableFields: raw.searchableFields ?? [],
+    listFields: raw.listFields ?? [],
     detailFields: raw.detailFields ?? [],
     hiddenFields: raw.hiddenFields ?? [],
     fieldLabels: raw.fieldLabels ?? {},
@@ -150,23 +172,33 @@ export type MapRegistryState = {
   status: 'idle' | 'loading' | 'ready' | 'error';
   layers: MvtLayerConfig[];
   groups: MvtGroupConfig[];
+  /** Lần đồng bộ thành công gần nhất với server (ISO 8601), null nếu chưa có. */
+  syncedAt?: string | null;
+  /** true = đang hiển thị bản đã lưu vì lần đồng bộ mới nhất thất bại. */
+  stale?: boolean;
 };
 
 let state: MapRegistryState = { status: 'idle', layers: [], groups: [] };
 const listeners = new Set<() => void>();
 let inflight: Promise<MapRegistryState> | null = null;
+let reloadQueued = false;
+/** Đối tượng (public/auth) của registry đang hiển thị. */
+let stateAudience: RegistryAudience | null = null;
 
 function setState(next: MapRegistryState) {
   state = next;
   listeners.forEach(listener => listener());
 }
 
-function applyRegistry(registry: RegistryCache) {
+function applyRegistry(registry: RegistryCache, stale: boolean) {
+  stateAudience = registry.audience;
   const layers = registry.layers.map(normalizeRegistryLayer);
   setState({
     status: 'ready',
     layers,
     groups: buildLayerGroups(layers, registry.groups),
+    syncedAt: registry.syncedAt,
+    stale,
   });
 }
 
@@ -177,6 +209,25 @@ async function readCache(): Promise<RegistryCache | null> {
   } catch {
     return null;
   }
+}
+
+function writeCache(registry: RegistryCache) {
+  AsyncStorage.setItem(REGISTRY_CACHE_KEY, JSON.stringify(registry)).catch(
+    () => {},
+  );
+}
+
+function authConfig() {
+  const accessToken = getAccessToken();
+  return {
+    audience: (accessToken ? 'auth' : 'public') as RegistryAudience,
+    config: {
+      timeout: TIMEOUT,
+      headers: accessToken
+        ? { Authorization: `Bearer ${accessToken}` }
+        : undefined,
+    },
+  };
 }
 
 async function fetchLayerGroups(
@@ -194,58 +245,93 @@ async function fetchLayerGroups(
 }
 
 /**
- * Hiện ngay registry đã cache (nếu có), rồi poll /map/config/version (nhẹ) và
- * chỉ tải lại /map/layers + /catalog/layer-groups khi registryVersion đổi.
- * Các endpoint đều public. Lỗi mạng: giữ cache; chưa từng cache -> 'error'.
+ * Hiện ngay registry đã cache (nếu cùng đối tượng public/auth), rồi poll
+ * /map/config/version (nhẹ) và chỉ tải lại /map/layers + /catalog/layer-groups
+ * khi registryVersion đổi. Đã đăng nhập thì gửi kèm token. Lỗi mạng: giữ bản
+ * đã lưu và đánh dấu `stale`; chưa từng cache -> 'error'.
  */
 async function load(): Promise<MapRegistryState> {
+  const { audience, config } = authConfig();
+  const cachedAny = await readCache();
+  const cached = cachedAny?.audience === audience ? cachedAny : null;
+
   if (state.status !== 'ready') {
     setState({ ...state, status: 'loading' });
   }
-  const cached = await readCache();
-  if (cached && state.status !== 'ready') applyRegistry(cached);
+  if (cached && (state.status !== 'ready' || stateAudience !== audience)) {
+    applyRegistry(cached, false);
+  }
 
   try {
     const version = await axios.get<{ registryVersion: string }>(
       `${DCU_API_BASE_URL}/map/config/version`,
-      { timeout: TIMEOUT },
+      config,
     );
+    const syncedAt = new Date().toISOString();
     if (cached && cached.registryVersion === version.data.registryVersion) {
+      // Giữ nguyên mảng layers (tránh các màn hình tải lại dữ liệu vô ích),
+      // chỉ cập nhật thời điểm đồng bộ.
+      setState({ ...state, syncedAt, stale: false });
+      writeCache({ ...cached, syncedAt });
       return state;
     }
     const [layersResponse, groups] = await Promise.all([
       axios.get<{ registryVersion: string; layers: RegistryLayer[] }>(
         `${DCU_API_BASE_URL}/map/layers`,
-        { timeout: TIMEOUT },
+        config,
       ),
-      fetchLayerGroups(cached?.groups ?? []),
+      fetchLayerGroups(cachedAny?.groups ?? []),
     ]);
     const registry: RegistryCache = {
       registryVersion: layersResponse.data.registryVersion,
+      audience,
+      syncedAt,
       layers: layersResponse.data.layers ?? [],
       groups,
     };
-    applyRegistry(registry);
-    AsyncStorage.setItem(REGISTRY_CACHE_KEY, JSON.stringify(registry)).catch(
-      () => {},
-    );
+    applyRegistry(registry, false);
+    writeCache(registry);
   } catch {
-    if (state.status !== 'ready') {
+    if (state.status === 'ready') {
+      setState({ ...state, stale: true });
+    } else {
       setState({ status: 'error', layers: [], groups: [] });
     }
   }
   return state;
 }
 
-/** Tải (lại) registry; các lời gọi trùng nhau dùng chung một lượt tải. */
-export function loadMapRegistry(): Promise<MapRegistryState> {
-  if (!inflight) {
-    inflight = load().finally(() => {
-      inflight = null;
-    });
+/**
+ * Tải (lại) registry; các lời gọi trùng nhau dùng chung một lượt tải.
+ * `force` = phải tải lại sau lượt đang chạy (vd. vừa đăng nhập/đăng xuất).
+ */
+export function loadMapRegistry(
+  options: { force?: boolean } = {},
+): Promise<MapRegistryState> {
+  if (inflight) {
+    if (!options.force) return inflight;
+    reloadQueued = true;
+    return inflight.then(() => loadMapRegistry());
   }
+  reloadQueued = false;
+  inflight = load().finally(() => {
+    inflight = null;
+  });
   return inflight;
 }
+
+// Đăng nhập / đăng xuất -> danh sách lớp có thể khác theo quyền: tải lại
+// registry kèm token mới (tài liệu mục 1 bước 4). Refresh token (vẫn đăng
+// nhập) không đổi đối tượng nên không cần tải lại.
+let lastAudience: RegistryAudience = getAccessToken() ? 'auth' : 'public';
+subscribeToAccessTokenChange(accessToken => {
+  const audience: RegistryAudience = accessToken ? 'auth' : 'public';
+  if (audience === lastAudience) return;
+  lastAudience = audience;
+  if (state.status !== 'idle' && !reloadQueued) {
+    loadMapRegistry({ force: true }).catch(() => {});
+  }
+});
 
 /** Cho service (ngoài React): registry hiện có, tải lần đầu nếu chưa có. */
 export async function getMapRegistry(): Promise<MapRegistryState> {
@@ -269,11 +355,13 @@ export function useMapRegistry(): MapRegistryState & {
   useEffect(() => {
     if (state.status === 'idle') loadMapRegistry();
   }, []);
-  return { ...snapshot, reload: loadMapRegistry };
+  return { ...snapshot, reload: () => loadMapRegistry({ force: true }) };
 }
 
 /** Chỉ dùng trong test: đưa store về trạng thái ban đầu. */
 export function resetMapRegistryForTests() {
   state = { status: 'idle', layers: [], groups: [] };
   inflight = null;
+  reloadQueued = false;
+  stateAudience = null;
 }

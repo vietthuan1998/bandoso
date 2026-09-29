@@ -17,8 +17,15 @@ jest.mock('../../services/statistics/statisticsApi', () => {
     fetchStatisticsMeasures: jest.fn(async () => []),
   };
 });
+const mockFetchStatuses = jest.fn(async () => [] as unknown[]);
 jest.mock('../../services/api/catalogApi', () => ({
   fetchCatalogWards: jest.fn(async () => []),
+  fetchCatalogStatuses: (...args: unknown[]) => mockFetchStatuses(...(args as [])),
+  shortWardName: (name: string) => name,
+}));
+let mockProfile: unknown = null;
+jest.mock('../../hooks/useAuthProfile', () => ({
+  useAuthProfile: () => mockProfile,
 }));
 jest.mock('../../services/map/mapRegistry', () => ({
   useMapRegistry: () => ({ status: 'ready', layers: [], groups: [], reload: jest.fn() }),
@@ -26,6 +33,7 @@ jest.mock('../../services/map/mapRegistry', () => ({
 
 import { AxiosError, AxiosHeaders } from 'axios';
 import { StatisticsScreen } from './StatisticsScreen';
+import { DonutChart } from '../../components/statistics/DonutChart';
 
 let renderer!: TestRenderer.ReactTestRenderer;
 
@@ -85,6 +93,9 @@ describe('StatisticsScreen (API /statistics)', () => {
   beforeEach(() => {
     mockFetchSummary.mockReset();
     mockFetchGroups.mockReset();
+    mockFetchStatuses.mockReset();
+    mockFetchStatuses.mockResolvedValue([]);
+    mockProfile = null;
   });
 
   it('follows the mandatory display rules of the statistics API', async () => {
@@ -156,5 +167,67 @@ describe('StatisticsScreen (API /statistics)', () => {
     const texts = await render();
 
     expect(texts).toContain('Đăng nhập ở tab Cá nhân để xem số liệu thống kê.');
+  });
+
+  it('shows the server message and requestId for other errors (by error.code)', async () => {
+    const config = { headers: new AxiosHeaders() };
+    mockFetchSummary.mockRejectedValue(
+      new AxiosError('403', '403', config, null, {
+        status: 403,
+        statusText: '',
+        headers: {},
+        config,
+        data: {
+          error: {
+            code: 'FORBIDDEN_WARD_SCOPE',
+            message: 'Tài khoản không có quyền xem dữ liệu của phường/xã này.',
+            requestId: 'b1f0a2c4',
+          },
+        },
+      }),
+    );
+
+    const texts = await render();
+
+    expect(texts).toContain(
+      'Tài khoản không có quyền xem dữ liệu của phường/xã này. (Mã tra cứu: b1f0a2c4)',
+    );
+  });
+
+  it('colours the status breakdown from /catalog/statuses instead of a client palette', async () => {
+    mockFetchStatuses.mockResolvedValue([
+      { code: 'draft', label: 'Khởi tạo', color: '#94a3b8' },
+      { code: 'approved', label: 'Đã duyệt', color: '#16a34a' },
+    ]);
+    mockFetchSummary.mockResolvedValue({
+      summary: {
+        ...SUMMARY,
+        byStatus: [
+          { status: 'approved', label: 'Đã duyệt', count: 10 },
+          { status: 'mystery', label: 'Lạ', count: 1 },
+        ],
+      },
+      notes: [],
+    });
+
+    await render();
+
+    const segments = renderer.root.findByType(DonutChart).props.segments;
+    expect(segments.map((segment: { color: string }) => segment.color)).toEqual([
+      '#16a34a',
+      '#94a3b8',
+    ]);
+  });
+
+  it('shows the export button only with the report.export permission', async () => {
+    mockFetchSummary.mockResolvedValue({ summary: SUMMARY, notes: [] });
+
+    expect(await render()).not.toContain('Xuất báo cáo');
+
+    mockProfile = {
+      permissions: ['statistics.read', 'report.export'],
+      wardScope: { type: 'all', wardIds: [] },
+    };
+    expect(await render()).toContain('Xuất báo cáo');
   });
 });

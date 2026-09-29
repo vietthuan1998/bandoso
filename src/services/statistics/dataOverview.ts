@@ -1,82 +1,80 @@
 import type { IconName } from '../../components/common/Icon';
-import { dcuAxios, dcuHeaders, dcuItemsUrl } from '../api/dcuClient';
 import { getMapRegistry } from '../map/mapRegistry';
+import { fetchStatisticsSummary } from './statisticsApi';
 
-export type DataOverviewGroupResult = {
-  id: string;
+export type DataOverviewLayer = {
+  collection: string;
   label: string;
+  count: number;
+};
+
+export type DataOverviewGroup = {
+  id: string;
+  /** null = lớp không có trong registry hiện tại (nhóm "Khác"). */
+  label: string | null;
   icon: IconName;
-  count: number | null;
+  layers: DataOverviewLayer[];
 };
 
 export type DataOverview = {
-  totalObjects: number;
-  readableCollections: number;
-  totalCollections: number;
-  groups: DataOverviewGroupResult[];
+  /** totals.total do server chốt — không cộng từ các lớp. */
+  total: number;
+  /** Bản ghi không quy được về phường xã nào — bắt buộc hiển thị. */
+  unknownWard: number;
+  /** meta.notes — giải thích phần lệch số liệu. */
+  notes: string[];
+  groups: DataOverviewGroup[];
 };
 
-async function fetchCollectionCount(
-  collection: string,
-): Promise<number | null> {
-  try {
-    const response = await dcuAxios.get<{ data: Array<{ count: string }> }>(
-      dcuItemsUrl(collection),
-      {
-        params: { 'aggregate[count]': '*' },
-        headers: dcuHeaders(),
-      },
-    );
-    const raw = response.data.data?.[0]?.count;
-    const count = raw === undefined ? NaN : Number(raw);
-    return Number.isFinite(count) ? count : null;
-  } catch {
-    return null;
-  }
-}
+const OTHER_GROUP_ID = '__other__';
 
+/**
+ * Tổng quan dữ liệu = GET /statistics/summary (không bộ lọc). Mọi con số do
+ * backend chốt (tài liệu mục 11): client chỉ xếp các dòng byLayer vào nhóm
+ * menu của registry để hiển thị, không tự đếm hay cộng lại.
+ */
 export async function fetchDataOverview(): Promise<DataOverview> {
-  const { layers, groups } = await getMapRegistry();
-  const countByLayerId = new Map<string, number | null>();
+  const [{ summary, notes }, registry] = await Promise.all([
+    fetchStatisticsSummary({}),
+    getMapRegistry(),
+  ]);
 
-  await Promise.all(
-    layers.map(async layer => {
-      countByLayerId.set(
-        layer.id,
-        await fetchCollectionCount(layer.collection),
-      );
-    }),
-  );
-
-  let totalObjects = 0;
-  let readableCollections = 0;
-  for (const count of countByLayerId.values()) {
-    if (count !== null) {
-      totalObjects += count;
-      readableCollections += 1;
-    }
+  const groupOf = new Map<string, string>();
+  for (const layer of registry.layers) {
+    groupOf.set(layer.id, layer.groupKey);
+    groupOf.set(layer.collection, layer.groupKey);
   }
 
-  // Nhóm theo menuGroup của registry (cùng nhóm với menu lớp bản đồ).
-  const groupResults: DataOverviewGroupResult[] = groups.map(group => {
-    const counts = layers
-      .filter(layer => layer.groupKey === group.key)
-      .map(layer => countByLayerId.get(layer.id) ?? null);
-    const readable = counts.filter((count): count is number => count !== null);
-    return {
+  const byGroup = new Map<string, DataOverviewLayer[]>();
+  for (const item of summary.byLayer) {
+    const groupId = groupOf.get(item.collection) ?? OTHER_GROUP_ID;
+    const list = byGroup.get(groupId) ?? [];
+    list.push({
+      collection: item.collection,
+      label: item.label,
+      count: item.count,
+    });
+    byGroup.set(groupId, list);
+  }
+
+  const groups: DataOverviewGroup[] = registry.groups
+    .filter(group => byGroup.has(group.key))
+    .map(group => ({
       id: group.key,
       label: group.label,
       icon: group.icon,
-      count: readable.length
-        ? readable.reduce((sum, count) => sum + count, 0)
-        : null,
-    };
-  });
+      layers: byGroup.get(group.key) ?? [],
+    }));
+  const known = new Set(groups.map(group => group.id));
+  for (const [groupId, layers] of byGroup) {
+    if (known.has(groupId)) continue;
+    groups.push({ id: groupId, label: null, icon: 'layers', layers });
+  }
 
   return {
-    totalObjects,
-    readableCollections,
-    totalCollections: layers.length,
-    groups: groupResults,
+    total: summary.totals.total,
+    unknownWard: summary.totals.unknownWard,
+    notes,
+    groups,
   };
 }

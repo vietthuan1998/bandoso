@@ -1,17 +1,21 @@
-import axios from 'axios';
 import { dcuAxios, dcuHeaders, dcuItemsUrl } from './dcuClient';
-import { classifyFreshness, type LayerFreshness } from '../../utils/freshness';
+import { isForbidden, parseApiError } from './apiError';
 import { getMapRegistry } from '../map/mapRegistry';
 import type { MvtLayerConfig } from '../map/mvtLayers';
 import {
-  pickFeatureLocation,
-  pickFeatureTitle,
-  pickFeatureWard,
-} from '../gis/normalizeFeatureFields';
-import {
-  isSystemDirectusCollection,
-  layerHasDateField,
-} from '../statistics/statisticsOverview';
+  resolveFeatureTitle,
+  resolveFieldValue,
+} from '../gis/registryFeatureFields';
+import type { FieldLabels } from '../gis/normalizeFeatureFields';
+import { isSystemDirectusCollection } from '../statistics/statisticsOverview';
+import { fetchStatisticsGroups } from '../statistics/statisticsApi';
+
+/**
+ * Màn Dữ liệu đọc thẳng items Directus vì BFF chưa có endpoint danh sách bản
+ * ghi (docs/designs/huemaps-bff-migration.md). Mọi tên field lấy từ registry
+ * (directusIdField, titleFields, listFields, searchableFields, updatedAtField)
+ * — không khai báo cứng trong client (tài liệu mục 4).
+ */
 
 // Lớp hiện ở màn Dữ liệu: registry bật capabilities.list, bỏ collection hệ thống.
 export function dataScreenLayers(layers: MvtLayerConfig[]): MvtLayerConfig[] {
@@ -27,7 +31,16 @@ export type MapLocateRequest = {
   properties: Record<string, unknown>;
 };
 
-export const WARD_TRACKED_LAYER_IDS = new Set(['thua_dat']);
+/** Bộ lọc dùng chung giữa màn Dữ liệu và Thống kê (tài liệu mục 11). */
+export type DataFilters = {
+  /** Mã ĐVHC; rỗng = mọi phường xã. */
+  wards: string[];
+  /** yyyy-mm-dd; null = không giới hạn. */
+  dateFrom: string | null;
+  dateTo: string | null;
+};
+
+export type DataRecordLine = { key: string; label: string; value: string };
 
 export type DataRecord = {
   id: string;
@@ -35,51 +48,142 @@ export type DataRecord = {
   collection: string;
   color: string;
   title: string;
-  ward: string | null;
-  /** Địa điểm/địa chỉ dạng text (xem pickFeatureLocation) — null khi
-   * collection không có field kiểu này (không suy đoán thay thế). */
-  location: string | null;
+  /** Các cột listFields (trừ trường đã làm tiêu đề), theo đúng thứ tự registry. */
+  lines: DataRecordLine[];
   updatedAt: string | null;
-  status: LayerFreshness;
   properties: Record<string, unknown>;
 };
 
-const ID_FIELD_CANDIDATES = ['id', 'gid', 'objectid', 'ogc_fid', 'fid', 'pk'];
-
-export function pickRecordId(raw: Record<string, unknown>): string {
-  for (const key of ID_FIELD_CANDIDATES) {
-    const value = raw[key];
-    if (value !== null && value !== undefined && String(value).trim()) {
-      return String(value).trim();
-    }
-  }
-  return '';
-}
-
-function normalizeRecord(
+export function recordId(
   layer: MvtLayerConfig,
   raw: Record<string, unknown>,
+): string {
+  const value = raw[layer.directusIdField];
+  return value !== null && value !== undefined && String(value).trim()
+    ? String(value).trim()
+    : '';
+}
+
+export function normalizeRecord(
+  layer: MvtLayerConfig,
+  raw: Record<string, unknown>,
+  labels: FieldLabels,
 ): DataRecord {
-  const id = pickRecordId(raw);
+  const title = resolveFeatureTitle(layer, raw);
+  const hidden = new Set(layer.hiddenFields);
+  const titleField = layer.titleFields.find(
+    field => resolveFieldValue(layer, field, raw, labels) === title,
+  );
+  const lines = layer.listFields
+    .filter(field => field !== titleField && !hidden.has(field))
+    .map(field => ({
+      key: field,
+      label: layer.fieldLabels[field] ?? field,
+      value: resolveFieldValue(layer, field, raw, labels),
+    }))
+    .filter(line => line.value !== '');
   const rawUpdatedAt = layer.updatedAtField ? raw[layer.updatedAtField] : null;
-  const updatedAt =
-    typeof rawUpdatedAt === 'string' && rawUpdatedAt.trim()
-      ? rawUpdatedAt
-      : null;
   return {
-    id,
+    id: recordId(layer, raw),
     layerId: layer.id,
     collection: layer.collection,
     color: layer.color,
-    title: pickFeatureTitle(raw) ?? id ?? layer.collection,
-    ward: pickFeatureWard(raw),
-    location: pickFeatureLocation(raw),
-    updatedAt,
-    status: layerHasDateField(layer)
-      ? classifyFreshness(updatedAt)
-      : 'unknown',
+    title,
+    lines,
+    updatedAt:
+      typeof rawUpdatedAt === 'string' && rawUpdatedAt.trim()
+        ? rawUpdatedAt
+        : null,
     properties: raw,
   };
+}
+
+const IDENTIFIER_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const wardFieldRequests = new Map<string, Promise<string | null>>();
+
+/**
+ * Trường chứa mã ĐVHC của lớp, lấy từ `field` mà server trả ở
+ * /statistics/{key}/groups?dimension=ward (vd. thua_dat -> ma_xa). Lớp không
+ * có trường phường xã thật (server trả "(chỉ mục địa bàn)") hoặc chưa đăng
+ * nhập -> null: danh sách Directus không lọc được theo phường xã cho lớp đó.
+ */
+export function resolveWardField(layer: MvtLayerConfig): Promise<string | null> {
+  let request = wardFieldRequests.get(layer.id);
+  if (!request) {
+    request = fetchStatisticsGroups(layer.id, 'ward', {})
+      .then(result => (IDENTIFIER_RE.test(result.field) ? result.field : null))
+      .catch(() => {
+        // Lỗi quyền/mạng không được ghim vĩnh viễn — lần sau hỏi lại.
+        wardFieldRequests.delete(layer.id);
+        return null;
+      });
+    wardFieldRequests.set(layer.id, request);
+  }
+  return request;
+}
+
+/** Chỉ dùng trong test. */
+export function resetWardFieldCacheForTests() {
+  wardFieldRequests.clear();
+}
+
+export type LayerFilterSupport = {
+  wards: boolean;
+  dates: boolean;
+  search: boolean;
+};
+
+type DirectusFilter = Record<string, unknown>;
+
+async function buildLayerQuery(
+  layer: MvtLayerConfig,
+  search: string,
+  filters: DataFilters,
+): Promise<{ filter: DirectusFilter | null; support: LayerFilterSupport }> {
+  const clauses: DirectusFilter[] = [];
+  const support: LayerFilterSupport = { wards: true, dates: true, search: true };
+
+  const query = search.trim();
+  if (query) {
+    if (layer.capabilities.search && layer.searchableFields.length > 0) {
+      clauses.push({
+        _or: layer.searchableFields.map(field => ({
+          [field]: { _icontains: query },
+        })),
+      });
+    } else {
+      support.search = false;
+    }
+  }
+
+  if (filters.wards.length > 0) {
+    const wardField = await resolveWardField(layer);
+    if (wardField) {
+      clauses.push({ [wardField]: { _in: filters.wards } });
+    } else {
+      support.wards = false;
+    }
+  }
+
+  if (filters.dateFrom || filters.dateTo) {
+    if (layer.updatedAtField) {
+      const range: Record<string, string> = {};
+      if (filters.dateFrom) range._gte = `${filters.dateFrom}T00:00:00`;
+      if (filters.dateTo) range._lte = `${filters.dateTo}T23:59:59`;
+      clauses.push({ [layer.updatedAtField]: range });
+    } else {
+      support.dates = false;
+    }
+  }
+
+  return {
+    filter: clauses.length ? { _and: clauses } : null,
+    support,
+  };
+}
+
+function isSupported(support: LayerFilterSupport): boolean {
+  return support.wards && support.dates && support.search;
 }
 
 export type DataRecordsUnreadableReason = 'forbidden' | 'error' | null;
@@ -88,39 +192,42 @@ export type DataRecordsPage = {
   items: DataRecord[];
   total: number;
   unreadableReason: DataRecordsUnreadableReason;
+  /** Bộ lọc/tìm kiếm không áp dụng được cho lớp này -> không trả bản ghi. */
+  unsupported: LayerFilterSupport | null;
 };
 
 function unreadableReasonOf(error: unknown): DataRecordsUnreadableReason {
-  return axios.isAxiosError(error) && error.response?.status === 403
-    ? 'forbidden'
-    : 'error';
+  return isForbidden(parseApiError(error)) ? 'forbidden' : 'error';
 }
 
 export async function fetchDataRecordsPage({
   layer,
   search = '',
-  ward = null,
+  filters,
+  labels,
   page = 1,
   pageSize = 20,
 }: {
   layer: MvtLayerConfig;
   search?: string;
-  ward?: string | null;
+  filters: DataFilters;
+  labels: FieldLabels;
   page?: number;
   pageSize?: number;
 }): Promise<DataRecordsPage> {
-  if (ward && !WARD_TRACKED_LAYER_IDS.has(layer.id)) {
-    return { items: [], total: 0, unreadableReason: null };
+  const { filter, support } = await buildLayerQuery(layer, search, filters);
+  // Không lọc được thì không trả gì — trả toàn bộ sẽ trông như đã lọc.
+  if (!isSupported(support)) {
+    return { items: [], total: 0, unreadableReason: null, unsupported: support };
   }
   try {
     const params: Record<string, string | number> = {
       limit: pageSize,
       page,
       meta: 'filter_count',
-      sort: layer.updatedAtField ? `-${layer.updatedAtField}` : '',
     };
-    if (search.trim()) params.search = search.trim();
-    if (ward) params['filter[ten_xa][_eq]'] = ward;
+    if (layer.updatedAtField) params.sort = `-${layer.updatedAtField}`;
+    if (filter) params.filter = JSON.stringify(filter);
 
     const response = await dcuAxios.get<{
       data: Array<Record<string, unknown>>;
@@ -128,54 +235,79 @@ export async function fetchDataRecordsPage({
     }>(dcuItemsUrl(layer.collection), { params, headers: dcuHeaders() });
 
     const items = (response.data.data ?? []).map(raw =>
-      normalizeRecord(layer, raw),
+      normalizeRecord(layer, raw, labels),
     );
     const total = response.data.meta?.filter_count ?? items.length;
-    return { items, total, unreadableReason: null };
+    return { items, total, unreadableReason: null, unsupported: null };
   } catch (error) {
-    return { items: [], total: 0, unreadableReason: unreadableReasonOf(error) };
+    return {
+      items: [],
+      total: 0,
+      unreadableReason: unreadableReasonOf(error),
+      unsupported: null,
+    };
   }
 }
 
-export async function fetchRecordById(
+/**
+ * Bản ghi đầy đủ của một feature bấm trên bản đồ. Khoá tile là
+ * featureIdField; khoá Directus là directusIdField — hai trường có thể khác
+ * nhau (vd. gisportal_* dùng objectid trong tile), khi đó tra theo filter.
+ */
+export async function fetchFeatureRecord(
   layer: MvtLayerConfig,
-  id: string,
+  featureId: string,
 ): Promise<Record<string, unknown> | null> {
   try {
-    const response = await dcuAxios.get<{ data: Record<string, unknown> }>(
-      `${dcuItemsUrl(layer.collection)}/${encodeURIComponent(id)}`,
-      { headers: dcuHeaders() },
-    );
-    return response.data.data ?? null;
+    if (layer.directusIdField === layer.featureIdField) {
+      const response = await dcuAxios.get<{ data: Record<string, unknown> }>(
+        `${dcuItemsUrl(layer.collection)}/${encodeURIComponent(featureId)}`,
+        { headers: dcuHeaders() },
+      );
+      return response.data.data ?? null;
+    }
+    const response = await dcuAxios.get<{
+      data: Array<Record<string, unknown>>;
+    }>(dcuItemsUrl(layer.collection), {
+      params: {
+        limit: 1,
+        filter: JSON.stringify({ [layer.featureIdField]: { _eq: featureId } }),
+      },
+      headers: dcuHeaders(),
+    });
+    return response.data.data?.[0] ?? null;
   } catch {
     return null;
   }
 }
 
-export type AllLayersRecordsResult = DataRecordsPage & {
+export type AllLayersRecordsResult = {
+  items: DataRecord[];
+  total: number;
   unreadableLayerIds: string[];
+  unsupportedLayerIds: string[];
 };
 
 export async function fetchAllLayersRecords({
   search = '',
-  ward = null,
+  filters,
+  labels,
   perLayerLimit = 6,
 }: {
   search?: string;
-  ward?: string | null;
+  filters: DataFilters;
+  labels: FieldLabels;
   perLayerLimit?: number;
 }): Promise<AllLayersRecordsResult> {
-  const allLayers = dataScreenLayers((await getMapRegistry()).layers);
-  const layers = ward
-    ? allLayers.filter(layer => WARD_TRACKED_LAYER_IDS.has(layer.id))
-    : allLayers;
+  const layers = dataScreenLayers((await getMapRegistry()).layers);
   const results = await Promise.all(
     layers.map(async layer => ({
       layer,
       page: await fetchDataRecordsPage({
         layer,
         search,
-        ward,
+        filters,
+        labels,
         page: 1,
         pageSize: perLayerLimit,
       }),
@@ -189,9 +321,14 @@ export async function fetchAllLayersRecords({
     if (b.updatedAt) return 1;
     return 0;
   });
-  const total = results.reduce((sum, r) => sum + r.page.total, 0);
-  const unreadableLayerIds = results
-    .filter(r => r.page.unreadableReason !== null)
-    .map(r => r.layer.id);
-  return { items, total, unreadableReason: null, unreadableLayerIds };
+  return {
+    items,
+    total: results.reduce((sum, r) => sum + r.page.total, 0),
+    unreadableLayerIds: results
+      .filter(r => r.page.unreadableReason !== null)
+      .map(r => r.layer.id),
+    unsupportedLayerIds: results
+      .filter(r => r.page.unsupported !== null)
+      .map(r => r.layer.id),
+  };
 }

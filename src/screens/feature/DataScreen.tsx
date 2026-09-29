@@ -11,27 +11,27 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { LayerFreshness } from '../../utils/freshness';
 import { useMapRegistry } from '../../services/map/mapRegistry';
 import {
   dataScreenLayers,
-  WARD_TRACKED_LAYER_IDS,
   fetchAllLayersRecords,
   fetchDataRecordsPage,
+  type DataFilters,
   type DataRecord,
   type DataRecordsUnreadableReason,
+  type LayerFilterSupport,
   type MapLocateRequest,
 } from '../../services/api/dataRecords';
+import {
+  fetchCatalogWards,
+  type CatalogWard,
+} from '../../services/api/catalogApi';
 import {
   pad2,
   type NormalizedFeatureField,
   type NormalizedFeatureLeaf,
 } from '../../services/gis/normalizeFeatureFields';
-import {
-  extractRepresentativePoint,
-  fetchWardDirectory,
-  type WardBreakdownItem,
-} from '../../services/statistics/statisticsOverview';
+import { extractRepresentativePoint } from '../../services/statistics/statisticsOverview';
 import { BottomSheet } from '../../components/common/BottomSheet';
 import { IotReadingsPanel } from '../../components/feature/IotReadingsPanel';
 import {
@@ -43,9 +43,12 @@ import {
   PickerOption,
 } from '../../components/filter/FilterControls';
 import {
-  FRESHNESS_COLOR,
-  FRESHNESS_ICON,
-} from '../../components/common/freshnessUi';
+  DateRangeSheet,
+  WardFilterSheet,
+  dateRangeLabel,
+  wardFilterLabel,
+} from '../../components/filter/FilterSheets';
+import { useSharedFilters } from '../../hooks/useSharedFilters';
 import { Icon } from '../../components/common/Icon';
 import { COLORS, RADIUS, SPACING } from '../../constants/theme';
 import {
@@ -71,9 +74,20 @@ export function DataScreen({
 }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const labels = useMemo(
+    () => ({
+      yes: t('common.yes'),
+      no: t('common.no'),
+      male: t('common.male'),
+      female: t('common.female'),
+    }),
+    [t],
+  );
 
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  // Bộ lọc dùng chung với màn Thống kê, giữ nguyên khi chuyển tab.
+  const { filters: shared, updateFilters } = useSharedFilters();
+  const search = shared.search;
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
   useEffect(() => {
     const timer = setTimeout(
       () => setDebouncedSearch(search),
@@ -87,40 +101,41 @@ export function DataScreen({
     () => dataScreenLayers(registry.layers),
     [registry.layers],
   );
-  // Registry chưa tải xong thì chưa gọi dữ liệu, tránh tải "tất cả lớp" rồi
-  // lại tải lớp mặc định ngay sau đó.
+  // Registry chưa tải xong thì chưa gọi dữ liệu.
   const registryPending =
     registry.status === 'idle' ||
     (registry.status === 'loading' && registry.layers.length === 0);
-  // undefined = người dùng chưa chọn -> mặc định lớp đầu tiên; null = tất cả lớp.
-  const [pickedLayerId, setSelectedLayerId] = useState<
-    string | null | undefined
-  >(undefined);
-  const selectedLayerId =
-    pickedLayerId === undefined ? layers[0]?.id ?? null : pickedLayerId;
+  const selectedLayerId = shared.collections[0] ?? null;
   const [layerSheetOpen, setLayerSheetOpen] = useState(false);
   const selectedLayer = useMemo(
     () => layers.find(layer => layer.id === selectedLayerId) ?? null,
     [layers, selectedLayerId],
   );
 
-  const [selectedWard, setSelectedWard] = useState<string | null>(null);
   const [wardSheetOpen, setWardSheetOpen] = useState(false);
-  const [wards, setWards] = useState<WardBreakdownItem[]>([]);
+  const [dateSheetOpen, setDateSheetOpen] = useState(false);
+  const [wardCatalog, setWardCatalog] = useState<CatalogWard[]>([]);
   useEffect(() => {
     let cancelled = false;
-    fetchWardDirectory().then(items => {
-      if (!cancelled) setWards(items);
-    });
+    fetchCatalogWards().then(
+      items => {
+        if (!cancelled) setWardCatalog(items);
+      },
+      () => {},
+    );
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const wardUnsupported =
-    !!selectedWard &&
-    !!selectedLayer &&
-    !WARD_TRACKED_LAYER_IDS.has(selectedLayer.id);
+  const filters = useMemo<DataFilters>(
+    () => ({
+      wards: shared.wards,
+      dateFrom: shared.dateFrom,
+      dateTo: shared.dateTo,
+    }),
+    [shared.wards, shared.dateFrom, shared.dateTo],
+  );
 
   const [records, setRecords] = useState<DataRecord[]>([]);
   const [total, setTotal] = useState(0);
@@ -130,7 +145,11 @@ export function DataScreen({
   const [hasError, setHasError] = useState(false);
   const [unreadableReason, setUnreadableReason] =
     useState<DataRecordsUnreadableReason>(null);
+  const [unsupported, setUnsupported] = useState<LayerFilterSupport | null>(
+    null,
+  );
   const [unreadableLayerIds, setUnreadableLayerIds] = useState<string[]>([]);
+  const [unsupportedLayerIds, setUnsupportedLayerIds] = useState<string[]>([]);
   const requestKeyRef = useRef(0);
   const loadingMoreRef = useRef(false);
 
@@ -151,7 +170,8 @@ export function DataScreen({
           const result = await fetchDataRecordsPage({
             layer: selectedLayer,
             search: debouncedSearch,
-            ward: selectedWard,
+            filters,
+            labels,
             page: 1,
             pageSize: PAGE_SIZE,
           });
@@ -159,17 +179,22 @@ export function DataScreen({
           setRecords(result.items);
           setTotal(result.total);
           setUnreadableReason(result.unreadableReason);
+          setUnsupported(result.unsupported);
           setUnreadableLayerIds([]);
+          setUnsupportedLayerIds([]);
         } else {
           const result = await fetchAllLayersRecords({
             search: debouncedSearch,
-            ward: selectedWard,
+            filters,
+            labels,
           });
           if (requestKeyRef.current !== key) return;
           setRecords(result.items);
           setTotal(result.total);
           setUnreadableReason(null);
+          setUnsupported(null);
           setUnreadableLayerIds(result.unreadableLayerIds);
+          setUnsupportedLayerIds(result.unsupportedLayerIds);
         }
       } catch {
         if (requestKeyRef.current === key) setHasError(true);
@@ -179,7 +204,8 @@ export function DataScreen({
     })();
   }, [
     selectedLayer,
-    selectedWard,
+    filters,
+    labels,
     debouncedSearch,
     registryPending,
     registry.status,
@@ -197,7 +223,8 @@ export function DataScreen({
     fetchDataRecordsPage({
       layer: selectedLayer,
       search: debouncedSearch,
-      ward: selectedWard,
+      filters,
+      labels,
       page: nextPage,
       pageSize: PAGE_SIZE,
     })
@@ -229,24 +256,23 @@ export function DataScreen({
     [layers, detailRecord],
   );
   const detailCoordinates = useMemo(() => {
-    if (!detailRecord) return null;
-    const geom = detailRecord.properties.geom as
+    if (!detailRecord || !detailLayer) return null;
+    const geom = detailRecord.properties[detailLayer.geometryField] as
       | { type: string; coordinates: unknown }
       | null
       | undefined;
     return extractRepresentativePoint(geom);
-  }, [detailRecord]);
+  }, [detailRecord, detailLayer]);
   // Cùng cách dựng với panel khi chạm trên bản đồ (MvtFeaturePanel): theo
   // registry detailFields / fieldLabels / valueLabels / objectValueKeys.
   const detailFields = useMemo(() => {
     if (!detailRecord || !detailLayer) return [];
-    return buildFeatureDetailFields(detailLayer, detailRecord.properties, {
-      yes: t('common.yes'),
-      no: t('common.no'),
-      male: t('common.male'),
-      female: t('common.female'),
-    });
-  }, [detailRecord, detailLayer, t]);
+    return buildFeatureDetailFields(
+      detailLayer,
+      detailRecord.properties,
+      labels,
+    );
+  }, [detailRecord, detailLayer, labels]);
   const detailTitle =
     detailRecord && detailLayer
       ? resolveFeatureTitle(detailLayer, detailRecord.properties)
@@ -266,6 +292,14 @@ export function DataScreen({
           properties: detailRecord.properties,
         }
       : null;
+
+  const unsupportedHints = unsupported
+    ? [
+        !unsupported.wards ? t('dataScreen.wardUnsupportedHint') : null,
+        !unsupported.dates ? t('dataScreen.dateUnsupportedHint') : null,
+        !unsupported.search ? t('dataScreen.searchUnsupportedHint') : null,
+      ].filter((hint): hint is string => !!hint)
+    : [];
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -288,7 +322,7 @@ export function DataScreen({
               <Icon name="search" size={16} color={COLORS.textFaint} />
               <TextInput
                 value={search}
-                onChangeText={setSearch}
+                onChangeText={value => updateFilters({ search: value })}
                 placeholder={t('dataScreen.searchPlaceholder')}
                 placeholderTextColor={COLORS.textFaint}
                 style={styles.searchInput}
@@ -296,7 +330,7 @@ export function DataScreen({
               />
               {search ? (
                 <Pressable
-                  onPress={() => setSearch('')}
+                  onPress={() => updateFilters({ search: '' })}
                   hitSlop={8}
                   accessibilityLabel={t('header.clearSearch')}
                 >
@@ -317,19 +351,27 @@ export function DataScreen({
               />
               <FilterChip
                 icon="pin"
-                label={selectedWard ?? t('statistics.filters.allWards')}
+                label={wardFilterLabel(shared.wards, wardCatalog, t)}
                 onPress={() => setWardSheetOpen(true)}
               />
               <FilterChip
-                icon="status"
-                label={t('dataScreen.filters.status')}
-                disabled
+                icon="calendar"
+                label={dateRangeLabel(shared.dateFrom, shared.dateTo, t)}
+                onPress={() => setDateSheetOpen(true)}
               />
             </View>
 
-            {wardUnsupported ? (
+            {unsupportedHints.map(hint => (
+              <Text key={hint} style={styles.hintText}>
+                {hint}
+              </Text>
+            ))}
+
+            {!selectedLayer && !loading && unsupportedLayerIds.length > 0 ? (
               <Text style={styles.hintText}>
-                {t('dataScreen.wardUnsupportedHint')}
+                {t('dataScreen.unsupportedLayersHint', {
+                  count: unsupportedLayerIds.length,
+                })}
               </Text>
             ) : null}
 
@@ -404,7 +446,7 @@ export function DataScreen({
             label={t('statistics.filters.allLayers')}
             active={selectedLayerId === null}
             onPress={() => {
-              setSelectedLayerId(null);
+              updateFilters({ collections: [] });
               setLayerSheetOpen(false);
             }}
           />
@@ -414,7 +456,7 @@ export function DataScreen({
               label={layer.label}
               active={selectedLayerId === layer.id}
               onPress={() => {
-                setSelectedLayerId(layer.id);
+                updateFilters({ collections: [layer.id] });
                 setLayerSheetOpen(false);
               }}
             />
@@ -422,34 +464,22 @@ export function DataScreen({
         </ScrollView>
       </BottomSheet>
 
-      {/* Sheet chọn phường/xã — 40 phường/xã thật lấy qua fetchWardDirectory(). */}
-      <BottomSheet
+      {/* Phường xã theo mã ĐVHC từ /catalog/wards — không dùng tên làm khoá. */}
+      <WardFilterSheet
         visible={wardSheetOpen}
         onClose={() => setWardSheetOpen(false)}
-        maxHeight={560}
-      >
-        <ScrollView>
-          <PickerOption
-            label={t('statistics.filters.allWards')}
-            active={selectedWard === null}
-            onPress={() => {
-              setSelectedWard(null);
-              setWardSheetOpen(false);
-            }}
-          />
-          {wards.map(item => (
-            <PickerOption
-              key={item.fullName}
-              label={item.ward}
-              active={selectedWard === item.fullName}
-              onPress={() => {
-                setSelectedWard(item.fullName);
-                setWardSheetOpen(false);
-              }}
-            />
-          ))}
-        </ScrollView>
-      </BottomSheet>
+        wards={wardCatalog}
+        selected={shared.wards}
+        onChange={wards => updateFilters({ wards })}
+      />
+
+      <DateRangeSheet
+        visible={dateSheetOpen}
+        onClose={() => setDateSheetOpen(false)}
+        dateFrom={shared.dateFrom}
+        dateTo={shared.dateTo}
+        onChange={range => updateFilters(range)}
+      />
 
       <BottomSheet
         visible={!!detailRecord}
@@ -510,36 +540,14 @@ export function DataScreen({
                 </View>
               </View>
 
-              {detailRecord.status !== 'unknown' ||
-              detailRecord.ward ||
-              detailRecord.updatedAt ? (
+              {detailRecord.updatedAt ? (
                 <View style={styles.detailMetaRow}>
-                  {detailRecord.status !== 'unknown' ? (
-                    <StatusBadge
-                      status={detailRecord.status}
-                      label={t(`statistics.status.${detailRecord.status}`)}
-                    />
-                  ) : null}
-                  {detailRecord.ward ? (
-                    <View style={styles.metaChip}>
-                      <Icon name="pin" size={11} color={COLORS.textMuted} />
-                      <Text style={styles.metaChipText} numberOfLines={1}>
-                        {detailRecord.ward}
-                      </Text>
-                    </View>
-                  ) : null}
-                  {detailRecord.updatedAt ? (
-                    <View style={styles.metaChip}>
-                      <Icon
-                        name="calendar"
-                        size={11}
-                        color={COLORS.textMuted}
-                      />
-                      <Text style={styles.metaChipText} numberOfLines={1}>
-                        {formatDateTime(detailRecord.updatedAt)}
-                      </Text>
-                    </View>
-                  ) : null}
+                  <View style={styles.metaChip}>
+                    <Icon name="calendar" size={11} color={COLORS.textMuted} />
+                    <Text style={styles.metaChipText} numberOfLines={1}>
+                      {formatDateTime(detailRecord.updatedAt)}
+                    </Text>
+                  </View>
                 </View>
               ) : null}
 
@@ -599,7 +607,6 @@ function DataRecordCard({
   record: DataRecord;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <Pressable
       onPress={onPress}
@@ -610,43 +617,24 @@ function DataRecordCard({
         <Icon name="database" size={16} color="#ffffff" />
       </View>
       <View style={styles.cardBody}>
-        <View style={styles.cardTopRow}>
-          <Text style={styles.cardTitle} numberOfLines={1}>
-            {record.title}
-          </Text>
-          {record.status !== 'unknown' ? (
-            <StatusBadge
-              status={record.status}
-              label={t(`statistics.status.${record.status}`)}
-              compact
-            />
-          ) : null}
-        </View>
+        <Text style={styles.cardTitle} numberOfLines={1}>
+          {record.title}
+        </Text>
 
-        {record.location ? (
-          <Text style={styles.cardLocationText} numberOfLines={1}>
-            {record.location}
+        {/* Cột theo listFields của registry (tài liệu mục 4). */}
+        {record.lines.slice(0, 3).map(line => (
+          <Text key={line.key} style={styles.cardLineText} numberOfLines={1}>
+            <Text style={styles.cardLineLabel}>{line.label}: </Text>
+            {line.value}
           </Text>
-        ) : null}
+        ))}
 
-        {record.ward || record.updatedAt ? (
-          <View style={styles.cardMetaCol}>
-            {record.ward ? (
-              <View style={styles.cardMetaRow}>
-                <Icon name="pin" size={11} color={COLORS.textFaint} />
-                <Text style={styles.cardMetaText} numberOfLines={1}>
-                  {record.ward}
-                </Text>
-              </View>
-            ) : null}
-            {record.updatedAt ? (
-              <View style={styles.cardMetaRow}>
-                <Icon name="calendar" size={11} color={COLORS.textFaint} />
-                <Text style={styles.cardMetaText} numberOfLines={1}>
-                  {formatDateTime(record.updatedAt)}
-                </Text>
-              </View>
-            ) : null}
+        {record.updatedAt ? (
+          <View style={styles.cardMetaRow}>
+            <Icon name="calendar" size={11} color={COLORS.textFaint} />
+            <Text style={styles.cardMetaText} numberOfLines={1}>
+              {formatDateTime(record.updatedAt)}
+            </Text>
           </View>
         ) : null}
       </View>
@@ -654,36 +642,6 @@ function DataRecordCard({
         <Icon name="chevronRight" size={18} color={COLORS.textFaint} />
       </View>
     </Pressable>
-  );
-}
-
-function StatusBadge({
-  status,
-  label,
-  compact,
-}: {
-  status: LayerFreshness;
-  label: string;
-  compact?: boolean;
-}) {
-  const color = FRESHNESS_COLOR[status];
-  return (
-    <View
-      style={[
-        styles.badge,
-        compact ? styles.badgeCompact : null,
-        { backgroundColor: `${color}1f` },
-      ]}
-    >
-      <Icon
-        name={FRESHNESS_ICON[status]}
-        size={compact ? 10 : 12}
-        color={color}
-      />
-      <Text style={[styles.badgeText, { color }]} numberOfLines={1}>
-        {label}
-      </Text>
-    </View>
   );
 }
 
@@ -822,37 +780,25 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   cardBody: { flex: 1, minWidth: 0, gap: 3 },
-  cardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: SPACING.sm,
-  },
   cardTitle: {
-    flex: 1,
     fontSize: 14,
     fontWeight: '700',
     color: COLORS.text,
     lineHeight: 18,
   },
-  cardLocationText: { fontSize: 12, color: COLORS.textMuted },
-  cardMetaCol: { gap: 2, marginTop: 1 },
-  cardMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  cardLineText: { fontSize: 12, color: COLORS.textMuted },
+  cardLineLabel: { color: COLORS.textFaint },
+  cardMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 1,
+  },
   cardMetaText: { flex: 1, fontSize: 11, color: COLORS.textMuted },
   // alignSelf: 'center' căn mũi tên theo chiều dọc TOÀN BỘ dòng (card dùng
   // alignItems: 'flex-start' để icon/nội dung neo lên đầu khi có nhiều dòng
   // meta) — không để mũi tên dính cứng lên đầu dòng khi card cao.
   cardChevronWrap: { alignSelf: 'center' },
-
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: 999,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 3,
-  },
-  badgeCompact: { paddingHorizontal: 6, paddingVertical: 2 },
-  badgeText: { fontSize: 10, fontWeight: '700' },
 
   // Khối cố định (tiêu đề popup + mini bản đồ) — đặt NGOÀI ScrollView bên
   // dưới, xem ghi chú tại nơi dùng trong JSX + đầu MiniMap.tsx.

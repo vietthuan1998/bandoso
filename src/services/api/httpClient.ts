@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getStaticApiToken, isApiBaseUrl } from '../../config/apiAccessToken';
 import { API_BASE_URL, TIMEOUT } from '../../constants/url';
-import { getToken } from '../auth/persistToken';
+import { parseApiError } from './apiError';
 
 export const httpClient = axios.create({
   baseURL: API_BASE_URL,
@@ -23,7 +23,7 @@ httpClient.interceptors.request.use(async config => {
   if (!isApiBaseUrl(resolveRequestUrl(config.baseURL, config.url))) {
     return config;
   }
-  const token = (await getToken()) ?? getStaticApiToken();
+  const token = getStaticApiToken();
   if (token) {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
@@ -31,14 +31,14 @@ httpClient.interceptors.request.use(async config => {
   return config;
 });
 
+/** Thông điệp lỗi: error.message của BFF (tài liệu mục 2) kèm requestId. */
 export function describeHttpError(error: unknown): string {
-  if (axios.isAxiosError(error)) {
-    if (error.response) {
-      const message = (error.response.data as { message?: string } | undefined)
-        ?.message;
-      return message ?? `HTTP ${error.response.status}`;
-    }
-    return error.message;
+  const info = parseApiError(error);
+  if (info.message) {
+    return info.requestId
+      ? `${info.message} (${info.requestId})`
+      : info.message;
   }
+  if (info.status !== null) return `HTTP ${info.status}`;
   return error instanceof Error ? error.message : String(error);
 }

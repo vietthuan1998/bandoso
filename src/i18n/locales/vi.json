@@ -20,7 +20,8 @@
     "no": "Không",
     "male": "Nam",
     "female": "Nữ",
-    "back": "Quay lại"
+    "back": "Quay lại",
+    "requestId": "(Mã tra cứu: {{id}})"
   },
   "header": {
     "title": "Hệ thống bản đồ số thành phố Huế",
@@ -49,7 +50,8 @@
     "unnamedProject": "Dự án chưa có tên",
     "resetBearing": "Đưa bản đồ về hướng Bắc",
     "locateMe": "Vị trí của tôi",
-    "locationUnavailable": "Không thể xác định vị trí của bạn"
+    "locationUnavailable": "Không thể xác định vị trí của bạn",
+    "registryStale": "Đang dùng cấu hình lớp đã lưu · đồng bộ lần cuối {{time}}"
   },
   "search": {
     "administrativeLayer": "Lớp địa giới hành chính",
@@ -159,11 +161,12 @@
     "openButton": "Xem tổng quan dữ liệu",
     "title": "Tổng quan dữ liệu",
     "totalObjects": "Tổng số đối tượng",
-    "collectionsReadable": "Collection đọc được",
     "groupsSectionTitle": "Phân nhóm dữ liệu",
-    "footerNote": "Số liệu được tổng hợp từ các collection Directus đang có quyền đọc.",
+    "footerNote": "Số liệu do máy chủ thống kê chốt (/statistics/summary), không tự tính trên máy.",
     "loading": "Đang tổng hợp số liệu...",
-    "error": "Không tải được số liệu tổng quan."
+    "error": "Không tải được số liệu tổng quan.",
+    "unknownWard": "Chưa xác định phường, xã",
+    "otherGroup": "Khác"
   },
   "statistics": {
     "title": "Thống kê dữ liệu",
@@ -174,7 +177,6 @@
     "filters": {
       "allLayers": "Tất cả lớp",
       "allWards": "Tất cả phường, xã",
-      "today": "Đến hôm nay",
       "dateTo": "Đến {{date}}"
     },
     "detail": {
@@ -185,10 +187,7 @@
     "notesTitle": "Ghi chú số liệu",
     "status": {
       "sectionTitle": "Theo trạng thái",
-      "total": "Tổng cộng",
-      "recent": "Cập nhật gần đây",
-      "stale": "Cần cập nhật",
-      "unknown": "Không theo dõi được"
+      "total": "Tổng cộng"
     },
     "processing": {
       "sectionTitle": "Tình trạng xử lý",
@@ -250,14 +249,17 @@
     "emptyTitle": "Không có dữ liệu phù hợp",
     "emptyMessage": "Thử từ khoá hoặc bộ lọc khác.",
     "loadMore": "Tải thêm",
-    "wardUnsupportedHint": "Lớp này chưa có dữ liệu phường, xã đáng tin cậy để lọc.",
+    "wardUnsupportedHint": "Danh sách lớp này chưa lọc được theo phường, xã (lớp không có trường phường, xã hoặc cần đăng nhập). Xem số liệu theo phường, xã ở tab Thống kê.",
     "unreadableTitle": "Không có quyền truy cập",
     "unreadableMessage": "Tài khoản hiện chưa được cấp quyền đọc dữ liệu của lớp này.",
     "unreadableLayersHint": "{{count}} lớp không đọc được do chưa có quyền truy cập",
     "detail": {
       "title": "Chi tiết dữ liệu",
       "noCoordinates": "Không xác định được toạ độ để định vị"
-    }
+    },
+    "dateUnsupportedHint": "Lớp này không có trường thời gian cập nhật nên không lọc được theo thời gian.",
+    "searchUnsupportedHint": "Lớp này không hỗ trợ tìm kiếm.",
+    "unsupportedLayersHint": "{{count}} lớp không áp dụng được bộ lọc hiện tại nên không hiển thị"
   },
   "comingSoon": {
     "title": "Sắp ra mắt",
@@ -304,5 +306,34 @@
     "locationAndroid": "Tải xuống/{{folder}}/{{name}}",
     "locationIos": "Tệp › Trên iPhone › {{folder}} › {{name}}",
     "savedTo": "Đã lưu báo cáo vào {{location}}"
+  },
+  "scope": {
+    "label": "Phạm vi: {{scope}}",
+    "all": "Toàn thành phố",
+    "wards": "{{count}} phường/xã"
+  },
+  "account": {
+    "fullName": "Họ tên",
+    "username": "Tên đăng nhập",
+    "unit": "Đơn vị",
+    "roles": "Vai trò",
+    "scope": "Phạm vi dữ liệu",
+    "roleNames": {
+      "guest": "Khách / công chúng",
+      "ward_officer": "Cán bộ phường xã",
+      "specialist": "Cán bộ chuyên môn",
+      "city_leader": "Lãnh đạo thành phố",
+      "data_admin": "Quản trị dữ liệu",
+      "system_admin": "Quản trị hệ thống"
+    }
+  },
+  "filters": {
+    "wardCount": "{{count}} phường, xã",
+    "dateRange": "{{from}} – {{to}}",
+    "dateFrom": "Từ {{date}}",
+    "anyTime": "Mọi thời gian",
+    "wardsTitle": "Chọn phường, xã",
+    "dateTitle": "Khoảng thời gian",
+    "done": "Xong"
   }
 }

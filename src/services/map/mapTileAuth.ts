@@ -1,5 +1,5 @@
 import { DCU_HOST_PATTERN, MAP_TILE_AUTH_HEADER, MAP_TILE_AUTH_HOST_PATTERN } from '@env';
-import { getStaticApiToken } from '../../config/apiAccessToken';
+import { directusTileToken } from '../api/directusAuth';
 
 export type TileAuthRule = {
   id: string;
@@ -15,14 +15,14 @@ export const TILE_AUTH_RULE_IDS = [
 ] as const;
 
 /**
- * Host tile dcu.huecity.vn trả 403 cho request không có Authorization và 401
- * cho token nó không nhận ra — kể cả accessToken phiên đăng nhập BFF
- * (dcudata.cgb.vn), vì hai hệ thống xác thực tách rời. Nên tile luôn dùng
- * token tĩnh API_ACCESS_TOKEN trong .env (xem config/apiAccessToken.ts),
- * dù đã đăng nhập hay chưa; không có token tĩnh thì không có luật -> 403.
+ * Host tile dcu.huecity.vn trả 403 cho request không có Authorization. Token
+ * chọn theo directusTileToken(): accessToken phiên đăng nhập khi host đã xác
+ * nhận nhận nó, không thì token tĩnh API_ACCESS_TOKEN làm dự phòng (xem
+ * services/api/directusAuth.ts). Token luôn đi trong header, không bao giờ
+ * nằm trên query string (tài liệu mục 5, 11).
  */
 export function getTileAuthRules(): TileAuthRule[] {
-  const staticToken = getStaticApiToken();
+  const dcuToken = directusTileToken();
   return [
     MAP_TILE_AUTH_HOST_PATTERN && MAP_TILE_AUTH_HEADER
       ? {
@@ -32,12 +32,12 @@ export function getTileAuthRules(): TileAuthRule[] {
           headerValue: MAP_TILE_AUTH_HEADER,
         }
       : null,
-    DCU_HOST_PATTERN && staticToken
+    DCU_HOST_PATTERN && dcuToken
       ? {
           id: 'dcu-huecity-auth',
           hostPattern: DCU_HOST_PATTERN,
           headerName: 'Authorization',
-          headerValue: `Bearer ${staticToken}`,
+          headerValue: `Bearer ${dcuToken}`,
         }
       : null,
   ].filter((rule): rule is TileAuthRule => rule !== null);

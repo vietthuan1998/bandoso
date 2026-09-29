@@ -2,6 +2,7 @@ import axios from 'axios';
 import Keychain from 'react-native-keychain';
 import { TIMEOUT } from '../../constants/url';
 import { DCU_API_BASE_URL, REFRESH_TOKEN_KEYCHAIN_SERVICE } from '../../config/dcuAuthConfig';
+import { isUnauthorized, parseApiError } from '../api/apiError';
 
 export type AuthSession = {
   accessToken: string;
@@ -23,11 +24,12 @@ export class AuthError extends Error {
 }
 
 function toAuthError(error: unknown): AuthError {
-  if (axios.isAxiosError(error)) {
-    if (!error.response) return new AuthError('network');
-    if (error.response.status === 401) return new AuthError('invalid_credentials');
+  const info = parseApiError(error);
+  if (info.network) return new AuthError('network');
+  if (isUnauthorized(info)) {
+    return new AuthError('invalid_credentials', info.message ?? undefined);
   }
-  return new AuthError('unknown');
+  return new AuthError('unknown', info.message ?? undefined);
 }
 
 type TokenResponse = {
@@ -36,12 +38,31 @@ type TokenResponse = {
     refreshToken: string;
     tokenType: string;
     expiresIn: number;
+    roles?: string[];
+    permissions?: string[];
+    wardScopeType?: 'all' | 'ward';
   };
+};
+
+export type WardScope = { type: 'all' | 'ward'; wardIds: string[] };
+
+/** GET /auth/me — hồ sơ, vai trò, quyền và phạm vi của tài khoản. */
+export type UserProfile = {
+  id: string | null;
+  username: string | null;
+  fullName: string | null;
+  unit: string | null;
+  roles: string[];
+  permissions: string[];
+  wardScope: WardScope;
+  allowedCollections: string[];
 };
 
 let inMemoryAccessToken: string | null = null;
 let inFlightRefresh: Promise<string> | null = null;
+let currentProfile: UserProfile | null = null;
 const sessionExpiryListeners = new Set<() => void>();
+const profileListeners = new Set<(profile: UserProfile | null) => void>();
 
 /**
  * App.tsx đăng ký để biết khi nào chuyển về màn đăng nhập (Bước 1-2: coi
@@ -73,10 +94,103 @@ function notifyAccessTokenChange(accessToken: string | null): void {
   accessTokenChangeListeners.forEach(listener => listener(accessToken));
 }
 
+export function getProfile(): UserProfile | null {
+  return currentProfile;
+}
+
+export function subscribeToProfileChange(
+  listener: (profile: UserProfile | null) => void,
+): () => void {
+  profileListeners.add(listener);
+  return () => profileListeners.delete(listener);
+}
+
+function setProfile(profile: UserProfile | null): void {
+  currentProfile = profile;
+  profileListeners.forEach(listener => listener(profile));
+}
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.map(String) : [];
+}
+
+function normalizeProfile(raw: Record<string, unknown>): UserProfile {
+  const scope = (raw.wardScope ?? {}) as { type?: unknown; wardIds?: unknown };
+  return {
+    id: raw.id != null ? String(raw.id) : null,
+    username: typeof raw.username === 'string' ? raw.username : null,
+    fullName: typeof raw.fullName === 'string' ? raw.fullName : null,
+    unit: typeof raw.unit === 'string' ? raw.unit : null,
+    roles: stringList(raw.roles),
+    permissions: stringList(raw.permissions),
+    wardScope: {
+      type: scope.type === 'ward' ? 'ward' : 'all',
+      wardIds: stringList(scope.wardIds),
+    },
+    allowedCollections: stringList(raw.allowedCollections),
+  };
+}
+
+/**
+ * Hồ sơ tạm từ phản hồi login/refresh (đã có roles, permissions,
+ * wardScopeType) để UI ẩn/hiện đúng ngay — /auth/me bổ sung chi tiết sau.
+ */
+function provisionalProfile(data: TokenResponse['data']): UserProfile | null {
+  if (!data.permissions && !data.roles) return null;
+  return {
+    id: null,
+    username: null,
+    fullName: null,
+    unit: null,
+    roles: data.roles ?? [],
+    permissions: data.permissions ?? [],
+    wardScope: {
+      type: data.wardScopeType === 'ward' ? 'ward' : 'all',
+      wardIds: currentProfile?.wardScope.wardIds ?? [],
+    },
+    allowedCollections: currentProfile?.allowedCollections ?? [],
+  };
+}
+
 async function storeRefreshToken(refreshToken: string): Promise<void> {
   await Keychain.setGenericPassword('refreshToken', refreshToken, {
     service: REFRESH_TOKEN_KEYCHAIN_SERVICE,
   });
+}
+
+function applyTokens(data: TokenResponse['data']): void {
+  inMemoryAccessToken = data.accessToken;
+  notifyAccessTokenChange(data.accessToken);
+  const provisional = provisionalProfile(data);
+  if (provisional && !currentProfile) setProfile(provisional);
+}
+
+function clearLocalSession(): void {
+  inMemoryAccessToken = null;
+  notifyAccessTokenChange(null);
+  setProfile(null);
+}
+
+/** GET /auth/me. Lỗi không chặn phiên — giữ hồ sơ tạm từ login. */
+export async function loadProfile(): Promise<UserProfile | null> {
+  const accessToken = inMemoryAccessToken;
+  if (!accessToken) return null;
+  try {
+    const response = await axios.get<{ data: Record<string, unknown> }>(
+      `${DCU_API_BASE_URL}/auth/me`,
+      {
+        timeout: TIMEOUT,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    );
+    // Phiên đã đổi trong lúc chờ (đăng xuất/đăng nhập tài khoản khác).
+    if (inMemoryAccessToken !== accessToken) return currentProfile;
+    const profile = normalizeProfile(response.data.data);
+    setProfile(profile);
+    return profile;
+  } catch {
+    return currentProfile;
+  }
 }
 
 export async function login(
@@ -89,11 +203,12 @@ export async function login(
       { username, password },
       { timeout: TIMEOUT },
     );
-    const { accessToken, refreshToken } = response.data.data;
-    await storeRefreshToken(refreshToken);
-    inMemoryAccessToken = accessToken;
-    notifyAccessTokenChange(accessToken);
-    return { accessToken };
+    const data = response.data.data;
+    await storeRefreshToken(data.refreshToken);
+    setProfile(null);
+    applyTokens(data);
+    loadProfile().catch(() => {});
+    return { accessToken: data.accessToken };
   } catch (error) {
     throw toAuthError(error);
   }
@@ -106,9 +221,9 @@ export function getAccessToken(): string | null {
 /**
  * Gọi lúc mở app: accessToken chỉ sống trong bộ nhớ nên mất khi app khởi
  * động lại — nếu còn refreshToken hợp lệ trong keychain, phục hồi phiên mà
- * không bắt đăng nhập lại. Trả về null nếu chưa từng đăng nhập hoặc phiên đã
- * hết hạn (không coi là lỗi — đây là trạng thái bình thường khi mở app lần
- * đầu).
+ * không bắt đăng nhập lại. Trả về null nếu chưa từng đăng nhập, phiên đã bị
+ * thu hồi, hoặc tạm thời không kết nối được (refreshToken vẫn được giữ để
+ * lần gọi sau phục hồi tiếp — xem doRefresh).
  */
 export async function bootstrapSession(): Promise<AuthSession | null> {
   const stored = await Keychain.getGenericPassword({
@@ -117,6 +232,7 @@ export async function bootstrapSession(): Promise<AuthSession | null> {
   if (stored === false) return null;
   try {
     const accessToken = await refreshAccessToken();
+    loadProfile().catch(() => {});
     return { accessToken };
   } catch {
     return null;
@@ -130,29 +246,32 @@ async function doRefresh(): Promise<string> {
   if (stored === false) {
     throw new AuthError('session_expired');
   }
+  let data: TokenResponse['data'];
   try {
     const response = await axios.post<TokenResponse>(
       `${DCU_API_BASE_URL}/auth/refresh`,
       { refreshToken: stored.password },
       { timeout: TIMEOUT },
     );
-    const { accessToken, refreshToken } = response.data.data;
-    await storeRefreshToken(refreshToken);
-    inMemoryAccessToken = accessToken;
-    notifyAccessTokenChange(accessToken);
-    return accessToken;
+    data = response.data.data;
   } catch (error) {
+    const info = parseApiError(error);
+    // Chỉ 401 mới nghĩa là phiên đã bị thu hồi (tài liệu mục 3). Mất mạng
+    // hay lỗi máy chủ thì giữ nguyên refreshToken — xoá đi là đăng xuất
+    // người dùng oan chỉ vì chập chờn mạng.
+    if (!isUnauthorized(info)) {
+      throw new AuthError(info.network ? 'network' : 'unknown');
+    }
     await Keychain.resetGenericPassword({
       service: REFRESH_TOKEN_KEYCHAIN_SERVICE,
     });
-    inMemoryAccessToken = null;
-    notifyAccessTokenChange(null);
+    clearLocalSession();
     sessionExpiryListeners.forEach(listener => listener());
-    const authError = toAuthError(error);
-    throw new AuthError(
-      authError.kind === 'invalid_credentials' ? 'session_expired' : authError.kind,
-    );
+    throw new AuthError('session_expired', info.message ?? undefined);
   }
+  await storeRefreshToken(data.refreshToken);
+  applyTokens(data);
+  return data.accessToken;
 }
 
 /**
@@ -169,15 +288,25 @@ export function refreshAccessToken(): Promise<string> {
 }
 
 /**
- * Best-effort: luôn xoá phiên cục bộ (keychain + bộ nhớ) dù server có phản
- * hồi lỗi hay không — người dùng bấm đăng xuất mong đợi thoát ngay lập tức.
+ * POST /auth/logout kèm accessToken + refreshToken để server thu hồi đúng
+ * phiên. Best-effort: luôn xoá phiên cục bộ (keychain + bộ nhớ) dù server có
+ * phản hồi lỗi hay không — người dùng bấm đăng xuất mong đợi thoát ngay.
  */
 export async function logout(): Promise<void> {
   try {
+    const stored = await Keychain.getGenericPassword({
+      service: REFRESH_TOKEN_KEYCHAIN_SERVICE,
+    });
+    const accessToken = inMemoryAccessToken;
     await axios.post(
       `${DCU_API_BASE_URL}/auth/logout`,
-      {},
-      { timeout: TIMEOUT },
+      stored === false ? {} : { refreshToken: stored.password },
+      {
+        timeout: TIMEOUT,
+        headers: accessToken
+          ? { Authorization: `Bearer ${accessToken}` }
+          : undefined,
+      },
     );
   } catch {
     // best-effort — vẫn xoá phiên cục bộ dù gọi server thất bại
@@ -185,7 +314,13 @@ export async function logout(): Promise<void> {
     await Keychain.resetGenericPassword({
       service: REFRESH_TOKEN_KEYCHAIN_SERVICE,
     });
-    inMemoryAccessToken = null;
-    notifyAccessTokenChange(null);
+    clearLocalSession();
   }
+}
+
+export function hasPermission(
+  profile: UserProfile | null,
+  permission: string,
+): boolean {
+  return !!profile && profile.permissions.includes(permission);
 }

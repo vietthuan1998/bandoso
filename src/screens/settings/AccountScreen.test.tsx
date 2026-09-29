@@ -26,6 +26,7 @@ describe('AccountScreen', () => {
     const renderer = render({
       status: 'unauthenticated',
       sessionExpired: false,
+      profile: null,
       login: jest.fn(),
       logout: jest.fn(),
     });
@@ -42,6 +43,7 @@ describe('AccountScreen', () => {
     const renderer = render({
       status: 'authenticated',
       sessionExpired: false,
+      profile: null,
       login: jest.fn(),
       logout,
     });
@@ -55,5 +57,33 @@ describe('AccountScreen', () => {
     const button = renderer.root.findByProps({ testID: 'account-logout' });
     button.props.onPress();
     expect(logout).toHaveBeenCalled();
+  });
+
+  it('shows the /auth/me profile and the data scope', () => {
+    const renderer = render({
+      status: 'authenticated',
+      sessionExpired: false,
+      profile: {
+        id: 'u1',
+        username: 'canbo01',
+        fullName: 'Nguyễn Văn A',
+        unit: 'UBND phường Thuận An',
+        roles: ['ward_officer'],
+        permissions: ['data.read'],
+        wardScope: { type: 'ward', wardIds: ['19900', '19858'] },
+        allowedCollections: [],
+      },
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+
+    const text = renderer.root
+      .findAllByType(Text)
+      .map(n => n.props.children)
+      .flat();
+    expect(text).toContain('Nguyễn Văn A');
+    expect(text).toContain('UBND phường Thuận An');
+    expect(text).toContain('Cán bộ phường xã');
+    expect(text).toContain('2 phường/xã');
   });
 });

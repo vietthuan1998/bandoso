@@ -1,6 +1,10 @@
-import axios from 'axios';
 import { DCU_API_BASE_URL } from '../../config/dcuAuthConfig';
 import { dcuAxios, dcuHeaders } from '../api/dcuClient';
+import {
+  isForbidden,
+  isUnauthorized,
+  parseApiError,
+} from '../api/apiError';
 import type { TrendPoint } from './statisticsOverview';
 
 /**
@@ -189,11 +193,11 @@ export async function fetchStatisticsGroups(
 
 export type StatisticsErrorKind = 'unauthorized' | 'forbidden' | 'error';
 
+/** Phân loại theo error.code (tài liệu mục 2), không theo câu chữ. */
 export function statisticsErrorKind(error: unknown): StatisticsErrorKind {
-  if (axios.isAxiosError(error)) {
-    if (error.response?.status === 401) return 'unauthorized';
-    if (error.response?.status === 403) return 'forbidden';
-  }
+  const info = parseApiError(error);
+  if (isUnauthorized(info)) return 'unauthorized';
+  if (isForbidden(info)) return 'forbidden';
   return 'error';
 }
 
