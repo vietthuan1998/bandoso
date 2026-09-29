@@ -125,7 +125,6 @@
     "map": "地図",
     "data": "データ",
     "statistics": "統計",
-    "tracking": "モニタリング",
     "profile": "マイページ"
   },
   "dataOverview": {
@@ -223,18 +222,12 @@
     "wardUnsupportedHint": "このレイヤーの一覧はまだ区・社で絞り込めません(区・社フィールドがないか、ログインが必要です)。区・社別の数値は統計タブで確認してください。",
     "unreadableTitle": "アクセス権限がありません",
     "unreadableMessage": "このアカウントはこのレイヤーのデータ読み取り権限がまだ付与されていません。",
-    "unreadableLayersHint": "{{count}} 件のレイヤーはアクセス権限がなく読み取れません",
     "detail": {
       "title": "データ詳細",
       "noCoordinates": "位置を特定できる座標がありません"
     },
     "dateUnsupportedHint": "このレイヤーには更新日時フィールドがないため、期間で絞り込めません。",
-    "searchUnsupportedHint": "このレイヤーは検索に対応していません。",
-    "unsupportedLayersHint": "{{count}} 件のレイヤーは現在の絞り込みに対応していないため表示されません"
-  },
-  "comingSoon": {
-    "title": "近日公開",
-    "message": "この画面は技術仕様に基づき開発中です。バックエンド準備後にAPI経由で実データに接続します。"
+    "searchUnsupportedHint": "このレイヤーは検索に対応していません。"
   },
   "auth": {
     "usernameLabel": "ユーザー名",

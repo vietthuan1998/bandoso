@@ -125,7 +125,6 @@
     "map": "地图",
     "data": "数据",
     "statistics": "统计",
-    "tracking": "监测",
     "profile": "我的"
   },
   "dataOverview": {
@@ -223,18 +222,12 @@
     "wardUnsupportedHint": "该图层列表暂不能按坊/社筛选(图层没有坊/社字段或需要登录)。按坊/社的统计请查看“统计”标签页。",
     "unreadableTitle": "没有访问权限",
     "unreadableMessage": "该账号尚未获得读取此图层数据的权限。",
-    "unreadableLayersHint": "{{count}} 个图层因权限不足无法读取",
     "detail": {
       "title": "数据详情",
       "noCoordinates": "没有可用于定位的坐标"
     },
     "dateUnsupportedHint": "该图层没有更新时间字段,无法按时间筛选。",
-    "searchUnsupportedHint": "该图层不支持搜索。",
-    "unsupportedLayersHint": "{{count}} 个图层不支持当前筛选条件,未显示"
-  },
-  "comingSoon": {
-    "title": "即将上线",
-    "message": "该界面正按技术规范开发中，后端就绪后将通过 API 接入真实数据。"
+    "searchUnsupportedHint": "该图层不支持搜索。"
   },
   "auth": {
     "usernameLabel": "用户名",

@@ -14,7 +14,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMapRegistry } from '../../services/map/mapRegistry';
 import {
   dataScreenLayers,
-  fetchAllLayersRecords,
   fetchDataRecordsPage,
   type DataFilters,
   type DataRecord,
@@ -107,11 +106,14 @@ export function DataScreen({
   const registryPending =
     registry.status === 'idle' ||
     (registry.status === 'loading' && registry.layers.length === 0);
-  // Chưa chọn lớp -> mặc định lớp đầu tiên registry trả về (chỉ để hiển thị,
-  // không ghi vào bộ lọc chung). null = người dùng chủ động chọn "Tất cả lớp".
+  // Luôn xem một lớp: lớp đang chọn trong bộ lọc chung nếu màn Dữ liệu hiển
+  // thị được, không thì lớp đầu tiên registry trả về (chỉ để hiển thị, không
+  // ghi vào bộ lọc chung — màn Thống kê vẫn hiểu rỗng là tất cả lớp).
+  const pickedLayerId = shared.collections[0];
   const selectedLayerId =
-    shared.collections[0] ??
-    (shared.dataAllLayers ? null : layers[0]?.id ?? null);
+    (pickedLayerId && layers.some(layer => layer.id === pickedLayerId)
+      ? pickedLayerId
+      : layers[0]?.id) ?? null;
   const [layerSheetOpen, setLayerSheetOpen] = useState(false);
   const selectedLayer = useMemo(
     () => layers.find(layer => layer.id === selectedLayerId) ?? null,
@@ -158,8 +160,6 @@ export function DataScreen({
   const [unsupported, setUnsupported] = useState<LayerFilterSupport | null>(
     null,
   );
-  const [unreadableLayerIds, setUnreadableLayerIds] = useState<string[]>([]);
-  const [unsupportedLayerIds, setUnsupportedLayerIds] = useState<string[]>([]);
   const requestKeyRef = useRef(0);
   const loadingMoreRef = useRef(false);
 
@@ -174,38 +174,28 @@ export function DataScreen({
       setLoading(false);
       return;
     }
+    if (!selectedLayer) {
+      // Registry không có lớp nào hiển thị được ở màn Dữ liệu.
+      setRecords([]);
+      setTotal(0);
+      setLoading(false);
+      return;
+    }
     (async () => {
       try {
-        if (selectedLayer) {
-          const result = await fetchDataRecordsPage({
-            layer: selectedLayer,
-            search: debouncedSearch,
-            filters,
-            labels,
-            page: 1,
-            pageSize: PAGE_SIZE,
-          });
-          if (requestKeyRef.current !== key) return;
-          setRecords(result.items);
-          setTotal(result.total);
-          setUnreadableReason(result.unreadableReason);
-          setUnsupported(result.unsupported);
-          setUnreadableLayerIds([]);
-          setUnsupportedLayerIds([]);
-        } else {
-          const result = await fetchAllLayersRecords({
-            search: debouncedSearch,
-            filters,
-            labels,
-          });
-          if (requestKeyRef.current !== key) return;
-          setRecords(result.items);
-          setTotal(result.total);
-          setUnreadableReason(null);
-          setUnsupported(null);
-          setUnreadableLayerIds(result.unreadableLayerIds);
-          setUnsupportedLayerIds(result.unsupportedLayerIds);
-        }
+        const result = await fetchDataRecordsPage({
+          layer: selectedLayer,
+          search: debouncedSearch,
+          filters,
+          labels,
+          page: 1,
+          pageSize: PAGE_SIZE,
+        });
+        if (requestKeyRef.current !== key) return;
+        setRecords(result.items);
+        setTotal(result.total);
+        setUnreadableReason(result.unreadableReason);
+        setUnsupported(result.unsupported);
       } catch {
         if (requestKeyRef.current === key) setHasError(true);
       } finally {
@@ -360,11 +350,7 @@ export function DataScreen({
             <View style={styles.filterRow}>
               <FilterChip
                 icon="database"
-                label={
-                  selectedLayer
-                    ? selectedLayer.label
-                    : t('statistics.filters.allLayers')
-                }
+                label={selectedLayer?.label ?? ''}
                 onPress={() => setLayerSheetOpen(true)}
               />
               <FilterChip
@@ -384,22 +370,6 @@ export function DataScreen({
                 {hint}
               </Text>
             ))}
-
-            {!selectedLayer && !loading && unsupportedLayerIds.length > 0 ? (
-              <Text style={styles.hintText}>
-                {t('dataScreen.unsupportedLayersHint', {
-                  count: unsupportedLayerIds.length,
-                })}
-              </Text>
-            ) : null}
-
-            {!selectedLayer && !loading && unreadableLayerIds.length > 0 ? (
-              <Text style={styles.hintText}>
-                {t('dataScreen.unreadableLayersHint', {
-                  count: unreadableLayerIds.length,
-                })}
-              </Text>
-            ) : null}
 
             {!loading && !hasError ? (
               <Text style={styles.resultCountText}>
@@ -453,31 +423,20 @@ export function DataScreen({
         }
       />
 
-      {/* Sheet chọn lớp/collection — "Tất cả lớp" + 14 collection thật. */}
+      {/* Sheet chọn lớp — mỗi lần xem một lớp của registry. */}
       <BottomSheet
         visible={layerSheetOpen}
         onClose={() => setLayerSheetOpen(false)}
         maxHeight={600}
       >
         <ScrollView>
-          <PickerOption
-            label={t('statistics.filters.allLayers')}
-            active={selectedLayerId === null}
-            onPress={() => {
-              updateFilters({ collections: [], dataAllLayers: true });
-              setLayerSheetOpen(false);
-            }}
-          />
           {layers.map(layer => (
             <PickerOption
               key={layer.id}
               label={layer.label}
               active={selectedLayerId === layer.id}
               onPress={() => {
-                updateFilters({
-                  collections: [layer.id],
-                  dataAllLayers: false,
-                });
+                updateFilters({ collections: [layer.id] });
                 setLayerSheetOpen(false);
               }}
             />

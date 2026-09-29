@@ -125,7 +125,6 @@
     "map": "Carte",
     "data": "Données",
     "statistics": "Statistiques",
-    "tracking": "Suivi",
     "profile": "Profil"
   },
   "dataOverview": {
@@ -223,18 +222,12 @@
     "wardUnsupportedHint": "La liste de cette couche ne peut pas encore être filtrée par quartier (pas de champ quartier, ou connexion requise). Voir les chiffres par quartier dans l'onglet Statistiques.",
     "unreadableTitle": "Accès non autorisé",
     "unreadableMessage": "Ce compte n'a pas encore l'autorisation de lire les données de cette couche.",
-    "unreadableLayersHint": "{{count}} couches illisibles faute d'autorisation d'accès",
     "detail": {
       "title": "Détail des données",
       "noCoordinates": "Aucune coordonnée disponible pour la localisation"
     },
     "dateUnsupportedHint": "Cette couche n'a pas de champ de date de mise à jour et ne peut pas être filtrée par période.",
-    "searchUnsupportedHint": "Cette couche ne prend pas en charge la recherche.",
-    "unsupportedLayersHint": "{{count}} couches ne prennent pas en charge les filtres actuels et sont masquées"
-  },
-  "comingSoon": {
-    "title": "Bientôt disponible",
-    "message": "Cet écran est en cours de développement selon la spécification technique et se connectera aux données réelles via l'API une fois le backend prêt."
+    "searchUnsupportedHint": "Cette couche ne prend pas en charge la recherche."
   },
   "auth": {
     "usernameLabel": "Nom d'utilisateur",

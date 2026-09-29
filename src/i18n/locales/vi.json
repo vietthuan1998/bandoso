@@ -125,7 +125,6 @@
     "map": "Bản đồ",
     "data": "Dữ liệu",
     "statistics": "Thống kê",
-    "tracking": "Theo dõi",
     "profile": "Cá nhân"
   },
   "dataOverview": {
@@ -223,18 +222,12 @@
     "wardUnsupportedHint": "Danh sách lớp này chưa lọc được theo phường, xã (lớp không có trường phường, xã hoặc cần đăng nhập). Xem số liệu theo phường, xã ở tab Thống kê.",
     "unreadableTitle": "Không có quyền truy cập",
     "unreadableMessage": "Tài khoản hiện chưa được cấp quyền đọc dữ liệu của lớp này.",
-    "unreadableLayersHint": "{{count}} lớp không đọc được do chưa có quyền truy cập",
     "detail": {
       "title": "Chi tiết dữ liệu",
       "noCoordinates": "Không xác định được toạ độ để định vị"
     },
     "dateUnsupportedHint": "Lớp này không có trường thời gian cập nhật nên không lọc được theo thời gian.",
-    "searchUnsupportedHint": "Lớp này không hỗ trợ tìm kiếm.",
-    "unsupportedLayersHint": "{{count}} lớp không áp dụng được bộ lọc hiện tại nên không hiển thị"
-  },
-  "comingSoon": {
-    "title": "Sắp ra mắt",
-    "message": "Màn hình này đang được xây dựng theo đặc tả kỹ thuật, sẽ nối dữ liệu thật qua API khi backend sẵn sàng."
+    "searchUnsupportedHint": "Lớp này không hỗ trợ tìm kiếm."
   },
   "auth": {
     "usernameLabel": "Tên đăng nhập",

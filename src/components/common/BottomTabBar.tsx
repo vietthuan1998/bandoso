@@ -8,7 +8,6 @@ const TABS: Array<{ id: AppTabId; icon: IconName; labelKey: string }> = [
   { id: 'map', icon: 'map', labelKey: 'tabs.map' },
   { id: 'data', icon: 'database', labelKey: 'tabs.data' },
   { id: 'statistics', icon: 'statistics', labelKey: 'tabs.statistics' },
-  { id: 'tracking', icon: 'tracking', labelKey: 'tabs.tracking' },
   { id: 'profile', icon: 'profile', labelKey: 'tabs.profile' },
 ];
 

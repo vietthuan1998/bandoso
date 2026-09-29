@@ -125,7 +125,6 @@
     "map": "Map",
     "data": "Data",
     "statistics": "Statistics",
-    "tracking": "Tracking",
     "profile": "Profile"
   },
   "dataOverview": {
@@ -223,18 +222,12 @@
     "wardUnsupportedHint": "This layer's list cannot be filtered by ward yet (no ward field, or sign-in required). See ward figures in the Statistics tab.",
     "unreadableTitle": "No access permission",
     "unreadableMessage": "This account is not yet granted read access to this layer's data.",
-    "unreadableLayersHint": "{{count}} layers unreadable due to missing access permission",
     "detail": {
       "title": "Data detail",
       "noCoordinates": "No coordinates available to locate"
     },
     "dateUnsupportedHint": "This layer has no update-time field, so it cannot be filtered by time.",
-    "searchUnsupportedHint": "This layer does not support search.",
-    "unsupportedLayersHint": "{{count}} layers do not support the current filters and are hidden"
-  },
-  "comingSoon": {
-    "title": "Coming soon",
-    "message": "This screen is being built per the technical spec and will connect to real data via API once the backend is ready."
+    "searchUnsupportedHint": "This layer does not support search."
   },
   "auth": {
     "usernameLabel": "Username",

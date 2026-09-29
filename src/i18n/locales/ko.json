@@ -125,7 +125,6 @@
     "map": "지도",
     "data": "데이터",
     "statistics": "통계",
-    "tracking": "모니터링",
     "profile": "내 정보"
   },
   "dataOverview": {
@@ -223,18 +222,12 @@
     "wardUnsupportedHint": "이 레이어 목록은 아직 동·사로 필터링할 수 없습니다(동·사 필드가 없거나 로그인이 필요합니다). 동·사별 수치는 통계 탭에서 확인하세요.",
     "unreadableTitle": "접근 권한이 없습니다",
     "unreadableMessage": "이 계정에는 아직 이 레이어 데이터에 대한 읽기 권한이 없습니다.",
-    "unreadableLayersHint": "{{count}}개 레이어는 접근 권한이 없어 읽을 수 없습니다",
     "detail": {
       "title": "데이터 상세",
       "noCoordinates": "위치를 표시할 좌표가 없습니다"
     },
     "dateUnsupportedHint": "이 레이어에는 업데이트 시간 필드가 없어 기간으로 필터링할 수 없습니다.",
-    "searchUnsupportedHint": "이 레이어는 검색을 지원하지 않습니다.",
-    "unsupportedLayersHint": "{{count}}개 레이어는 현재 필터를 지원하지 않아 표시되지 않습니다"
-  },
-  "comingSoon": {
-    "title": "출시 예정",
-    "message": "이 화면은 기술 명세에 따라 개발 중이며, 백엔드 준비 후 API를 통해 실제 데이터에 연결됩니다."
+    "searchUnsupportedHint": "이 레이어는 검색을 지원하지 않습니다."
   },
   "auth": {
     "usernameLabel": "아이디",

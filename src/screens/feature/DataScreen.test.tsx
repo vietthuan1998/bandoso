@@ -5,7 +5,6 @@ import { Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const mockFetchPage = jest.fn();
-const mockFetchAll = jest.fn();
 
 function mockLayer(id: string, label: string, detail = true) {
   return {
@@ -40,7 +39,6 @@ jest.mock('../../services/api/dataRecords', () => {
   return {
     ...actual,
     fetchDataRecordsPage: (...args: unknown[]) => mockFetchPage(...args),
-    fetchAllLayersRecords: (...args: unknown[]) => mockFetchAll(...args),
   };
 });
 jest.mock('../../services/api/catalogApi', () => ({
@@ -87,20 +85,28 @@ async function render() {
   });
 }
 
+const record = (layerId: string, id: string) => ({
+  id,
+  layerId,
+  collection: layerId,
+  color: '#000',
+  title: `Bản ghi ${id}`,
+  lines: [],
+  updatedAt: null,
+  properties: {},
+});
+
 describe('DataScreen layer selection', () => {
   beforeEach(() => {
-    mockFetchPage.mockReset().mockResolvedValue({
-      items: [],
-      total: 0,
-      unreadableReason: null,
-      unsupported: null,
-    });
-    mockFetchAll.mockReset().mockResolvedValue({
-      items: [],
-      total: 0,
-      unreadableLayerIds: [],
-      unsupportedLayerIds: [],
-    });
+    // Mỗi lớp trả một bản ghi mang id = tên lớp.
+    mockFetchPage
+      .mockReset()
+      .mockImplementation(async ({ layer }: { layer: { id: string } }) => ({
+        items: [record(layer.id, layer.id)],
+        total: 1,
+        unreadableReason: null,
+        unsupported: null,
+      }));
   });
 
   it('shows the first registry layer by default', async () => {
@@ -111,40 +117,27 @@ describe('DataScreen layer selection', () => {
         layer: expect.objectContaining({ id: 'bts' }),
       }),
     );
-    expect(mockFetchAll).not.toHaveBeenCalled();
   });
 
-  it('keeps "all layers" once the user picks it explicitly', async () => {
+  it('only offers single layers — there is no "all layers" option', async () => {
     await render();
 
-    // Mở ô chọn lớp (đang hiện lớp mặc định) rồi chọn "Tất cả lớp".
+    // Mở ô chọn lớp (đang hiện lớp mặc định).
     await pressText('Trạm BTS');
-    await pressText('Tất cả lớp');
+    const texts = renderer.root
+      .findAllByType(Text)
+      .map(node => [].concat(node.props.children as never).join(''));
+    expect(texts).not.toContain('Tất cả lớp');
 
-    expect(mockFetchAll).toHaveBeenCalled();
+    await pressText('Thửa đất');
+    expect(mockFetchPage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        layer: expect.objectContaining({ id: 'thua_dat' }),
+      }),
+    );
   });
 
   it('does not open details for a layer whose registry capabilities.detail is false', async () => {
-    const record = (layerId: string, id: string) => ({
-      id,
-      layerId,
-      collection: layerId,
-      color: '#000',
-      title: `Bản ghi ${id}`,
-      lines: [],
-      updatedAt: null,
-      properties: {},
-    });
-    mockFetchAll.mockResolvedValue({
-      items: [record('bts', '1'), record('no_detail', '2')],
-      total: 2,
-      unreadableLayerIds: [],
-      unsupportedLayerIds: [],
-    });
-    await render();
-    await pressText('Trạm BTS');
-    await pressText('Tất cả lớp');
-
     const cardFor = (title: string) =>
       renderer.root.findAll(
         node =>
@@ -152,7 +145,12 @@ describe('DataScreen layer selection', () => {
           'disabled' in node.props &&
           node.findAllByType(Text).some(text => text.props.children === title),
       )[0];
-    expect(cardFor('Bản ghi 1').props.disabled).toBe(false);
-    expect(cardFor('Bản ghi 2').props.disabled).toBe(true);
+
+    await render();
+    expect(cardFor('Bản ghi bts').props.disabled).toBe(false);
+
+    await pressText('Trạm BTS');
+    await pressText('Lớp không chi tiết');
+    expect(cardFor('Bản ghi no_detail').props.disabled).toBe(true);
   });
 });

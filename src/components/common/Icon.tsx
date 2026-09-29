@@ -23,7 +23,6 @@ const GLYPHS = {
   map: 'map',
   database: 'database',
   statistics: 'chart-bar',
-  tracking: 'access-point',
   profile: 'account-circle',
   construction: 'hammer-wrench',
 

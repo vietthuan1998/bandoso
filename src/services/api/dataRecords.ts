@@ -1,6 +1,5 @@
 import { dcuAxios, dcuHeaders, dcuItemsUrl } from './dcuClient';
 import { isForbidden, parseApiError } from './apiError';
-import { getMapRegistry } from '../map/mapRegistry';
 import type { MvtLayerConfig } from '../map/mvtLayers';
 import {
   resolveFeatureTitle,
@@ -107,7 +106,9 @@ const wardFieldRequests = new Map<string, Promise<string | null>>();
  * có trường phường xã thật (server trả "(chỉ mục địa bàn)") hoặc chưa đăng
  * nhập -> null: danh sách Directus không lọc được theo phường xã cho lớp đó.
  */
-export function resolveWardField(layer: MvtLayerConfig): Promise<string | null> {
+export function resolveWardField(
+  layer: MvtLayerConfig,
+): Promise<string | null> {
   let request = wardFieldRequests.get(layer.id);
   if (!request) {
     request = fetchStatisticsGroups(layer.id, 'ward', {})
@@ -141,7 +142,11 @@ async function buildLayerQuery(
   filters: DataFilters,
 ): Promise<{ filter: DirectusFilter | null; support: LayerFilterSupport }> {
   const clauses: DirectusFilter[] = [];
-  const support: LayerFilterSupport = { wards: true, dates: true, search: true };
+  const support: LayerFilterSupport = {
+    wards: true,
+    dates: true,
+    search: true,
+  };
 
   const query = search.trim();
   if (query) {
@@ -218,7 +223,12 @@ export async function fetchDataRecordsPage({
   const { filter, support } = await buildLayerQuery(layer, search, filters);
   // Không lọc được thì không trả gì — trả toàn bộ sẽ trông như đã lọc.
   if (!isSupported(support)) {
-    return { items: [], total: 0, unreadableReason: null, unsupported: support };
+    return {
+      items: [],
+      total: 0,
+      unreadableReason: null,
+      unsupported: support,
+    };
   }
   try {
     const params: Record<string, string | number> = {
@@ -279,56 +289,4 @@ export async function fetchFeatureRecord(
   } catch {
     return null;
   }
-}
-
-export type AllLayersRecordsResult = {
-  items: DataRecord[];
-  total: number;
-  unreadableLayerIds: string[];
-  unsupportedLayerIds: string[];
-};
-
-export async function fetchAllLayersRecords({
-  search = '',
-  filters,
-  labels,
-  perLayerLimit = 6,
-}: {
-  search?: string;
-  filters: DataFilters;
-  labels: FieldLabels;
-  perLayerLimit?: number;
-}): Promise<AllLayersRecordsResult> {
-  const layers = dataScreenLayers((await getMapRegistry()).layers);
-  const results = await Promise.all(
-    layers.map(async layer => ({
-      layer,
-      page: await fetchDataRecordsPage({
-        layer,
-        search,
-        filters,
-        labels,
-        page: 1,
-        pageSize: perLayerLimit,
-      }),
-    })),
-  );
-  const items = results.flatMap(r => r.page.items);
-  items.sort((a, b) => {
-    if (a.updatedAt && b.updatedAt)
-      return b.updatedAt.localeCompare(a.updatedAt);
-    if (a.updatedAt) return -1;
-    if (b.updatedAt) return 1;
-    return 0;
-  });
-  return {
-    items,
-    total: results.reduce((sum, r) => sum + r.page.total, 0),
-    unreadableLayerIds: results
-      .filter(r => r.page.unreadableReason !== null)
-      .map(r => r.layer.id),
-    unsupportedLayerIds: results
-      .filter(r => r.page.unsupported !== null)
-      .map(r => r.layer.id),
-  };
 }

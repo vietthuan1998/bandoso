@@ -12,7 +12,6 @@ import { useHueMap } from '../hooks/useHueMap';
 import { SharedFiltersProvider } from '../hooks/useSharedFilters';
 import { StatisticsScreen } from './statistics/StatisticsScreen';
 import { BottomTabBar } from '../components/common/BottomTabBar';
-import { PlaceholderScreen } from '../components/common/PlaceholderScreen';
 import type { AppTabId } from '../types/navigation';
 
 export default function AppShell({ auth }: { auth: AuthGateState }) {
@@ -64,9 +63,6 @@ export default function AppShell({ auth }: { auth: AuthGateState }) {
           ) : null}
           {activeTab === 'statistics' ? (
             <StatisticsScreen onRequestLogin={() => setActiveTab('profile')} />
-          ) : null}
-          {activeTab === 'tracking' ? (
-            <PlaceholderScreen icon="tracking" titleKey="tabs.tracking" />
           ) : null}
           {activeTab === 'profile' ? <AccountScreen auth={auth} /> : null}
         </View>
