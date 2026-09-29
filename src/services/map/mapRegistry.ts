@@ -1,9 +1,9 @@
-import axios from 'axios';
 import { useEffect, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { IconName } from '../../components/common/Icon';
 import { DCU_API_BASE_URL } from '../../config/dcuAuthConfig';
+import { dcuAxios } from '../api/dcuClient';
 import { TIMEOUT } from '../../constants/url';
 import {
   getAccessToken,
@@ -226,6 +226,8 @@ function writeCache(registry: RegistryCache) {
   );
 }
 
+// Qua dcuAxios: accessToken hết hạn (vd. app nằm nền lâu) -> 401 -> refresh
+// rồi phát lại request (tài liệu mục 3), thay vì coi là lỗi mạng.
 function authConfig() {
   const accessToken = getAccessToken();
   return {
@@ -243,7 +245,7 @@ async function fetchLayerGroups(
   fallback: RegistryLayerGroup[],
 ): Promise<RegistryLayerGroup[]> {
   try {
-    const response = await axios.get<{ data: RegistryLayerGroup[] }>(
+    const response = await dcuAxios.get<{ data: RegistryLayerGroup[] }>(
       `${DCU_API_BASE_URL}/catalog/layer-groups`,
       { timeout: TIMEOUT },
     );
@@ -273,7 +275,7 @@ async function load(): Promise<MapRegistryState> {
 
   lastVersionCheckAt = Date.now();
   try {
-    const version = await axios.get<{ registryVersion: string }>(
+    const version = await dcuAxios.get<{ registryVersion: string }>(
       `${DCU_API_BASE_URL}/map/config/version`,
       config,
     );
@@ -286,7 +288,7 @@ async function load(): Promise<MapRegistryState> {
       return state;
     }
     const [layersResponse, groups] = await Promise.all([
-      axios.get<{ registryVersion: string; layers: RegistryLayer[] }>(
+      dcuAxios.get<{ registryVersion: string; layers: RegistryLayer[] }>(
         `${DCU_API_BASE_URL}/map/layers`,
         config,
       ),

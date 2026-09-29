@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './Icon';
 import { COLORS, RADIUS, SPACING } from '../../constants/theme';
+import { INFO_CARD_MAX_HEIGHT_RATIO } from '../../services/map/cameraFraming';
 
 export function InfoCard({
   title,
@@ -69,7 +70,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: SPACING.md,
     right: SPACING.md,
-    maxHeight: '58%',
+    maxHeight: `${INFO_CARD_MAX_HEIGHT_RATIO * 100}%`,
     backgroundColor: 'rgba(255,255,255,0.98)',
     borderRadius: RADIUS.lg,
     borderWidth: 1,

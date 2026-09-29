@@ -157,8 +157,7 @@
     "unknownWard": "区・社不明",
     "notesTitle": "データに関する注記",
     "status": {
-      "sectionTitle": "ステータス別",
-      "total": "合計"
+      "sectionTitle": "ステータス別"
     },
     "processing": {
       "sectionTitle": "処理状況",
@@ -246,7 +245,9 @@
     "networkError": "サーバーに接続できません。もう一度お試しください",
     "sessionExpiredBanner": "セッションの有効期限が切れました。再度ログインしてください",
     "loggedInStatus": "ログイン済みです",
-    "logoutButton": "ログアウト"
+    "logoutButton": "ログアウト",
+    "checkingSession": "ログイン状態を確認しています...",
+    "offlineSession": "サーバーに接続できないため、ログイン状態を復元できません。"
   },
   "report": {
     "title": "レポートを出力",
@@ -305,6 +306,7 @@
     "anyTime": "全期間",
     "wardsTitle": "区・社を選択",
     "dateTitle": "期間",
-    "done": "完了"
+    "done": "完了",
+    "assignedWards": "担当の区・社（{{count}}）"
   }
 }

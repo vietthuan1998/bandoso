@@ -7,13 +7,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 const mockFetchPage = jest.fn();
 const mockFetchAll = jest.fn();
 
-function mockLayer(id: string, label: string) {
+function mockLayer(id: string, label: string, detail = true) {
   return {
     id,
     collection: id,
     label,
     color: '#000',
-    capabilities: { list: true, detail: true, search: true, statistics: true },
+    capabilities: { list: true, detail, search: true, statistics: true },
   };
 }
 
@@ -24,7 +24,11 @@ jest.mock('../../services/map/mapRegistry', () => ({
   useMapRegistry: () => {
     mockRegistry ??= {
       status: 'ready',
-      layers: [mockLayer('bts', 'Trạm BTS'), mockLayer('thua_dat', 'Thửa đất')],
+      layers: [
+        mockLayer('bts', 'Trạm BTS'),
+        mockLayer('thua_dat', 'Thửa đất'),
+        mockLayer('no_detail', 'Lớp không chi tiết', false),
+      ],
       groups: [],
       reload: jest.fn(),
     };
@@ -118,5 +122,37 @@ describe('DataScreen layer selection', () => {
     await pressText('Tất cả lớp');
 
     expect(mockFetchAll).toHaveBeenCalled();
+  });
+
+  it('does not open details for a layer whose registry capabilities.detail is false', async () => {
+    const record = (layerId: string, id: string) => ({
+      id,
+      layerId,
+      collection: layerId,
+      color: '#000',
+      title: `Bản ghi ${id}`,
+      lines: [],
+      updatedAt: null,
+      properties: {},
+    });
+    mockFetchAll.mockResolvedValue({
+      items: [record('bts', '1'), record('no_detail', '2')],
+      total: 2,
+      unreadableLayerIds: [],
+      unsupportedLayerIds: [],
+    });
+    await render();
+    await pressText('Trạm BTS');
+    await pressText('Tất cả lớp');
+
+    const cardFor = (title: string) =>
+      renderer.root.findAll(
+        node =>
+          typeof node.type !== 'string' &&
+          'disabled' in node.props &&
+          node.findAllByType(Text).some(text => text.props.children === title),
+      )[0];
+    expect(cardFor('Bản ghi 1').props.disabled).toBe(false);
+    expect(cardFor('Bản ghi 2').props.disabled).toBe(true);
   });
 });

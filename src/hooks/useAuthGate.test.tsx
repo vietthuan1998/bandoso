@@ -20,7 +20,11 @@ const mockedAxios = require('axios').default;
 
 import { useAuthGate } from './useAuthGate';
 
-function Probe({ onState }: { onState: (state: ReturnType<typeof useAuthGate>) => void }) {
+function Probe({
+  onState,
+}: {
+  onState: (state: ReturnType<typeof useAuthGate>) => void;
+}) {
   const state = useAuthGate();
   onState(state);
   return <Text>{state.status}</Text>;
@@ -63,6 +67,38 @@ describe('useAuthGate', () => {
     });
 
     const getLatest = await renderProbe();
+
+    expect(getLatest().status).toBe('authenticated');
+  });
+
+  it('goes "offline" instead of "unauthenticated" when the stored session cannot be restored for lack of network, and retry() restores it', async () => {
+    await Keychain.setGenericPassword('refreshToken', 'refresh-old', {
+      service: 'huemaps-refresh-token',
+    });
+    mockedAxios.post.mockRejectedValueOnce(
+      Object.assign(new Error('Network Error'), {
+        isAxiosError: true,
+        response: undefined,
+        toJSON: () => ({}),
+      }),
+    );
+
+    const getLatest = await renderProbe();
+    expect(getLatest().status).toBe('offline');
+
+    mockedAxios.post.mockResolvedValueOnce({
+      data: {
+        data: {
+          accessToken: 'access-back',
+          refreshToken: 'refresh-back',
+          tokenType: 'Bearer',
+          expiresIn: 28800,
+        },
+      },
+    });
+    await act(async () => {
+      await getLatest().retry();
+    });
 
     expect(getLatest().status).toBe('authenticated');
   });

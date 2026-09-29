@@ -1,10 +1,6 @@
 import { DCU_API_BASE_URL } from '../../config/dcuAuthConfig';
 import { dcuAxios, dcuHeaders } from '../api/dcuClient';
-import {
-  isForbidden,
-  isUnauthorized,
-  parseApiError,
-} from '../api/apiError';
+import { isForbidden, isUnauthorized, parseApiError } from '../api/apiError';
 import type { TrendPoint } from './statisticsOverview';
 
 /**
@@ -43,7 +39,21 @@ export type StatisticsByWard = {
   lastUpdatedAt: string | null;
 };
 
+/**
+ * Phạm vi server THỰC SỰ đã áp dụng (tài liệu mục 7, 10): `?wards=` chỉ thu
+ * hẹp trong phạm vi được cấp — xin rộng hơn thì bị bỏ qua lặng lẽ.
+ * wardIds rỗng = mọi phường xã.
+ */
+export type StatisticsScope = {
+  collections: string[];
+  wardIds: string[];
+  dateFrom: string | null;
+  dateTo: string | null;
+  scopeType: string | null;
+};
+
 export type StatisticsSummary = {
+  scope: StatisticsScope | null;
   totals: StatisticsTotals;
   byLayer: Array<{ collection: string; label: string; count: number }>;
   byStatus: Array<{ status: string; label: string; count: number }>;
@@ -136,6 +146,15 @@ export async function fetchStatisticsSummary(
   return {
     summary: {
       ...body.data,
+      scope: body.data.scope
+        ? {
+            collections: body.data.scope.collections ?? [],
+            wardIds: (body.data.scope.wardIds ?? []).map(String),
+            dateFrom: body.data.scope.dateFrom ?? null,
+            dateTo: body.data.scope.dateTo ?? null,
+            scopeType: body.data.scope.scopeType ?? null,
+          }
+        : null,
       byLayer: body.data.byLayer ?? [],
       byStatus: body.data.byStatus ?? [],
       byWard: (body.data.byWard ?? []).map(ward => ({
@@ -205,7 +224,27 @@ export function statisticsErrorKind(error: unknown): StatisticsErrorKind {
  * Nhãn trục cho điểm xu hướng. `bucket` có thể là ngày (2026-09-28), tháng
  * (2026-09 hoặc ngày đầu tháng) hay quý (2026-Q3); không nhận ra thì giữ nguyên.
  */
-export function formatTrendBucket(bucket: string, kind: StatisticsBucket): string {
+/**
+ * Phường xã server đã áp dụng khác phường xã người dùng chọn -> trả danh
+ * sách thực tế để hiển thị; trùng nhau (hoặc server không trả) -> null.
+ */
+export function narrowedWardScope(
+  scope: StatisticsScope | null | undefined,
+  requestedWards: string[],
+): string[] | null {
+  const applied = scope?.wardIds ?? [];
+  if (applied.length === 0) return null;
+  const requested = new Set(requestedWards);
+  const same =
+    requested.size === applied.length &&
+    applied.every(ward => requested.has(ward));
+  return same ? null : applied;
+}
+
+export function formatTrendBucket(
+  bucket: string,
+  kind: StatisticsBucket,
+): string {
   const quarter = /^(\d{4})-?Q([1-4])$/i.exec(bucket);
   if (quarter) return `Q${quarter[2]}/${quarter[1]}`;
   const date = /^(\d{4})-(\d{2})(?:-(\d{2}))?/.exec(bucket);

@@ -157,8 +157,7 @@
     "unknownWard": "未确定坊/社",
     "notesTitle": "数据说明",
     "status": {
-      "sectionTitle": "按状态",
-      "total": "合计"
+      "sectionTitle": "按状态"
     },
     "processing": {
       "sectionTitle": "处理情况",
@@ -246,7 +245,9 @@
     "networkError": "无法连接服务器，请重试",
     "sessionExpiredBanner": "会话已过期，请重新登录",
     "loggedInStatus": "您已登录",
-    "logoutButton": "退出登录"
+    "logoutButton": "退出登录",
+    "checkingSession": "正在检查登录状态...",
+    "offlineSession": "无法连接服务器，未能恢复登录状态。"
   },
   "report": {
     "title": "导出报告",
@@ -305,6 +306,7 @@
     "anyTime": "全部时间",
     "wardsTitle": "选择坊/社",
     "dateTitle": "时间范围",
-    "done": "完成"
+    "done": "完成",
+    "assignedWards": "分配的坊/社（{{count}}）"
   }
 }

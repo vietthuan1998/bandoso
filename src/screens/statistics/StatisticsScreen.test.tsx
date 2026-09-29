@@ -314,4 +314,85 @@ describe('StatisticsScreen (API /statistics)', () => {
     expect(textsOf()).toContain('Xu hướng');
     expect(textsOf()).toContain('Chưa có dữ liệu xu hướng');
   });
+
+  it('shows the scope the server actually applied when it narrows the requested wards', async () => {
+    mockFetchSummary.mockResolvedValue({
+      summary: {
+        ...SUMMARY,
+        scope: {
+          collections: [],
+          wardIds: ['19858'],
+          dateFrom: null,
+          dateTo: null,
+          scopeType: 'ward',
+        },
+      },
+      notes: [],
+    });
+
+    await render();
+
+    // Chưa chọn phường nào nhưng tài khoản chỉ được xem Phong Thái -> thẻ
+    // tổng ghi theo phạm vi thực tế, không phải "tất cả".
+    // Một lần ở dòng phường xã, thêm một lần ở nhãn thẻ tổng.
+    expect(textsOf().filter(text => text === 'Phường Phong Thái')).toHaveLength(
+      2,
+    );
+  });
+
+  it('does not show the scope notice when the applied scope matches the filter', async () => {
+    mockFetchSummary.mockResolvedValue({
+      summary: {
+        ...SUMMARY,
+        scope: {
+          collections: [],
+          wardIds: [],
+          dateFrom: null,
+          dateTo: null,
+          scopeType: 'all',
+        },
+      },
+      notes: [],
+    });
+
+    await render();
+
+    // Không thu hẹp -> thẻ tổng giữ nhãn mặc định.
+    expect(textsOf()).toContain('Tổng số bản ghi');
+  });
+
+  it('shows only server counts per layer, never a client-computed share of the total', async () => {
+    mockFetchSummary.mockResolvedValue({ summary: SUMMARY, notes: [] });
+
+    const texts = await render();
+
+    expect(texts).toContain('348.144');
+    // 348144 / 350534 = 99,3% — con số app tự tính, không được hiển thị.
+    expect(texts.some(text => text.includes('%'))).toBe(false);
+  });
+
+  it('labels "no ward filter" as the assigned wards for a ward-scoped account, without a redundant notice', async () => {
+    mockProfile = {
+      permissions: ['statistics.read'],
+      wardScope: { type: 'ward', wardIds: ['19858'] },
+    };
+    mockFetchSummary.mockResolvedValue({
+      summary: {
+        ...SUMMARY,
+        scope: {
+          collections: [],
+          wardIds: ['19858'],
+          dateFrom: null,
+          dateTo: null,
+          scopeType: 'ward',
+        },
+      },
+      notes: [],
+    });
+
+    const texts = await render();
+
+    expect(texts).toContain('Phường, xã được giao (1)');
+    expect(texts).not.toContain('Tất cả phường, xã');
+  });
 });

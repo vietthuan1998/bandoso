@@ -49,6 +49,7 @@ import {
   wardFilterLabel,
 } from '../../components/filter/FilterSheets';
 import { useSharedFilters } from '../../hooks/useSharedFilters';
+import { useAuthProfile } from '../../hooks/useAuthProfile';
 import { Icon } from '../../components/common/Icon';
 import { COLORS, RADIUS, SPACING } from '../../constants/theme';
 import {
@@ -74,6 +75,7 @@ export function DataScreen({
 }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const profile = useAuthProfile();
   const labels = useMemo(
     () => ({
       yes: t('common.yes'),
@@ -114,6 +116,10 @@ export function DataScreen({
   const selectedLayer = useMemo(
     () => layers.find(layer => layer.id === selectedLayerId) ?? null,
     [layers, selectedLayerId],
+  );
+  const layerById = useMemo(
+    () => new Map(layers.map(layer => [layer.id, layer])),
+    [layers],
   );
 
   const [wardSheetOpen, setWardSheetOpen] = useState(false);
@@ -314,7 +320,15 @@ export function DataScreen({
         onEndReachedThreshold={0.4}
         onEndReached={loadMore}
         renderItem={({ item }) => (
-          <DataRecordCard record={item} onPress={() => setDetailRecord(item)} />
+          <DataRecordCard
+            record={item}
+            // Registry tắt capabilities.detail -> không mở chi tiết.
+            onPress={
+              layerById.get(item.layerId)?.capabilities.detail === false
+                ? undefined
+                : () => setDetailRecord(item)
+            }
+          />
         )}
         ListHeaderComponent={
           <>
@@ -355,7 +369,7 @@ export function DataScreen({
               />
               <FilterChip
                 icon="pin"
-                label={wardFilterLabel(shared.wards, wardCatalog, t)}
+                label={wardFilterLabel(shared.wards, wardCatalog, t, profile)}
                 onPress={() => setWardSheetOpen(true)}
               />
               <FilterChip
@@ -612,13 +626,14 @@ function DataRecordCard({
   onPress,
 }: {
   record: DataRecord;
-  onPress: () => void;
+  onPress?: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={!onPress}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-      accessibilityRole="button"
+      accessibilityRole={onPress ? 'button' : undefined}
     >
       <View style={[styles.cardIcon, { backgroundColor: record.color }]}>
         <Icon name="database" size={16} color="#ffffff" />
@@ -645,9 +660,11 @@ function DataRecordCard({
           </View>
         ) : null}
       </View>
-      <View style={styles.cardChevronWrap}>
-        <Icon name="chevronRight" size={18} color={COLORS.textFaint} />
-      </View>
+      {onPress ? (
+        <View style={styles.cardChevronWrap}>
+          <Icon name="chevronRight" size={18} color={COLORS.textFaint} />
+        </View>
+      ) : null}
     </Pressable>
   );
 }

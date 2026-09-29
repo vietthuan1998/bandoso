@@ -36,6 +36,8 @@ import {
 } from '../../services/report/reportFile';
 import { describeApiError } from '../../services/api/apiError';
 import { toggleInList } from '../../hooks/useSharedFilters';
+import { useAuthProfile } from '../../hooks/useAuthProfile';
+import { allWardsLabel, wardsWithinScope } from '../filter/FilterSheets';
 
 function toIsoDate(date: Date): string {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(
@@ -74,6 +76,7 @@ export function ReportExportForm({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const profile = useAuthProfile();
   const [format, setFormat] = useState<ReportFormat>('xlsx');
   const [report, setReport] = useState<ReportKind>(initial.report ?? 'byWard');
   const [collectionKey, setCollectionKey] = useState(initial.collectionKey);
@@ -262,7 +265,7 @@ export function ReportExportForm({
           icon="pin"
           label={
             wardCodes.length === 0
-              ? t('statistics.filters.allWards')
+              ? allWardsLabel(profile, t)
               : wardCodes.length === 1
               ? wards.find(ward => ward.code === wardCodes[0])?.name ??
                 wardCodes[0]
@@ -271,8 +274,11 @@ export function ReportExportForm({
           open={openList === 'ward'}
           onToggle={() => toggleList('ward')}
           options={[
-            { value: null, label: t('statistics.filters.allWards') },
-            ...wards.map(ward => ({ value: ward.code, label: ward.name })),
+            { value: null, label: allWardsLabel(profile, t) },
+            ...wardsWithinScope(wards, profile).map(ward => ({
+              value: ward.code,
+              label: ward.name,
+            })),
           ]}
           isActive={value =>
             value === null ? wardCodes.length === 0 : wardCodes.includes(value)

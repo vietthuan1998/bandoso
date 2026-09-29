@@ -50,6 +50,14 @@ const PRECISE_HITBOX = { top: 1, right: 1, bottom: 1, left: 1 };
 const CITY_CEILING_LAYER = 'city-ceiling';
 const WARD_CEILING_LAYER = 'ward-ceiling';
 const POINTS_CEILING_LAYER = 'points-ceiling';
+/**
+ * Mốc cho lớp tô nổi bật đối tượng đang chọn: luôn trên mọi lớp MVT. Lớp MVT
+ * neo afterId=POINTS_CEILING_LAYER nên được chèn ngay trên mốc đó, tức là
+ * dưới mốc này — bất kể lớp nào được thêm trước. (Nếu dùng chung mốc, lớp
+ * thêm sau lại nằm dưới: vòng tô nổi bật chui xuống dưới chấm của lớp, thành
+ * hai vòng tròn lồng nhau.)
+ */
+const HIGHLIGHT_CEILING_LAYER = 'highlight-ceiling';
 const POINTS_CEILING_SOURCE_ID = 'points-ceiling-source';
 
 const FEATURE_HIGHLIGHT_SOURCE_ID = 'feature-highlight-source';
@@ -227,6 +235,13 @@ export function MapCanvas({
           id={POINTS_CEILING_LAYER}
           source={POINTS_CEILING_SOURCE_ID}
           afterId={WARD_CEILING_LAYER}
+          layout={{ visibility: 'none' }}
+        />
+        <Layer
+          type="line"
+          id={HIGHLIGHT_CEILING_LAYER}
+          source={POINTS_CEILING_SOURCE_ID}
+          afterId={POINTS_CEILING_LAYER}
           layout={{ visibility: 'none' }}
         />
       </GeoJSONSource>
@@ -424,7 +439,7 @@ export function MapCanvas({
           type="fill"
           id={FEATURE_HIGHLIGHT_FILL_LAYER}
           source={FEATURE_HIGHLIGHT_SOURCE_ID}
-          afterId={POINTS_CEILING_LAYER}
+          afterId={HIGHLIGHT_CEILING_LAYER}
           filter={['==', ['geometry-type'], 'Polygon'] as FilterSpecification}
           paint={{
             'fill-color': highlightFeature?.color ?? '#d71920',
@@ -435,7 +450,7 @@ export function MapCanvas({
           type="line"
           id={FEATURE_HIGHLIGHT_LINE_LAYER}
           source={FEATURE_HIGHLIGHT_SOURCE_ID}
-          afterId={POINTS_CEILING_LAYER}
+          afterId={HIGHLIGHT_CEILING_LAYER}
           paint={{
             'line-color': highlightFeature?.color ?? '#d71920',
             'line-width': 3.5,
@@ -445,7 +460,7 @@ export function MapCanvas({
           type="circle"
           id={FEATURE_HIGHLIGHT_CIRCLE_LAYER}
           source={FEATURE_HIGHLIGHT_SOURCE_ID}
-          afterId={POINTS_CEILING_LAYER}
+          afterId={HIGHLIGHT_CEILING_LAYER}
           filter={['==', ['geometry-type'], 'Point'] as FilterSpecification}
           paint={{
             'circle-radius': 9,

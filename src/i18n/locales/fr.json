@@ -157,8 +157,7 @@
     "unknownWard": "Quartier/commune non identifié",
     "notesTitle": "Notes sur les données",
     "status": {
-      "sectionTitle": "Par statut",
-      "total": "Total"
+      "sectionTitle": "Par statut"
     },
     "processing": {
       "sectionTitle": "État de traitement",
@@ -246,7 +245,9 @@
     "networkError": "Impossible de contacter le serveur, veuillez réessayer",
     "sessionExpiredBanner": "Votre session a expiré, veuillez vous reconnecter",
     "loggedInStatus": "Vous êtes connecté",
-    "logoutButton": "Se déconnecter"
+    "logoutButton": "Se déconnecter",
+    "checkingSession": "Vérification de la session...",
+    "offlineSession": "Impossible de joindre le serveur pour restaurer votre session."
   },
   "report": {
     "title": "Exporter un rapport",
@@ -305,6 +306,7 @@
     "anyTime": "Toute période",
     "wardsTitle": "Choisir les quartiers/communes",
     "dateTitle": "Période",
-    "done": "OK"
+    "done": "OK",
+    "assignedWards": "Quartiers attribués ({{count}})"
   }
 }

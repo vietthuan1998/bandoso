@@ -157,8 +157,7 @@
     "unknownWard": "동·사 미확인",
     "notesTitle": "데이터 참고 사항",
     "status": {
-      "sectionTitle": "상태별",
-      "total": "합계"
+      "sectionTitle": "상태별"
     },
     "processing": {
       "sectionTitle": "처리 현황",
@@ -246,7 +245,9 @@
     "networkError": "서버에 연결할 수 없습니다. 다시 시도해 주세요",
     "sessionExpiredBanner": "세션이 만료되었습니다. 다시 로그인해 주세요",
     "loggedInStatus": "로그인되었습니다",
-    "logoutButton": "로그아웃"
+    "logoutButton": "로그아웃",
+    "checkingSession": "로그인 상태를 확인하는 중...",
+    "offlineSession": "서버에 연결할 수 없어 로그인 상태를 복원하지 못했습니다."
   },
   "report": {
     "title": "보고서 내보내기",
@@ -305,6 +306,7 @@
     "anyTime": "전체 기간",
     "wardsTitle": "동·사 선택",
     "dateTitle": "기간",
-    "done": "완료"
+    "done": "완료",
+    "assignedWards": "배정된 동·사 ({{count}})"
   }
 }

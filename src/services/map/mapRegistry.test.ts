@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { dcuAxios } from '../api/dcuClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { proxiedTileUrl } from './mvtLayers';
 import {
@@ -11,7 +11,7 @@ import {
   type RegistryLayer,
 } from './mapRegistry';
 
-jest.mock('axios', () => ({ __esModule: true, default: { get: jest.fn() } }));
+jest.mock('../api/dcuClient', () => ({ dcuAxios: { get: jest.fn() } }));
 jest.mock('../../constants/url', () => ({
   API_V1_URL: 'https://bff.test/api/v1',
   DIRECTUS_BASE_URL: 'https://bff.test/api/directus',
@@ -52,7 +52,7 @@ jest.mock('../auth/authClient', () => ({
   },
 }));
 
-const mockedGet = axios.get as jest.Mock;
+const mockedGet = dcuAxios.get as jest.Mock;
 
 const BTS: RegistryLayer = {
   collectionKey: 'bts',

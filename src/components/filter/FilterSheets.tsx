@@ -17,6 +17,8 @@ import { PickerOption } from './FilterControls';
 import { COLORS, RADIUS, SPACING } from '../../constants/theme';
 import { shortWardName, type CatalogWard } from '../../services/api/catalogApi';
 import { toggleInList } from '../../hooks/useSharedFilters';
+import { useAuthProfile } from '../../hooks/useAuthProfile';
+import type { UserProfile } from '../../services/auth/authClient';
 import { pad2 } from '../../services/gis/normalizeFeatureFields';
 
 export function toIsoDate(date: Date): string {
@@ -30,13 +32,51 @@ export function formatIsoDate(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
-/** Nhãn ô lọc phường xã: "Tất cả", tên một phường, hoặc "N phường, xã". */
+type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+/**
+ * Mã phường xã được giao của tài khoản cấp phường (wardScope.type 'ward',
+ * tài liệu mục 10); null = toàn thành phố / khách.
+ */
+export function assignedWardIds(profile: UserProfile | null): string[] | null {
+  return profile?.wardScope.type === 'ward' &&
+    profile.wardScope.wardIds.length > 0
+    ? profile.wardScope.wardIds
+    : null;
+}
+
+/**
+ * Nhãn cho lựa chọn "không lọc phường": tài khoản cấp phường chỉ xem được
+ * phường được giao nên không ghi "Tất cả phường, xã" (server bỏ qua phần
+ * ngoài phạm vi — tài liệu mục 10).
+ */
+export function allWardsLabel(
+  profile: UserProfile | null,
+  t: Translate,
+): string {
+  const assigned = assignedWardIds(profile);
+  return assigned
+    ? t('filters.assignedWards', { count: assigned.length })
+    : t('statistics.filters.allWards');
+}
+
+/** Phường xã được chọn trong bộ lọc: chỉ trong phạm vi được giao. */
+export function wardsWithinScope(
+  wards: CatalogWard[],
+  profile: UserProfile | null,
+): CatalogWard[] {
+  const assigned = assignedWardIds(profile);
+  return assigned ? wards.filter(ward => assigned.includes(ward.code)) : wards;
+}
+
+/** Nhãn ô lọc phường xã: "Tất cả"/"được giao", tên một phường, hoặc "N phường, xã". */
 export function wardFilterLabel(
   selected: string[],
   wards: CatalogWard[],
-  t: (key: string, options?: Record<string, unknown>) => string,
+  t: Translate,
+  profile: UserProfile | null = null,
 ): string {
-  if (selected.length === 0) return t('statistics.filters.allWards');
+  if (selected.length === 0) return allWardsLabel(profile, t);
   if (selected.length === 1) {
     const ward = wards.find(item => item.code === selected[0]);
     return ward ? shortWardName(ward.name) : selected[0];
@@ -82,6 +122,7 @@ export function WardFilterSheet({
   hintFor?: (code: string) => string | undefined;
 }) {
   const { t } = useTranslation();
+  const profile = useAuthProfile();
   return (
     <BottomSheet visible={visible} onClose={onClose} maxHeight={600}>
       <View style={styles.sheetHeader}>
@@ -92,11 +133,11 @@ export function WardFilterSheet({
       </View>
       <ScrollView>
         <PickerOption
-          label={t('statistics.filters.allWards')}
+          label={allWardsLabel(profile, t)}
           active={selected.length === 0}
           onPress={() => onChange([])}
         />
-        {wards.map(ward => (
+        {wardsWithinScope(wards, profile).map(ward => (
           <PickerOption
             key={ward.code}
             label={ward.name}

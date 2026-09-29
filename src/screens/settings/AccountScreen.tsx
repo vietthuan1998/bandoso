@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADIUS, SPACING } from '../../constants/theme';
 import { LoginScreen } from '../auth/LoginScreen';
@@ -20,7 +27,43 @@ import { Icon, type IconName } from '../../components/common/Icon';
  * Khi đã đăng nhập: thẻ hồ sơ + quyền truy cập từ /auth/me (tài liệu mục 10).
  */
 export function AccountScreen({ auth }: { auth: AuthGateState }) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+
+  // Lúc mở app, phiên đã lưu (refresh token trong Keychain) đang được khôi
+  // phục qua /auth/refresh — chưa biết đã đăng nhập hay chưa, không được hiện
+  // form đăng nhập rồi lại nhảy sang hồ sơ.
+  if (auth.status === 'checking') {
+    return (
+      <View style={[styles.root, styles.checking]}>
+        <ActivityIndicator color={COLORS.primary} />
+        <Text style={styles.checkingText}>{t('auth.checkingSession')}</Text>
+      </View>
+    );
+  }
+
+  // Còn phiên đã lưu nhưng chưa liên lạc được server: cho thử lại, không bắt
+  // đăng nhập lại (đăng nhập cũng cần mạng).
+  if (auth.status === 'offline') {
+    return (
+      <View style={[styles.root, styles.checking]}>
+        <Icon name="warning" size={24} color={COLORS.textMuted} />
+        <Text style={styles.offlineText}>{t('auth.offlineSession')}</Text>
+        <Pressable
+          onPress={auth.retry}
+          style={({ pressed }) => [
+            styles.retryButton,
+            pressed ? styles.retryButtonPressed : null,
+          ]}
+          accessibilityRole="button"
+          testID="account-retry-session"
+        >
+          <Icon name="refresh" size={16} color={COLORS.surface} />
+          <Text style={styles.retryText}>{t('common.retry')}</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   if (auth.status !== 'authenticated') {
     return (
@@ -209,6 +252,32 @@ function LogoutButton({ onPress }: { onPress: () => void }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.background },
+  checking: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+  },
+  checkingText: { fontSize: 13, color: COLORS.textMuted },
+  offlineText: {
+    maxWidth: 280,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    color: COLORS.text,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    minHeight: 44,
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+  },
+  retryButtonPressed: { backgroundColor: COLORS.primaryDark },
+  retryText: { fontSize: 15, fontWeight: '700', color: COLORS.surface },
   content: { paddingHorizontal: SPACING.lg, gap: SPACING.lg },
 
   badge: {

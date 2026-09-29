@@ -9,7 +9,15 @@ import {
 } from '../services/auth/authClient';
 import { useAuthProfile } from './useAuthProfile';
 
-export type AuthGateStatus = 'checking' | 'authenticated' | 'unauthenticated';
+/**
+ * 'offline' = còn phiên đã lưu nhưng lúc mở app không liên lạc được server
+ * để khôi phục — khác 'unauthenticated' (chưa đăng nhập / phiên bị thu hồi).
+ */
+export type AuthGateStatus =
+  | 'checking'
+  | 'authenticated'
+  | 'unauthenticated'
+  | 'offline';
 
 export type AuthGateState = {
   status: AuthGateStatus;
@@ -18,6 +26,8 @@ export type AuthGateState = {
   profile: UserProfile | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  /** Thử khôi phục lại phiên đã lưu (dùng khi 'offline'). */
+  retry: () => Promise<void>;
 };
 
 /**
@@ -32,22 +42,27 @@ export function useAuthGate(): AuthGateState {
   const profile = useAuthProfile();
   const mountedRef = useRef(true);
 
+  const restore = useCallback(async () => {
+    setStatus('checking');
+    let next: AuthGateStatus;
+    try {
+      next = (await bootstrapSession()) ? 'authenticated' : 'unauthenticated';
+    } catch {
+      next = 'offline';
+    }
+    if (!mountedRef.current) return;
+    // Trong lúc chờ, người dùng có thể đã đăng nhập hoặc phiên đã được một
+    // request khác làm mới -> giữ trạng thái đó.
+    setStatus(current => (current === 'checking' ? next : current));
+  }, []);
+
   useEffect(() => {
     mountedRef.current = true;
-    bootstrapSession().then(session => {
-      if (!mountedRef.current) return;
-      setStatus(current =>
-        session
-          ? 'authenticated'
-          : current === 'checking'
-          ? 'unauthenticated'
-          : current,
-      );
-    });
+    restore();
     return () => {
       mountedRef.current = false;
     };
-  }, []);
+  }, [restore]);
 
   useEffect(() => {
     return subscribeToSessionExpiry(() => {
@@ -79,5 +94,5 @@ export function useAuthGate(): AuthGateState {
     setStatus('unauthenticated');
   }, []);
 
-  return { status, sessionExpired, profile, login, logout };
+  return { status, sessionExpired, profile, login, logout, retry: restore };
 }

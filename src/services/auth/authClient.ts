@@ -220,10 +220,11 @@ export function getAccessToken(): string | null {
 
 /**
  * Gọi lúc mở app: accessToken chỉ sống trong bộ nhớ nên mất khi app khởi
- * động lại — nếu còn refreshToken hợp lệ trong keychain, phục hồi phiên mà
- * không bắt đăng nhập lại. Trả về null nếu chưa từng đăng nhập, phiên đã bị
- * thu hồi, hoặc tạm thời không kết nối được (refreshToken vẫn được giữ để
- * lần gọi sau phục hồi tiếp — xem doRefresh).
+ * động lại — nếu còn refreshToken trong keychain, phục hồi phiên mà không bắt
+ * đăng nhập lại.
+ * - Trả null: chưa từng đăng nhập, hoặc phiên đã bị thu hồi (401).
+ * - Ném AuthError 'network' / 'unknown': không liên lạc được server; refresh
+ *   token vẫn được giữ để thử lại (không phải đăng xuất).
  */
 export async function bootstrapSession(): Promise<AuthSession | null> {
   const stored = await Keychain.getGenericPassword({
@@ -234,7 +235,10 @@ export async function bootstrapSession(): Promise<AuthSession | null> {
     const accessToken = await refreshAccessToken();
     loadProfile().catch(() => {});
     return { accessToken };
-  } catch {
+  } catch (error) {
+    if (error instanceof AuthError && error.kind !== 'session_expired') {
+      throw error;
+    }
     return null;
   }
 }

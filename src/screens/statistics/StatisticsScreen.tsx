@@ -35,6 +35,7 @@ import { useSharedFilters } from '../../hooks/useSharedFilters';
 import {
   DateRangeSheet,
   WardFilterSheet,
+  assignedWardIds,
   dateRangeLabel,
   wardFilterLabel,
 } from '../../components/filter/FilterSheets';
@@ -43,6 +44,7 @@ import {
   fetchStatisticsMeasures,
   fetchStatisticsSummary,
   fetchStatisticsTrend,
+  narrowedWardScope,
   statisticsErrorKind,
   toTrendPoints,
   type StatisticsBucket,
@@ -346,12 +348,21 @@ export function StatisticsScreen({
       layer => layer.id === collection || layer.collection === collection,
     )?.icon ?? 'layers';
 
+  // Phạm vi server thực sự áp dụng (vd. cán bộ phường chọn "Tất cả" nhưng chỉ
+  // được xem phường mình) — hiển thị theo phạm vi này, không theo ô lọc.
+  // "Không lọc phường" của tài khoản cấp phường = phường được giao (ô lọc
+  // đã ghi rõ), nên chỉ báo khi server áp dụng khác điều đó.
+  const appliedWardIds = narrowedWardScope(
+    summary?.scope,
+    selectedWardIds.length ? selectedWardIds : assignedWardIds(profile) ?? [],
+  );
+  const displayedWardIds = appliedWardIds ?? selectedWardIds;
   const scopeLabel = [
     selectedLayer?.label,
-    wardFiltered
-      ? selectedWardIds.length === 1
-        ? wardName(selectedWardIds[0])
-        : wardFilterLabel(selectedWardIds, wardCatalog, t)
+    displayedWardIds.length
+      ? displayedWardIds.length === 1
+        ? wardName(displayedWardIds[0])
+        : wardFilterLabel(displayedWardIds, wardCatalog, t, profile)
       : null,
   ]
     .filter(Boolean)
@@ -408,7 +419,7 @@ export function StatisticsScreen({
             />
             <FilterChip
               icon="pin"
-              label={wardFilterLabel(selectedWardIds, wardCatalog, t)}
+              label={wardFilterLabel(selectedWardIds, wardCatalog, t, profile)}
               onPress={() => setWardSheetOpen(true)}
             />
             <FilterChip
@@ -572,7 +583,6 @@ export function StatisticsScreen({
                   icon={layerIcon(layer.collection)}
                   label={layer.label}
                   count={layer.count}
-                  total={summary.totals.total}
                   onPress={() => setSelectedLayerId(layer.collection)}
                 />
               ))}
@@ -816,8 +826,6 @@ function StatusBreakdown({
   items: Array<{ status: string; label: string; count: number }>;
   statuses: CatalogStatus[];
 }) {
-  const { t } = useTranslation();
-  const total = items.reduce((sum, item) => sum + item.count, 0);
   const colorOf = (code: string) =>
     statuses.find(status => status.code === code)?.color ??
     UNKNOWN_STATUS_COLOR;
@@ -843,20 +851,11 @@ function StatusBreakdown({
             <Text style={styles.legendLabel} numberOfLines={1}>
               {item.label}
             </Text>
-            <Text style={styles.legendValue}>
-              {formatNumber(item.count)}
-              {total > 0
-                ? ` (${formatPercent((item.count / total) * 100)})`
-                : ''}
-            </Text>
+            {/* Chỉ số lượng do server trả — không tự tính tỷ lệ hay tổng
+                (tài liệu mục 11: mọi con số do backend chốt). */}
+            <Text style={styles.legendValue}>{formatNumber(item.count)}</Text>
           </View>
         ))}
-        <View style={styles.legendTotalRow}>
-          <Text style={styles.legendTotalLabel}>
-            {t('statistics.status.total')}
-          </Text>
-          <Text style={styles.legendTotalValue}>{formatNumber(total)}</Text>
-        </View>
       </View>
     </View>
   );
@@ -1031,14 +1030,12 @@ function LayerRow({
   icon,
   label,
   count,
-  total,
   onPress,
 }: {
   rank: number;
   icon: IconName;
   label: string;
   count: number;
-  total: number;
   onPress: () => void;
 }) {
   return (
@@ -1059,11 +1056,6 @@ function LayerRow({
       </Text>
       <View style={styles.topLayerNumbers}>
         <Text style={styles.topLayerCount}>{formatNumber(count)}</Text>
-        {total > 0 ? (
-          <Text style={styles.topLayerPercent}>
-            {formatPercent((count / total) * 100)}
-          </Text>
-        ) : null}
       </View>
       <Icon name="chevronRight" size={14} color={COLORS.textFaint} />
     </Pressable>
@@ -1202,16 +1194,6 @@ const styles = StyleSheet.create({
   legendDot: { width: 8, height: 8, borderRadius: 4 },
   legendLabel: { flex: 1, fontSize: 11, color: COLORS.textMuted },
   legendValue: { fontSize: 11, fontWeight: '700', color: COLORS.text },
-  legendTotalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.borderSoft,
-  },
-  legendTotalLabel: { fontSize: 11, fontWeight: '800', color: COLORS.text },
-  legendTotalValue: { fontSize: 11, fontWeight: '800', color: COLORS.text },
 
   emptyText: {
     fontSize: 11,
@@ -1304,7 +1286,6 @@ const styles = StyleSheet.create({
   topLayerLabel: { fontSize: 12, fontWeight: '600', color: COLORS.text },
   topLayerNumbers: { alignItems: 'flex-end' },
   topLayerCount: { fontSize: 12, fontWeight: '800', color: COLORS.text },
-  topLayerPercent: { fontSize: 10, color: COLORS.textFaint },
 
   measureBlock: { marginTop: SPACING.sm, gap: SPACING.xs },
   measureTitle: { fontSize: 12, fontWeight: '700', color: COLORS.text },

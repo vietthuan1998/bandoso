@@ -157,8 +157,7 @@
     "unknownWard": "Chưa xác định phường, xã",
     "notesTitle": "Ghi chú số liệu",
     "status": {
-      "sectionTitle": "Theo trạng thái",
-      "total": "Tổng cộng"
+      "sectionTitle": "Theo trạng thái"
     },
     "processing": {
       "sectionTitle": "Tình trạng xử lý",
@@ -246,7 +245,9 @@
     "networkError": "Không kết nối được máy chủ, thử lại",
     "sessionExpiredBanner": "Phiên làm việc đã hết hạn, vui lòng đăng nhập lại",
     "loggedInStatus": "Bạn đã đăng nhập",
-    "logoutButton": "Đăng xuất"
+    "logoutButton": "Đăng xuất",
+    "checkingSession": "Đang kiểm tra phiên đăng nhập...",
+    "offlineSession": "Không kết nối được máy chủ để khôi phục phiên đăng nhập."
   },
   "report": {
     "title": "Xuất báo cáo",
@@ -305,6 +306,7 @@
     "anyTime": "Mọi thời gian",
     "wardsTitle": "Chọn phường, xã",
     "dateTitle": "Khoảng thời gian",
-    "done": "Xong"
+    "done": "Xong",
+    "assignedWards": "Phường, xã được giao ({{count}})"
   }
 }

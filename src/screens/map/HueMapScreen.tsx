@@ -28,6 +28,14 @@ import {
 import { getFeatureId } from '../../services/gis/registryFeatureFields';
 import { extractRepresentativePoint } from '../../services/statistics/statisticsOverview';
 import { useAuthProfile } from '../../hooks/useAuthProfile';
+import { useSelectionLayer } from '../../hooks/useSelectionLayer';
+import {
+  NO_PADDING,
+  POINT_FOCUS_ZOOM,
+  boundsCenter,
+  isTinyBounds,
+  panelAwarePadding,
+} from '../../services/map/cameraFraming';
 import { EMPTY_FILTERS } from '../../hooks/useSharedFilters';
 import {
   boundsOfGeometry,
@@ -130,11 +138,17 @@ export default function HueMapScreen({
   const [highlightGeometry, setHighlightGeometry] =
     useState<GeoJsonGeometry | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const { showForSelection, releaseSelection, noteUserToggle } =
+    useSelectionLayer(mvtLayersVisible, setMvtLayersVisible);
   const closeMvtFeature = () => {
     setSelectedMvtFeature(null);
     setHighlightGeometry(null);
+    // Lớp chỉ tạm bật để xem đối tượng này -> trả về trạng thái cũ.
+    releaseSelection();
   };
+  /** Bật/tắt lớp từ menu lớp bản đồ (người dùng chủ động). */
   const toggleMvtLayer = (id: string, visible: boolean) => {
+    noteUserToggle(id);
     setMvtLayersVisible(current => ({ ...current, [id]: visible }));
     if (!visible) closeMvtFeature();
   };
@@ -158,11 +172,7 @@ export default function HueMapScreen({
       if (bounds) {
         focusBounds(bounds);
       } else if (flyToPointIfNoBounds && coordinates) {
-        cameraRef.current?.setStop({
-          center: coordinates,
-          zoom: 17,
-          duration: 900,
-        });
+        focusPoint(coordinates);
       }
     };
 
@@ -294,7 +304,7 @@ export default function HueMapScreen({
     const applyFocus = () => {
       const layer = mvtLayers.find(item => item.id === focusRequest.layerId);
       if (layer) {
-        toggleMvtLayer(layer.id, true);
+        showForSelection(layer.id);
         selectFeature(
           layer,
           focusRequest.properties,
@@ -314,15 +324,34 @@ export default function HueMapScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusRequest, mapReady, onFocusHandled]);
 
-  const focusBounds = (bounds: [number, number, number, number] | null) => {
+  // Chiều cao thật của vùng bản đồ — panel chi tiết chiếm tối đa 58% vùng này.
+  const [mapHeight, setMapHeight] = useState(0);
+  const cameraPadding = (withPanel: boolean) =>
+    withPanel ? panelAwarePadding(mapHeight, insets.top) : NO_PADDING;
+  /**
+   * Bay tới một điểm. withPanel: panel chi tiết sẽ mở ở đáy -> đặt điểm
+   * giữa phần bản đồ không bị panel che (lệch lên trên).
+   */
+  const focusPoint = (center: [number, number], withPanel = true) => {
+    cameraRef.current?.setStop({
+      center,
+      zoom: POINT_FOCUS_ZOOM,
+      padding: cameraPadding(withPanel),
+      duration: 900,
+    });
+  };
+  const focusBounds = (
+    bounds: [number, number, number, number] | null,
+    withPanel = true,
+  ) => {
     if (!bounds) return;
+    // Điểm / vùng rất nhỏ: fitBounds sẽ phóng tới zoom tối đa -> căn giữa.
+    if (isTinyBounds(bounds)) {
+      focusPoint(boundsCenter(bounds), withPanel);
+      return;
+    }
     cameraRef.current?.fitBounds(bounds, {
-      padding: {
-        top: insets.top + 90,
-        bottom: insets.bottom + 260,
-        left: 48,
-        right: 48,
-      },
+      padding: cameraPadding(withPanel),
       duration: 900,
     });
   };
@@ -347,23 +376,37 @@ export default function HueMapScreen({
       );
       if (!match) return;
       const { layer, record } = match;
-      toggleMvtLayer(layer.id, true);
+      const geometry = record.properties[layer.geometryField] as
+        | { type: string; coordinates: unknown }
+        | null
+        | undefined;
+      if (!layer.capabilities.detail) {
+        // Không có chi tiết (không có panel để đóng): bật lớp như người dùng
+        // tự bật, rồi chỉ đưa bản đồ tới đối tượng.
+        closeMvtFeature();
+        toggleMvtLayer(layer.id, true);
+        const bounds = boundsOfGeometry((geometry ?? null) as GeoJsonGeometry);
+        const point = extractRepresentativePoint(geometry);
+        // Không mở panel -> không cần chừa chỗ.
+        if (bounds) focusBounds(bounds, false);
+        else if (point) focusPoint(point, false);
+        return;
+      }
+      showForSelection(layer.id);
       selectFeature(
         layer,
         record.properties,
-        extractRepresentativePoint(
-          record.properties[layer.geometryField] as
-            | { type: string; coordinates: unknown }
-            | null
-            | undefined,
-        ),
+        extractRepresentativePoint(geometry),
         true,
       );
     }
   };
 
   return (
-    <View style={styles.root}>
+    <View
+      style={styles.root}
+      onLayout={event => setMapHeight(event.nativeEvent.layout.height)}
+    >
       <MapCanvas
         cameraRef={cameraRef}
         language={language}
@@ -382,6 +425,8 @@ export default function HueMapScreen({
         }}
         mvtLayersVisible={mvtLayersVisible}
         onMvtFeaturePress={(layer, properties, coordinates) => {
+          // Registry tắt capabilities.detail -> không mở panel chi tiết.
+          if (!layer.capabilities.detail) return;
           selectFeature(layer, properties, coordinates, false);
         }}
         highlightFeature={
@@ -420,9 +465,11 @@ export default function HueMapScreen({
       <LocateButton
         onLocate={coords => {
           setShowUserLocation(true);
+          // Không có panel: bỏ padding lệch còn lại từ lần chọn đối tượng.
           cameraRef.current?.setStop({
             center: coords,
             zoom: 15,
+            padding: NO_PADDING,
             duration: 900,
           });
         }}

@@ -361,6 +361,37 @@ describe('bootstrapSession', () => {
 
     expect(session).toEqual({ accessToken: 'access-restored' });
   });
+
+  it('reports "network" (and keeps the refresh token) when the server cannot be reached', async () => {
+    await Keychain.setGenericPassword('refreshToken', 'refresh-old', {
+      service: 'huemaps-refresh-token',
+    });
+    mockedAxios.isAxiosError.mockReturnValue(true);
+    mockedAxios.post.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: undefined,
+    });
+
+    await expect(bootstrapSession()).rejects.toMatchObject({ kind: 'network' });
+
+    const stored = await Keychain.getGenericPassword({
+      service: 'huemaps-refresh-token',
+    });
+    expect(stored !== false && stored.password).toBe('refresh-old');
+  });
+
+  it('returns null when the stored session was revoked (401)', async () => {
+    await Keychain.setGenericPassword('refreshToken', 'refresh-old', {
+      service: 'huemaps-refresh-token',
+    });
+    mockedAxios.isAxiosError.mockReturnValue(true);
+    mockedAxios.post.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 401, data: { error: { code: 'UNAUTHORIZED' } } },
+    });
+
+    await expect(bootstrapSession()).resolves.toBeNull();
+  });
 });
 
 describe('subscribeToSessionExpiry', () => {

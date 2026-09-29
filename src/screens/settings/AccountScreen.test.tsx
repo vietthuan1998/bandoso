@@ -39,6 +39,7 @@ async function render(overrides: Partial<AuthGateState>) {
     profile: null,
     login: jest.fn(),
     logout: jest.fn(),
+    retry: jest.fn(),
     ...overrides,
   };
   await act(async () => {
@@ -54,6 +55,28 @@ async function render(overrides: Partial<AuthGateState>) {
 }
 
 describe('AccountScreen', () => {
+  it('does not flash the login form while the stored session is being restored', async () => {
+    const text = await render({ status: 'checking' });
+
+    expect(text).not.toContain('Tên đăng nhập');
+    expect(text).toContain('Đang kiểm tra phiên đăng nhập...');
+  });
+
+  it('offers a retry instead of the login form when the session could not be restored offline', async () => {
+    const retry = jest.fn();
+    const text = await render({ status: 'offline', retry });
+
+    expect(text).not.toContain('Tên đăng nhập');
+    expect(text).toContain(
+      'Không kết nối được máy chủ để khôi phục phiên đăng nhập.',
+    );
+    const button = renderer.root.findByProps({
+      testID: 'account-retry-session',
+    });
+    button.props.onPress();
+    expect(retry).toHaveBeenCalled();
+  });
+
   it('shows the login form when not authenticated', async () => {
     const text = await render({ status: 'unauthenticated' });
     expect(text).toContain('Tên đăng nhập');

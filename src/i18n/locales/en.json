@@ -157,8 +157,7 @@
     "unknownWard": "Ward not identified",
     "notesTitle": "Data notes",
     "status": {
-      "sectionTitle": "By status",
-      "total": "Total"
+      "sectionTitle": "By status"
     },
     "processing": {
       "sectionTitle": "Processing status",
@@ -246,7 +245,9 @@
     "networkError": "Could not reach the server, please try again",
     "sessionExpiredBanner": "Your session has expired, please log in again",
     "loggedInStatus": "You are logged in",
-    "logoutButton": "Log out"
+    "logoutButton": "Log out",
+    "checkingSession": "Checking your session...",
+    "offlineSession": "Could not reach the server to restore your session."
   },
   "report": {
     "title": "Export report",
@@ -305,6 +306,7 @@
     "anyTime": "Any time",
     "wardsTitle": "Select wards/communes",
     "dateTitle": "Time range",
-    "done": "Done"
+    "done": "Done",
+    "assignedWards": "Assigned wards ({{count}})"
   }
 }
