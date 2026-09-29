@@ -18,7 +18,7 @@ function Separator() {
 
 export type SearchResult = {
   id: string;
-  kind: 'ward' | 'project' | 'feature';
+  kind: 'ward' | 'feature';
   title: string;
   layer: string;
   detail: string;

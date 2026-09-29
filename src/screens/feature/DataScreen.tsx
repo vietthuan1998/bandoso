@@ -105,7 +105,11 @@ export function DataScreen({
   const registryPending =
     registry.status === 'idle' ||
     (registry.status === 'loading' && registry.layers.length === 0);
-  const selectedLayerId = shared.collections[0] ?? null;
+  // Chưa chọn lớp -> mặc định lớp đầu tiên registry trả về (chỉ để hiển thị,
+  // không ghi vào bộ lọc chung). null = người dùng chủ động chọn "Tất cả lớp".
+  const selectedLayerId =
+    shared.collections[0] ??
+    (shared.dataAllLayers ? null : layers[0]?.id ?? null);
   const [layerSheetOpen, setLayerSheetOpen] = useState(false);
   const selectedLayer = useMemo(
     () => layers.find(layer => layer.id === selectedLayerId) ?? null,
@@ -446,7 +450,7 @@ export function DataScreen({
             label={t('statistics.filters.allLayers')}
             active={selectedLayerId === null}
             onPress={() => {
-              updateFilters({ collections: [] });
+              updateFilters({ collections: [], dataAllLayers: true });
               setLayerSheetOpen(false);
             }}
           />
@@ -456,7 +460,10 @@ export function DataScreen({
               label={layer.label}
               active={selectedLayerId === layer.id}
               onPress={() => {
-                updateFilters({ collections: [layer.id] });
+                updateFilters({
+                  collections: [layer.id],
+                  dataAllLayers: false,
+                });
                 setLayerSheetOpen(false);
               }}
             />

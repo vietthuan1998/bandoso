@@ -25,7 +25,6 @@ export type WardProperties = {
   viTriDiaLy?: string;
   diaChiUB?: string;
   GhiChu?: string | number;
-  fColor?: string | number;
   publicWardId?: string;
   publicFillColor?: string;
   [key: string]: unknown;
@@ -49,51 +48,4 @@ export type Ward = {
   committeeAddress: string;
   note: string;
   properties: WardProperties;
-};
-
-export type ProjectCategoryId =
-  | 'calling'
-  | 'selecting-investor'
-  | 'constructing'
-  | 'operating';
-
-export type ProjectCategory = {
-  id: ProjectCategoryId;
-  alias: string;
-  color: string;
-  sourceUrl: string;
-};
-
-export type ProjectProperties = {
-  OBJECTID?: string | number;
-  tenDuAn?: string;
-  name?: string;
-  diaDiem?: string;
-  dienTich?: string | number;
-  tongMucDauTu?: string | number;
-  nhaDauTu?: string;
-  chuDauTu?: string;
-  moTa?: string;
-  tinhHinhThucHien?: string;
-  tienDoThucHien?: string;
-  thongTin?: string;
-  vuongMac?: string;
-  deXuat?: string;
-  ghiChu?: string;
-  [key: string]: unknown;
-};
-
-export type SelectedProject = {
-  id: string;
-  categoryId: ProjectCategoryId;
-  categoryAlias: string;
-  color: string;
-  properties: ProjectProperties;
-};
-
-export type ProjectSearchItem = SelectedProject & {
-  name: string;
-  location: string;
-  investor: string;
-  bounds: [number, number, number, number] | null;
 };

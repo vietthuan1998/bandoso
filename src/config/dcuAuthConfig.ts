@@ -1,8 +1,8 @@
+import { API_V1_URL } from '../constants/url';
+
 /**
- * BFF dcudata.cgb.vn — base URL cố định theo tài liệu API (không phải
- * dcu.huecity.vn, host cũ của Directus trực tiếp). Xem docs/designs/
- * huemaps-bff-migration.md.
+ * API BFF = BASE_URL (.env) + "/v1" — xem constants/url.ts và docs/api.md.
  */
-export const DCU_API_BASE_URL = 'https://dcudata.cgb.vn/api/v1';
+export const DCU_API_BASE_URL = API_V1_URL;
 
 export const REFRESH_TOKEN_KEYCHAIN_SERVICE = 'huemaps-refresh-token';

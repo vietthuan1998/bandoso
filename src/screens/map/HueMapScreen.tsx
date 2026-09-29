@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { CameraRef } from '@maplibre/maplibre-react-native';
 import {
@@ -9,13 +15,8 @@ import {
   type SupportedLanguage,
 } from '../../i18n';
 import { appLanguage, getLocalizedDataValue } from '../../i18n/localizedData';
-import {
-  normalizeProject,
-  normalizeWard,
-  useHueMap,
-} from '../../hooks/useHueMap';
-import type { ProjectSearchItem, Ward } from '../../types/map';
-import { PROJECT_CATEGORIES } from '../../services/map/projectLayers';
+import { normalizeWard, useHueMap } from '../../hooks/useHueMap';
+import type { Ward } from '../../types/map';
 import { useMapRegistry } from '../../services/map/mapRegistry';
 import type { MvtLayerConfig } from '../../services/map/mvtLayers';
 import {
@@ -39,12 +40,7 @@ import { DataOverviewPanel } from '../../components/map/DataOverviewPanel';
 import { Header, LanguageOption } from '../../components/map/Header';
 import { Icon } from '../../components/common/Icon';
 import { LayersFab } from '../../components/layer/LayersFab';
-import {
-  CityInfoPanel,
-  ProjectInfoPanel,
-  ProjectLegendPanel,
-  WardInfoPanel,
-} from '../../components/map/InfoPanels';
+import { CityInfoPanel, WardInfoPanel } from '../../components/map/InfoPanels';
 import { LayerMenuSheet } from '../../components/layer/LayerMenuSheet';
 import { LocateButton } from '../../components/map/LocateButton';
 import { MapCanvas } from '../../components/map/MapCanvas';
@@ -63,6 +59,11 @@ function formatSyncTime(iso: string): string {
     d.getMonth() + 1,
   )}/${d.getFullYear()}`;
 }
+
+// Mốc đồng bộ mà người dùng đã đóng thông báo "đang dùng cấu hình đã lưu".
+// Sống ở module scope để không hiện lại khi chuyển tab rồi quay về bản đồ;
+// lần đồng bộ thất bại sau (mốc khác) vẫn hiện lại.
+let dismissedStaleSyncedAt: string | null = null;
 
 const COMBINING_DIACRITICS = /[̀-ͯ]/g;
 
@@ -105,6 +106,13 @@ export default function HueMapScreen({
 
   const registry = useMapRegistry();
   const mvtLayers = registry.layers;
+  const [staleDismissedAt, setStaleDismissedAt] = useState(
+    dismissedStaleSyncedAt,
+  );
+  const dismissStaleNotice = () => {
+    dismissedStaleSyncedAt = registry.syncedAt ?? null;
+    setStaleDismissedAt(dismissedStaleSyncedAt);
+  };
   const profile = useAuthProfile();
   const scopeLabel = profile
     ? t('scope.label', {
@@ -266,47 +274,6 @@ export default function HueMapScreen({
         color: '#0878bd',
       }));
 
-    const projectResults = map.projects
-      .map(project => {
-        const name =
-          getLocalizedDataValue(
-            project.properties,
-            ['tenDuAn', 'name'],
-            language,
-          ).value || project.name;
-        const location =
-          getLocalizedDataValue(project.properties, ['diaDiem'], language)
-            .value || project.location;
-        const investor =
-          getLocalizedDataValue(
-            project.properties,
-            ['nhaDauTu', 'chuDauTu'],
-            language,
-          ).value || project.investor;
-        const category = t(`projectCategories.${project.categoryId}`);
-        return { project, name, location, investor, category };
-      })
-      .filter(({ project, name, location, investor, category }) =>
-        normalizeSearchText(
-          [
-            name,
-            location,
-            investor,
-            category,
-            project.name,
-            project.location,
-          ].join(' '),
-        ).includes(query),
-      )
-      .map(({ project, name, location, investor, category }) => ({
-        id: `${project.categoryId}:${project.id}`,
-        kind: 'project' as const,
-        title: name,
-        layer: t('search.projectLayer', { category }),
-        detail: location || investor,
-        color: project.color,
-      }));
-
     const featureResults = featureMatches.map(({ layer, record }) => ({
       id: `${layer.id}:${record.id}`,
       kind: 'feature' as const,
@@ -316,8 +283,10 @@ export default function HueMapScreen({
       color: layer.color,
     }));
 
-    return [...wardResults, ...projectResults, ...featureResults];
-  }, [featureMatches, language, map.projects, map.wards, search, t]);
+    // Dự án đầu tư nằm trong featureResults (lớp registry
+    // danh_muc_du_an_thu_hut_dau_tu), không còn nguồn riêng.
+    return [...wardResults, ...featureResults];
+  }, [featureMatches, language, map.wards, search, t]);
 
   useEffect(() => {
     if (!focusRequest) return undefined;
@@ -363,11 +332,6 @@ export default function HueMapScreen({
     focusBounds(map.wardBoundsById(ward.id));
   };
 
-  const selectProjectAndFocus = (project: ProjectSearchItem) => {
-    map.selectProject(project);
-    focusBounds(project.bounds);
-  };
-
   const handleSearchSelect = (result: SearchResult) => {
     setSearch(result.title);
     setSearchOpen(false);
@@ -395,15 +359,7 @@ export default function HueMapScreen({
         ),
         true,
       );
-      return;
     }
-    const separator = result.id.indexOf(':');
-    const categoryId = result.id.slice(0, separator);
-    const projectId = result.id.slice(separator + 1);
-    const project = map.projects.find(
-      item => item.categoryId === categoryId && item.id === projectId,
-    );
-    if (project) selectProjectAndFocus(project);
   };
 
   return (
@@ -415,8 +371,6 @@ export default function HueMapScreen({
         hiddenWardIds={map.hiddenWardIds}
         selectedWardId={map.selectedWard?.id ?? null}
         cityVisible={map.cityVisible}
-        projectLayerVisible={map.projectLayerVisible}
-        projectCategoryVisibility={map.projectCategoryVisibility}
         onCityPress={() => {
           closeMvtFeature();
           map.selectCity();
@@ -425,14 +379,6 @@ export default function HueMapScreen({
           closeMvtFeature();
           const ward = normalizeWard(properties);
           map.selectWard(ward);
-        }}
-        onProjectPress={(categoryId, properties) => {
-          const category = PROJECT_CATEGORIES.find(
-            item => item.id === categoryId,
-          );
-          if (!category) return;
-          closeMvtFeature();
-          map.selectProject(normalizeProject(category, properties));
         }}
         mvtLayersVisible={mvtLayersVisible}
         onMvtFeaturePress={(layer, properties, coordinates) => {
@@ -504,25 +450,8 @@ export default function HueMapScreen({
       ) : null}
 
       {map.citySelected ? <CityInfoPanel onClose={map.clearSelection} /> : null}
-      {map.projectLayerVisible &&
-      !map.selectedProject &&
-      !map.selectedWard &&
-      !map.citySelected &&
-      !selectedMvtFeature ? (
-        <ProjectLegendPanel
-          categoryVisibility={map.projectCategoryVisibility}
-          onToggleCategory={map.toggleProjectCategory}
-          onClose={() => map.toggleProjectLayer(false)}
-        />
-      ) : null}
       {map.selectedWard ? (
         <WardInfoPanel ward={map.selectedWard} onClose={map.clearSelection} />
-      ) : null}
-      {map.selectedProject ? (
-        <ProjectInfoPanel
-          project={map.selectedProject}
-          onClose={map.clearSelection}
-        />
       ) : null}
       {/* FeatureDetailScreen tạm thời không dùng: panel là nơi xem thông tin. */}
       {selectedMvtFeature ? (
@@ -538,7 +467,10 @@ export default function HueMapScreen({
         onClose={() => setDataOverviewOpen(false)}
       />
 
-      {registry.stale && registry.syncedAt && !(map.error && !map.loading) ? (
+      {registry.stale &&
+      registry.syncedAt &&
+      registry.syncedAt !== staleDismissedAt &&
+      !(map.error && !map.loading) ? (
         <View style={[styles.staleBanner, { top: insets.top + 64 }]}>
           <Icon name="info" size={14} color={COLORS.warningText} />
           <Text style={styles.staleText} numberOfLines={2}>
@@ -546,6 +478,14 @@ export default function HueMapScreen({
               time: formatSyncTime(registry.syncedAt),
             })}
           </Text>
+          <Pressable
+            onPress={dismissStaleNotice}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+          >
+            <Icon name="close" size={14} color={COLORS.warningText} />
+          </Pressable>
         </View>
       ) : null}
 
@@ -567,13 +507,10 @@ export default function HueMapScreen({
         citySelected={map.citySelected}
         allWardsVisible={map.hiddenWardIds.size === 0}
         selectedWardId={map.selectedWard?.id ?? null}
-        projectLayerVisible={map.projectLayerVisible}
         onToggleCity={map.toggleCity}
         onSelectCity={map.selectCity}
         onToggleAllWards={map.toggleAllWards}
         onViewAllWards={map.clearSelection}
-        onToggleProjectLayer={map.toggleProjectLayer}
-        onActivateProjectLayer={map.activateProjectLayer}
         mvtLayersVisible={mvtLayersVisible}
         onToggleMvtLayer={toggleMvtLayer}
       />

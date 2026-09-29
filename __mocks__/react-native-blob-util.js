@@ -21,6 +21,10 @@ module.exports = {
       writeFile: jest.fn(async (path, data) => {
         files.set(path, data);
       }),
+      readFile: jest.fn(async path => {
+        if (!files.has(path)) throw new Error(`ENOENT: ${path}`);
+        return files.get(path);
+      }),
       __files: files,
     },
     MediaCollection: {

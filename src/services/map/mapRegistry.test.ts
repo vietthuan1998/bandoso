@@ -1,8 +1,10 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { proxiedTileUrl } from './mvtLayers';
 import {
   buildLayerGroups,
   getMapRegistry,
+  getRegistryVersion,
   loadMapRegistry,
   normalizeRegistryLayer,
   resetMapRegistryForTests,
@@ -10,6 +12,35 @@ import {
 } from './mapRegistry';
 
 jest.mock('axios', () => ({ __esModule: true, default: { get: jest.fn() } }));
+jest.mock('../../constants/url', () => ({
+  API_V1_URL: 'https://bff.test/api/v1',
+  DIRECTUS_BASE_URL: 'https://bff.test/api/directus',
+  TIMEOUT: 15000,
+}));
+
+// Listener được đăng ký lúc import mapRegistry (trước mọi câu lệnh của test),
+// nên mock tự giữ lại thay vì gán vào biến của file test.
+jest.mock('react-native', () => {
+  const listeners: Array<(status: string) => void> = [];
+  return {
+    AppState: {
+      __listeners: listeners,
+      addEventListener: (
+        _event: string,
+        listener: (status: string) => void,
+      ) => {
+        listeners.push(listener);
+        return { remove: () => {} };
+      },
+    },
+  };
+});
+const emitAppState = (status: string) =>
+  (
+    require('react-native').AppState.__listeners as Array<
+      (value: string) => void
+    >
+  ).forEach(listener => listener(status));
 
 let mockAccessToken: string | null = null;
 let mockTokenListener: ((token: string | null) => void) | null = null;
@@ -45,16 +76,25 @@ const BTS: RegistryLayer = {
   valueLabels: { operation_status: { '1': 'Bình thường' } },
 };
 
-function mockRegistryResponses(registryVersion: string, layers: RegistryLayer[]) {
+function mockRegistryResponses(
+  registryVersion: string,
+  layers: RegistryLayer[],
+) {
   mockedGet.mockImplementation(async (url: string) => {
-    if (url.endsWith('/map/config/version')) return { data: { registryVersion } };
-    if (url.endsWith('/map/layers')) return { data: { registryVersion, layers } };
+    if (url.endsWith('/map/config/version'))
+      return { data: { registryVersion } };
+    if (url.endsWith('/map/layers'))
+      return { data: { registryVersion, layers } };
     if (url.endsWith('/catalog/layer-groups')) {
       return {
         data: {
           data: [
             { key: 'land', label: 'Đất đai, địa chính', icon: 'landscape' },
-            { key: 'telecom', label: 'Viễn thông', icon: 'settings_input_antenna' },
+            {
+              key: 'telecom',
+              label: 'Viễn thông',
+              icon: 'settings_input_antenna',
+            },
           ],
         },
       };
@@ -69,7 +109,9 @@ describe('normalizeRegistryLayer', () => {
       id: 'bts',
       collection: 'bts',
       sourceLayer: 'bts',
-      tileUrl: BTS.tileUrl,
+      // Tile đi qua proxy BFF: chỉ đổi origin, giữ nguyên đường dẫn + query.
+      tileUrl:
+        'https://bff.test/api/directus/mvt/{z}/{x}/{y}.mvt?collections=bts',
       label: 'Trạm BTS',
       groupKey: 'telecom',
       geometryTypes: ['point'],
@@ -90,7 +132,12 @@ describe('normalizeRegistryLayer', () => {
       fieldLabels: { station_code: 'Mã trạm', operation_status: 'Trạng thái' },
       valueLabels: { operation_status: { '1': 'Bình thường' } },
       objectValueKeys: {},
-      capabilities: { list: true, detail: true, search: true, statistics: false },
+      capabilities: {
+        list: true,
+        detail: true,
+        search: true,
+        statistics: false,
+      },
     });
   });
 
@@ -111,11 +158,48 @@ describe('normalizeRegistryLayer', () => {
   });
 });
 
+describe('normalizeRegistryLayer zoom range', () => {
+  it('treats maxZoom: null (e.g. danh_muc_du_an_thu_hut_dau_tu) as "no upper limit" instead of passing null to MapLibre', () => {
+    const layer = normalizeRegistryLayer({
+      ...BTS,
+      minZoom: 9,
+      maxZoom: null,
+    });
+    expect(layer.minzoom).toBe(9);
+    expect(layer.maxzoom).toBeUndefined();
+  });
+});
+
+describe('proxiedTileUrl', () => {
+  it('rewrites only the origin of a direct Directus tile URL to BASE_URL/directus', () => {
+    expect(
+      proxiedTileUrl(
+        'https://dcu.huecity.vn/mvt/{z}/{x}/{y}.mvt?collections=danh_muc_du_an_thu_hut_dau_tu',
+      ),
+    ).toBe(
+      'https://bff.test/api/directus/mvt/{z}/{x}/{y}.mvt?collections=danh_muc_du_an_thu_hut_dau_tu',
+    );
+  });
+
+  it('leaves URLs that already point elsewhere untouched', () => {
+    const proxied =
+      'https://bff.test/api/directus/mvt/{z}/{x}/{y}.mvt?collections=bts';
+    expect(proxiedTileUrl(proxied)).toBe(proxied);
+    expect(proxiedTileUrl('https://tiles.example/{z}/{x}/{y}.pbf')).toBe(
+      'https://tiles.example/{z}/{x}/{y}.pbf',
+    );
+  });
+});
+
 describe('buildLayerGroups', () => {
   it('keeps catalog order, drops empty groups and appends unknown menuGroups', () => {
     const layers = [
       normalizeRegistryLayer(BTS),
-      normalizeRegistryLayer({ ...BTS, collectionKey: 'x', menuGroup: 'new-group' }),
+      normalizeRegistryLayer({
+        ...BTS,
+        collectionKey: 'x',
+        menuGroup: 'new-group',
+      }),
     ];
     const groups = buildLayerGroups(layers, [
       { key: 'land', label: 'Đất đai', icon: 'landscape' },
@@ -204,5 +288,36 @@ describe('loadMapRegistry', () => {
 
     expect(second.layers).toBe(layers);
     expect(second.stale).toBe(false);
+  });
+
+  it('exposes registryVersion as the cache key for catalogs and boundaries', async () => {
+    mockRegistryResponses('r7', [BTS]);
+    await loadMapRegistry();
+    expect(await getRegistryVersion()).toBe('r7');
+  });
+
+  it('re-checks /map/config/version when the app comes back to the foreground (at most once a minute)', async () => {
+    jest.useFakeTimers({ now: 1_000_000 });
+    try {
+      mockRegistryResponses('r1', [BTS]);
+      await loadMapRegistry();
+      mockedGet.mockClear();
+
+      // Vừa kiểm tra xong -> chưa gọi lại.
+      emitAppState('active');
+      expect(mockedGet).not.toHaveBeenCalled();
+
+      jest.setSystemTime(1_000_000 + 61_000);
+      emitAppState('background');
+      expect(mockedGet).not.toHaveBeenCalled();
+      emitAppState('active');
+      await Promise.resolve();
+      await getRegistryVersion();
+      expect(mockedGet.mock.calls.map(([url]) => url)).toContainEqual(
+        expect.stringContaining('/map/config/version'),
+      );
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

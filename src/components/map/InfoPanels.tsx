@@ -1,8 +1,7 @@
-import { Switch, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { appLanguage, getLocalizedDataValue } from '../../i18n/localizedData';
-import { PROJECT_CATEGORIES } from '../../services/map/projectLayers';
-import type { ProjectCategoryId, SelectedProject, Ward } from '../../types/map';
+import type { Ward } from '../../types/map';
 import { COLORS } from '../../constants/theme';
 import { Icon, type IconName } from '../common/Icon';
 import { InfoCard } from '../common/InfoCard';
@@ -86,101 +85,6 @@ export function WardInfoPanel({
         />
       ) : null}
       {note.value ? <Detail label={t('ward.note')} value={note.value} /> : null}
-    </InfoCard>
-  );
-}
-
-export function ProjectLegendPanel({
-  categoryVisibility,
-  onToggleCategory,
-  onClose,
-}: {
-  categoryVisibility: Record<ProjectCategoryId, boolean>;
-  onToggleCategory: (id: ProjectCategoryId, visible: boolean) => void;
-  onClose: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <InfoCard
-      title={t('project.legendTitle')}
-      subtitle={t('project.legendHint')}
-      onClose={onClose}
-      closeLabel={t('project.closeLayer')}
-    >
-      {PROJECT_CATEGORIES.map(category => (
-        <View key={category.id} style={styles.legendRow}>
-          <View
-            style={[styles.legendSwatch, { backgroundColor: category.color }]}
-          />
-          <Text style={styles.legendLabel}>
-            {t(`projectCategories.${category.id}`)}
-          </Text>
-          <Switch
-            value={categoryVisibility[category.id]}
-            onValueChange={value => onToggleCategory(category.id, value)}
-            trackColor={{ false: '#d7e1ea', true: category.color }}
-            thumbColor="#ffffff"
-          />
-        </View>
-      ))}
-    </InfoCard>
-  );
-}
-
-export function ProjectInfoPanel({
-  project,
-  onClose,
-}: {
-  project: SelectedProject;
-  onClose: () => void;
-}) {
-  const { t, i18n } = useTranslation();
-  const language = appLanguage(i18n.resolvedLanguage ?? i18n.language);
-  const properties = project.properties;
-  const projectName = getLocalizedDataValue(
-    properties,
-    ['tenDuAn', 'name'],
-    language,
-  );
-  const detailDefinitions: Array<[string, string[], string?]> = [
-    ['project.location', ['diaDiem']],
-    ['project.area', ['dienTich'], 'ha'],
-    ['project.totalInvestment', ['tongMucDauTu']],
-    ['project.investor', ['nhaDauTu', 'chuDauTu']],
-    ['project.description', ['moTa']],
-    ['project.information', ['thongTin']],
-    ['project.implementation', ['tinhHinhThucHien']],
-    ['project.progress', ['tienDoThucHien']],
-    ['project.issues', ['vuongMac']],
-    ['project.proposal', ['deXuat']],
-    ['project.note', ['ghiChu']],
-  ];
-  const details = detailDefinitions.map(([labelKey, fields, unit]) => {
-    const localized = getLocalizedDataValue(properties, fields, language);
-    return {
-      label: t(labelKey),
-      value:
-        unit && localized.value
-          ? `${localized.value} ${unit}`
-          : localized.value,
-      isFallback: localized.isFallback,
-    };
-  });
-  const usesFallback =
-    (projectName.value && projectName.isFallback) ||
-    details.some(detail => detail.value && detail.isFallback);
-
-  return (
-    <InfoCard
-      title={projectName.value || t('project.defaultTitle')}
-      subtitle={t(`projectCategories.${project.categoryId}`)}
-      accentColor={project.color}
-      onClose={onClose}
-    >
-      {usesFallback && <SourceLanguageNotice />}
-      {details.map(({ label, value }) =>
-        value ? <Detail key={label} label={label} value={value} /> : null,
-      )}
     </InfoCard>
   );
 }

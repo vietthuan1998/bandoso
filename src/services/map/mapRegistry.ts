@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useEffect, useSyncExternalStore } from 'react';
+import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { IconName } from '../../components/common/Icon';
 import { DCU_API_BASE_URL } from '../../config/dcuAuthConfig';
@@ -8,10 +9,11 @@ import {
   getAccessToken,
   subscribeToAccessTokenChange,
 } from '../auth/authClient';
-import type {
-  MvtGeometryKind,
-  MvtGroupConfig,
-  MvtLayerConfig,
+import {
+  proxiedTileUrl,
+  type MvtGeometryKind,
+  type MvtGroupConfig,
+  type MvtLayerConfig,
 } from './mvtLayers';
 
 type RegistryGeometryType =
@@ -32,8 +34,9 @@ export type RegistryLayer = {
   label?: string;
   menuGroup: string;
   geometryTypes?: RegistryGeometryType[];
-  minZoom?: number;
-  maxZoom?: number;
+  minZoom?: number | null;
+  /** null = không giới hạn trên (vd. danh_muc_du_an_thu_hut_dau_tu). */
+  maxZoom?: number | null;
   color: string;
   icon?: string;
   capabilities?: Partial<
@@ -111,15 +114,16 @@ export function normalizeRegistryLayer(raw: RegistryLayer): MvtLayerConfig {
     id: raw.collectionKey,
     collection: raw.directusCollection || raw.collectionKey,
     sourceLayer: raw.sourceLayer || raw.collectionKey,
-    tileUrl: raw.tileUrl,
+    tileUrl: proxiedTileUrl(raw.tileUrl),
     label: raw.label || raw.collectionKey,
     groupKey: raw.menuGroup,
     // Registry không khai báo hình học -> vẽ đủ cả ba kiểu cho chắc.
     geometryTypes: kinds.length ? kinds : ['polygon', 'linestring', 'point'],
     color: raw.color,
     icon: resolveRegistryIcon(raw.icon),
-    minzoom: raw.minZoom,
-    maxzoom: raw.maxZoom,
+    // Registry trả null khi không giới hạn — MapLibre cần undefined (mặc định 22).
+    minzoom: raw.minZoom ?? undefined,
+    maxzoom: raw.maxZoom ?? undefined,
     updatedAtField: raw.dimensions?.updatedAtField ?? null,
     measureFields: raw.dimensions?.measureFields ?? [],
     featureIdField: raw.featureIdField || 'id',
@@ -176,12 +180,16 @@ export type MapRegistryState = {
   syncedAt?: string | null;
   /** true = đang hiển thị bản đã lưu vì lần đồng bộ mới nhất thất bại. */
   stale?: boolean;
+  /** Khoá cache cho danh mục/ranh giới (tài liệu mục 4, 11). */
+  registryVersion?: string | null;
 };
 
 let state: MapRegistryState = { status: 'idle', layers: [], groups: [] };
 const listeners = new Set<() => void>();
 let inflight: Promise<MapRegistryState> | null = null;
 let reloadQueued = false;
+/** Lần gần nhất gọi /map/config/version (ms). */
+let lastVersionCheckAt = 0;
 /** Đối tượng (public/auth) của registry đang hiển thị. */
 let stateAudience: RegistryAudience | null = null;
 
@@ -199,6 +207,7 @@ function applyRegistry(registry: RegistryCache, stale: boolean) {
     groups: buildLayerGroups(layers, registry.groups),
     syncedAt: registry.syncedAt,
     stale,
+    registryVersion: registry.registryVersion,
   });
 }
 
@@ -262,6 +271,7 @@ async function load(): Promise<MapRegistryState> {
     applyRegistry(cached, false);
   }
 
+  lastVersionCheckAt = Date.now();
   try {
     const version = await axios.get<{ registryVersion: string }>(
       `${DCU_API_BASE_URL}/map/config/version`,
@@ -338,6 +348,29 @@ export async function getMapRegistry(): Promise<MapRegistryState> {
   return state.status === 'ready' ? state : loadMapRegistry();
 }
 
+/**
+ * registryVersion đã đối chiếu với server (chờ lượt kiểm tra đang chạy, nếu
+ * có) — khoá cache cho danh mục và ranh giới. null = chưa từng biết version.
+ */
+export async function getRegistryVersion(): Promise<string | null> {
+  const current = inflight ? await inflight : await getMapRegistry();
+  return current.registryVersion ?? null;
+}
+
+// Mở lại app từ nền -> kiểm tra version lại (tài liệu mục 11: "mỗi lần mở
+// app"). Không gọi dồn: tối thiểu 60 giây một lần, khớp max-age của
+// /map/layers (tài liệu mục 4).
+const VERSION_RECHECK_MS = 60_000;
+AppState.addEventListener?.('change', status => {
+  if (
+    status === 'active' &&
+    state.status !== 'idle' &&
+    Date.now() - lastVersionCheckAt >= VERSION_RECHECK_MS
+  ) {
+    loadMapRegistry().catch(() => {});
+  }
+});
+
 function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => {
@@ -364,4 +397,5 @@ export function resetMapRegistryForTests() {
   inflight = null;
   reloadQueued = false;
   stateAudience = null;
+  lastVersionCheckAt = 0;
 }

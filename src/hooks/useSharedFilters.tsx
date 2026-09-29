@@ -22,6 +22,12 @@ export type SharedFilters = {
   dateTo: string | null;
   /** Từ khoá ô tìm kiếm màn Dữ liệu. */
   search: string;
+  /**
+   * Màn Dữ liệu: người dùng đã chủ động chọn "Tất cả lớp". Khi false và chưa
+   * chọn lớp nào, màn Dữ liệu mặc định hiển thị lớp đầu tiên của registry
+   * (màn Thống kê vẫn hiểu collections rỗng là tất cả lớp).
+   */
+  dataAllLayers: boolean;
 };
 
 export const EMPTY_FILTERS: SharedFilters = {
@@ -30,6 +36,7 @@ export const EMPTY_FILTERS: SharedFilters = {
   dateFrom: null,
   dateTo: null,
   search: '',
+  dataAllLayers: false,
 };
 
 type SharedFiltersContextValue = {

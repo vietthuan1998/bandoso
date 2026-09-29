@@ -47,7 +47,6 @@
     "ariaLabel": "Bản đồ hành chính thành phố Huế",
     "loading": "Đang tải dữ liệu bản đồ...",
     "loadError": "Không thể tải dữ liệu bản đồ",
-    "unnamedProject": "Dự án chưa có tên",
     "resetBearing": "Đưa bản đồ về hướng Bắc",
     "locateMe": "Vị trí của tôi",
     "locationUnavailable": "Không thể xác định vị trí của bạn",
@@ -55,17 +54,13 @@
   },
   "search": {
     "administrativeLayer": "Lớp địa giới hành chính",
-    "unitCode": "Mã đơn vị: {{code}}",
-    "projectLayer": "Lớp dự án · {{category}}"
+    "unitCode": "Mã đơn vị: {{code}}"
   },
   "menu": {
     "title": "Bản đồ số thành phố Huế",
     "administrative": "Lớp địa giới hành chính",
     "city": "Lớp thành phố Huế",
     "wards": "Lớp các phường, xã",
-    "public": "Lớp công khai thông tin",
-    "auction": "Bản đồ các khu đấu giá",
-    "investmentProjects": "Bản đồ dự án kêu gọi đầu tư",
     "planning": "Lớp quy hoạch",
     "generalPlanning": "Quy hoạch chung",
     "zoningPlanning": "Quy hoạch phân khu",
@@ -79,8 +74,7 @@
     "technicalInfrastructure": "Hạ tầng kỹ thuật",
     "specialized": "Lớp chuyên ngành",
     "environment": "Tài nguyên và môi trường",
-    "cultureTourism": "Văn hóa và du lịch",
-    "updating": "Dữ liệu đang được cập nhật"
+    "cultureTourism": "Văn hóa và du lịch"
   },
   "city": {
     "title": "Thông tin tổng quan Thành phố Huế",
@@ -99,29 +93,6 @@
     "geographicPosition": "Vị trí địa lý",
     "committeeAddress": "Địa chỉ UBND",
     "note": "Ghi chú"
-  },
-  "project": {
-    "legendTitle": "Phân loại dự án đầu tư",
-    "legendHint": "Bật hoặc tắt từng nhóm dự án trên bản đồ",
-    "closeLayer": "Đóng lớp dự án",
-    "defaultTitle": "Thông tin dự án",
-    "location": "Địa điểm",
-    "area": "Diện tích",
-    "totalInvestment": "Tổng mức đầu tư",
-    "investor": "Nhà đầu tư",
-    "description": "Mô tả",
-    "information": "Thông tin",
-    "implementation": "Tình hình thực hiện",
-    "progress": "Tiến độ thực hiện",
-    "issues": "Vướng mắc",
-    "proposal": "Đề xuất",
-    "note": "Ghi chú"
-  },
-  "projectCategories": {
-    "calling": "Dự án đang kêu gọi đầu tư",
-    "selecting-investor": "Dự án đã chấp thuận chủ trương đầu tư, đang triển khai lựa chọn nhà đầu tư",
-    "constructing": "Dự án đã chấp thuận nhà đầu tư, đang triển khai xây dựng",
-    "operating": "Dự án đã đi vào hoạt động"
   },
   "mvt": {
     "hint": "Vẽ trực tiếp từ dcu.huecity.vn theo mục 8 đặc tả kỹ thuật. Nét đứt = lớp định hướng (quy hoạch tương lai).",
@@ -172,7 +143,7 @@
     "title": "Thống kê dữ liệu",
     "loading": "Đang tải số liệu thống kê...",
     "error": "Không tải được số liệu thống kê.",
-    "needLogin": "Đăng nhập ở tab Cá nhân để xem số liệu thống kê.",
+    "needLogin": "Bạn cần đăng nhập để xem số liệu thống kê.",
     "forbidden": "Tài khoản chưa được cấp quyền xem thống kê.",
     "filters": {
       "allLayers": "Tất cả lớp",
@@ -235,7 +206,8 @@
       "field": "Trường: {{field}}",
       "empty": "Chưa có dữ liệu nhóm",
       "error": "Không tải được số liệu nhóm."
-    }
+    },
+    "goToLogin": "Đến đăng nhập"
   },
   "dataScreen": {
     "title": "Dữ liệu số hóa",
@@ -245,7 +217,7 @@
     },
     "resultCount": "{{count}} kết quả",
     "loading": "Đang tải dữ liệu...",
-    "error": "Không tải được dữ liệu từ Directus.",
+    "error": "Không tải được dữ liệu.",
     "emptyTitle": "Không có dữ liệu phù hợp",
     "emptyMessage": "Thử từ khoá hoặc bộ lọc khác.",
     "loadMore": "Tải thêm",
@@ -313,10 +285,6 @@
     "wards": "{{count}} phường/xã"
   },
   "account": {
-    "fullName": "Họ tên",
-    "username": "Tên đăng nhập",
-    "unit": "Đơn vị",
-    "roles": "Vai trò",
     "scope": "Phạm vi dữ liệu",
     "roleNames": {
       "guest": "Khách / công chúng",
@@ -325,7 +293,10 @@
       "city_leader": "Lãnh đạo thành phố",
       "data_admin": "Quản trị dữ liệu",
       "system_admin": "Quản trị hệ thống"
-    }
+    },
+    "accessTitle": "Quyền truy cập",
+    "visibleLayers": "Lớp xem được",
+    "layerCount": "{{count}} lớp"
   },
   "filters": {
     "wardCount": "{{count}} phường, xã",

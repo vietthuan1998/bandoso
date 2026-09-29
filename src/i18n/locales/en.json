@@ -47,7 +47,6 @@
     "ariaLabel": "Hue City administrative map",
     "loading": "Loading map data...",
     "loadError": "Unable to load map data",
-    "unnamedProject": "Unnamed project",
     "resetBearing": "Reset map to north",
     "locateMe": "My location",
     "locationUnavailable": "Unable to determine your location",
@@ -55,17 +54,13 @@
   },
   "search": {
     "administrativeLayer": "Administrative boundaries",
-    "unitCode": "Unit code: {{code}}",
-    "projectLayer": "Projects · {{category}}"
+    "unitCode": "Unit code: {{code}}"
   },
   "menu": {
     "title": "Hue City Digital Map",
     "administrative": "Administrative boundaries",
     "city": "Hue City boundary",
     "wards": "Wards and communes",
-    "public": "Public information",
-    "auction": "Land auction map",
-    "investmentProjects": "Investment promotion projects",
     "planning": "Planning",
     "generalPlanning": "General planning",
     "zoningPlanning": "Zoning planning",
@@ -79,8 +74,7 @@
     "technicalInfrastructure": "Technical infrastructure",
     "specialized": "Specialized data",
     "environment": "Natural resources and environment",
-    "cultureTourism": "Culture and tourism",
-    "updating": "Data is being updated"
+    "cultureTourism": "Culture and tourism"
   },
   "city": {
     "title": "Hue City Overview",
@@ -99,29 +93,6 @@
     "geographicPosition": "Geographic location",
     "committeeAddress": "People's Committee address",
     "note": "Notes"
-  },
-  "project": {
-    "legendTitle": "Investment project categories",
-    "legendHint": "Show or hide each project group on the map",
-    "closeLayer": "Close project layer",
-    "defaultTitle": "Project information",
-    "location": "Location",
-    "area": "Area",
-    "totalInvestment": "Total investment",
-    "investor": "Investor",
-    "description": "Description",
-    "information": "Information",
-    "implementation": "Implementation status",
-    "progress": "Progress",
-    "issues": "Issues",
-    "proposal": "Proposal",
-    "note": "Notes"
-  },
-  "projectCategories": {
-    "calling": "Projects calling for investment",
-    "selecting-investor": "Approved in principle; investor selection in progress",
-    "constructing": "Investor approved; construction in progress",
-    "operating": "Projects in operation"
   },
   "mvt": {
     "hint": "Rendered directly from dcu.huecity.vn per section 8 of the technical spec. Dashed = planned (future) layer.",
@@ -172,7 +143,7 @@
     "title": "Data statistics",
     "loading": "Loading statistics...",
     "error": "Could not load statistics.",
-    "needLogin": "Sign in on the Profile tab to view statistics.",
+    "needLogin": "You need to sign in to view statistics.",
     "forbidden": "Your account is not allowed to view statistics.",
     "filters": {
       "allLayers": "All layers",
@@ -235,7 +206,8 @@
       "field": "Field: {{field}}",
       "empty": "No group data yet",
       "error": "Could not load grouped data."
-    }
+    },
+    "goToLogin": "Go to sign in"
   },
   "dataScreen": {
     "title": "Digitized data",
@@ -245,7 +217,7 @@
     },
     "resultCount": "{{count}} results",
     "loading": "Loading data...",
-    "error": "Unable to load data from Directus.",
+    "error": "Unable to load data.",
     "emptyTitle": "No matching data",
     "emptyMessage": "Try a different keyword or filter.",
     "loadMore": "Load more",
@@ -313,10 +285,6 @@
     "wards": "{{count}} wards/communes"
   },
   "account": {
-    "fullName": "Full name",
-    "username": "Username",
-    "unit": "Unit",
-    "roles": "Roles",
     "scope": "Data scope",
     "roleNames": {
       "guest": "Guest / public",
@@ -325,7 +293,10 @@
       "city_leader": "City leader",
       "data_admin": "Data administrator",
       "system_admin": "System administrator"
-    }
+    },
+    "accessTitle": "Access",
+    "visibleLayers": "Visible layers",
+    "layerCount": "{{count}} layers"
   },
   "filters": {
     "wardCount": "{{count}} wards/communes",

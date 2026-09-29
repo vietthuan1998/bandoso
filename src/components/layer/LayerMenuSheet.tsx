@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -13,10 +13,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMapRegistry } from '../../services/map/mapRegistry';
 import { Icon, type IconName } from '../common/Icon';
 import { LeftSheet } from '../common/LeftSheet';
-import { COLORS, RADIUS, SPACING } from '../../constants/theme';
+import { COLORS, SPACING } from '../../constants/theme';
 
 const ADMIN_GROUP_ID = 'admin';
-const PUBLIC_GROUP_ID = 'public';
 
 export function LayerMenuSheet({
   visible,
@@ -27,13 +26,10 @@ export function LayerMenuSheet({
   citySelected,
   allWardsVisible,
   selectedWardId,
-  projectLayerVisible,
   onToggleCity,
   onSelectCity,
   onToggleAllWards,
   onViewAllWards,
-  onToggleProjectLayer,
-  onActivateProjectLayer,
   mvtLayersVisible,
   onToggleMvtLayer,
 }: {
@@ -45,13 +41,10 @@ export function LayerMenuSheet({
   citySelected: boolean;
   allWardsVisible: boolean;
   selectedWardId: string | null;
-  projectLayerVisible: boolean;
   onToggleCity: (visible: boolean) => void;
   onSelectCity: () => void;
   onToggleAllWards: (visible: boolean) => void;
   onViewAllWards: () => void;
-  onToggleProjectLayer: (visible: boolean) => void;
-  onActivateProjectLayer: () => void;
   mvtLayersVisible: Record<string, boolean>;
   onToggleMvtLayer: (id: string, visible: boolean) => void;
 }) {
@@ -62,22 +55,6 @@ export function LayerMenuSheet({
   const [openGroups, setOpenGroups] = useState<Set<string>>(
     () => new Set([ADMIN_GROUP_ID]),
   );
-  const [notice, setNotice] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(
-    () => () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    },
-    [],
-  );
-
-  const notifyUpdating = () => {
-    setNotice(true);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setNotice(false), 2000);
-  };
-
   const toggleGroup = (id: string) =>
     setOpenGroups(current => {
       const next = new Set(current);
@@ -148,34 +125,6 @@ export function LayerMenuSheet({
           )}
         </LayerGroup>
 
-        <LayerGroup
-          icon="publicInfo"
-          label={t('menu.public')}
-          visibleCount={Number(projectLayerVisible)}
-          totalCount={1}
-          expanded={openGroups.has(PUBLIC_GROUP_ID)}
-          onToggleExpanded={() => toggleGroup(PUBLIC_GROUP_ID)}
-        >
-          <LayerRow
-            icon="investment"
-            color="#1b9b52"
-            label={t('menu.investmentProjects')}
-            checked={projectLayerVisible}
-            onToggle={onToggleProjectLayer}
-            onPressLabel={onActivateProjectLayer}
-          />
-          {/* Lớp đấu giá chưa có dữ liệu: bấm chỉ báo "đang cập nhật". */}
-          <LayerRow
-            icon="auction"
-            color={COLORS.textFaint}
-            label={t('menu.auction')}
-            checked={false}
-            disabled
-            onToggle={notifyUpdating}
-            onPressLabel={notifyUpdating}
-          />
-        </LayerGroup>
-
         {registry.status === 'loading' && registry.layers.length === 0 ? (
           <View style={styles.statusRow}>
             <ActivityIndicator color={COLORS.primary} />
@@ -229,13 +178,6 @@ export function LayerMenuSheet({
           );
         })}
       </ScrollView>
-
-      {notice ? (
-        <View style={styles.toast}>
-          <Icon name="info" size={15} color="#8ed4ff" />
-          <Text style={styles.toastText}>{t('menu.updating')}</Text>
-        </View>
-      ) : null}
     </LeftSheet>
   );
 }
@@ -381,18 +323,4 @@ const styles = StyleSheet.create({
   statusFill: { flex: 1 },
   errorText: { fontSize: 12, color: COLORS.critical },
   retry: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
-  toast: {
-    position: 'absolute',
-    left: SPACING.md,
-    right: SPACING.md,
-    bottom: SPACING.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    backgroundColor: '#153b59',
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-  },
-  toastText: { color: '#ffffff', fontSize: 12, fontWeight: '600' },
 });

@@ -21,18 +21,19 @@ jest.mock('axios', () => {
   };
 });
 
- 
 const mockedAxios = require('axios').default;
 
-jest.mock('../../config/apiAccessToken', () => ({
-  getStaticApiToken: jest.fn(() => 'static-token'),
-  isApiBaseUrl: (url?: string) => !!url && url.startsWith('https://dcu.huecity.vn/'),
+jest.mock('../../constants/url', () => ({
+  BASE_URL: 'https://bff.test/api',
+  API_V1_URL: 'https://bff.test/api/v1',
+  DIRECTUS_BASE_URL: 'https://bff.test/api/directus',
+  TIMEOUT: 15000,
 }));
 
-import { getStaticApiToken } from '../../config/apiAccessToken';
-import { dcuAxios, dcuHeaders } from './dcuClient';
-import { getSessionTokenAcceptance } from './directusAuth';
-import { login } from '../auth/authClient';
+import { dcuAxios, dcuHeaders, dcuItemsUrl, isDirectusUrl } from './dcuClient';
+import { login, logout } from '../auth/authClient';
+
+const ITEMS_BTS = 'https://bff.test/api/directus/items/bts';
 
 const mockInstance = dcuAxios as unknown as {
   interceptors: { request: { use: jest.Mock }; response: { use: jest.Mock } };
@@ -44,102 +45,62 @@ const responseErrorHandler =
   mockInstance.interceptors.response.use.mock.calls[0][1];
 const requestHandler = mockInstance.interceptors.request.use.mock.calls[0][0];
 
-const responseSuccessHandler =
-  mockInstance.interceptors.response.use.mock.calls[0][0];
+function tokenResponse(accessToken: string, refreshToken: string) {
+  return {
+    data: {
+      data: { accessToken, refreshToken, tokenType: 'Bearer', expiresIn: 3600 },
+    },
+  };
+}
 
-describe('dcuAxios Directus credential (guest)', () => {
-  it('falls back to the static token on API_BASE_URL when nobody is signed in', () => {
-    const config = requestHandler({
-      url: 'https://dcu.huecity.vn/items/bts',
-      headers: {},
-    });
-    expect(config.headers.Authorization).toBe('Bearer static-token');
-    expect(config._dcuCredential).toBe('static');
+describe('Directus URL', () => {
+  it('builds items URLs from BASE_URL + /directus/items/{collection}', () => {
+    expect(dcuItemsUrl('bts')).toBe(ITEMS_BTS);
   });
 
-  it('drops the Authorization header when there is no token at all', () => {
-    (getStaticApiToken as jest.Mock).mockReturnValueOnce(null);
+  it('recognises only Directus URLs under BASE_URL', () => {
+    expect(isDirectusUrl(ITEMS_BTS)).toBe(true);
+    expect(isDirectusUrl('https://bff.test/api/v1/statistics/summary')).toBe(
+      false,
+    );
+    expect(isDirectusUrl('https://bff.test/api/directusX/items/bts')).toBe(
+      false,
+    );
+    expect(isDirectusUrl(undefined)).toBe(false);
+  });
+});
+
+describe('Directus request credential', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedAxios.get.mockRejectedValue(new Error('no /auth/me'));
+  });
+
+  it('sends no token at all for guests (the BFF proxy authenticates server-side)', async () => {
+    mockedAxios.post.mockResolvedValueOnce({});
+    await logout();
     const config = requestHandler({
-      url: 'https://dcu.huecity.vn/items/bts',
+      url: ITEMS_BTS,
       headers: { Authorization: 'Bearer stale' },
     });
     expect(config.headers.Authorization).toBeUndefined();
   });
 
-  it('never touches other hosts', () => {
-    const bff = requestHandler({
-      url: 'https://dcudata.cgb.vn/api/v1/statistics/summary',
-      headers: { Authorization: 'Bearer access-session' },
-    });
-    expect(bff.headers.Authorization).toBe('Bearer access-session');
-
-    const guest = requestHandler({
-      url: 'https://dcudata.cgb.vn/api/v1/statistics/summary',
-      headers: {},
-    });
-    expect(guest.headers.Authorization).toBeUndefined();
-  });
-});
-
-describe('dcuAxios Directus credential (signed in)', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    mockedAxios.post.mockResolvedValueOnce({
-      data: {
-        data: {
-          accessToken: 'access-session',
-          refreshToken: 'refresh-1',
-          tokenType: 'Bearer',
-          expiresIn: 3600,
-        },
-      },
-    });
-    mockedAxios.get = jest.fn().mockRejectedValue(new Error('no /auth/me'));
-    await login('canbo01', 'matkhau');
-  });
-
-  it('tries the session access token first (no token in the client if the host accepts it)', () => {
-    const config = requestHandler({
-      url: 'https://dcu.huecity.vn/items/bts',
-      headers: {},
-    });
-    expect(config.headers.Authorization).toBe('Bearer access-session');
-    expect(config._dcuCredential).toBe('session');
-  });
-
-  it('remembers that the host accepts the session token so tiles can switch to it', () => {
-    responseSuccessHandler({
-      config: { url: 'https://dcu.huecity.vn/items/bts', _dcuCredential: 'session' },
-    });
-    expect(getSessionTokenAcceptance()).toBe('accepted');
-  });
-
-  it('retries once with the static token on a 401 for the session token, then sticks to it', async () => {
-    mockInstance.request.mockResolvedValueOnce({ data: { ok: true } });
-    mockedAxios.post.mockClear();
-    const config = requestHandler({
-      url: 'https://dcu.huecity.vn/items/bts',
-      headers: {},
-    });
-
-    const result = await responseErrorHandler({
-      config,
-      response: { status: 401 },
-    });
-
-    expect(result).toEqual({ data: { ok: true } });
-    expect(mockedAxios.post).not.toHaveBeenCalled(); // không đụng refresh token BFF
-    const retried = mockInstance.request.mock.calls[0][0];
-    expect(retried._dcuStaticFallback).toBe(true);
-    expect(requestHandler(retried).headers.Authorization).toBe(
-      'Bearer static-token',
+  it('sends the current session access token when signed in', async () => {
+    mockedAxios.post.mockResolvedValueOnce(
+      tokenResponse('access-session', 'refresh-1'),
     );
-    expect(getSessionTokenAcceptance()).toBe('rejected');
-    // Request sau dùng thẳng token tĩnh, không thử lại token phiên.
-    expect(
-      requestHandler({ url: 'https://dcu.huecity.vn/items/x', headers: {} })
-        .headers.Authorization,
-    ).toBe('Bearer static-token');
+    await login('canbo01', 'matkhau');
+    const config = requestHandler({ url: ITEMS_BTS, headers: {} });
+    expect(config.headers.Authorization).toBe('Bearer access-session');
+  });
+
+  it('never touches API v1 requests', () => {
+    const bff = requestHandler({
+      url: 'https://bff.test/api/v1/statistics/summary',
+      headers: { Authorization: 'Bearer from-call-site' },
+    });
+    expect(bff.headers.Authorization).toBe('Bearer from-call-site');
   });
 });
 
@@ -153,37 +114,26 @@ describe('dcuAxios 401 interceptor', () => {
     await Keychain.setGenericPassword('refreshToken', 'refresh-old', {
       service: 'huemaps-refresh-token',
     });
-    mockedAxios.post.mockResolvedValueOnce({
-      data: {
-        data: {
-          accessToken: 'access-new',
-          refreshToken: 'refresh-new',
-          tokenType: 'Bearer',
-          expiresIn: 28800,
-        },
-      },
-    });
+    mockedAxios.post.mockResolvedValueOnce(
+      tokenResponse('access-new', 'refresh-new'),
+    );
     mockInstance.request.mockResolvedValueOnce({ data: { ok: true } });
 
-    const originalRequestConfig = { url: '/items/thua_dat', headers: {} };
-
     const result = await responseErrorHandler({
-      isAxiosError: true,
-      config: originalRequestConfig,
+      config: { url: ITEMS_BTS, headers: {} },
       response: { status: 401 },
     });
 
     expect(result).toEqual({ data: { ok: true } });
-    expect(mockInstance.request).toHaveBeenCalledTimes(1);
     const retriedConfig = mockInstance.request.mock.calls[0][0];
+    expect(retriedConfig._dcuRetried).toBe(true);
     expect(retriedConfig.headers.Authorization).toBe('Bearer access-new');
     expect(dcuHeaders()).toEqual({ Authorization: 'Bearer access-new' });
   });
 
   it('rejects with the original error when the status is not 401', async () => {
     const notFoundError = {
-      isAxiosError: true,
-      config: { url: '/items/thua_dat', headers: {} },
+      config: { url: 'https://bff.test/api/v1/x', headers: {} },
       response: { status: 404 },
     };
 
@@ -195,8 +145,7 @@ describe('dcuAxios 401 interceptor', () => {
 
   it('rejects with the original error when refresh fails (no refresh token stored)', async () => {
     const unauthorizedError = {
-      isAxiosError: true,
-      config: { url: '/items/thua_dat', headers: {} },
+      config: { url: ITEMS_BTS, headers: {} },
       response: { status: 401 },
     };
 
@@ -204,29 +153,16 @@ describe('dcuAxios 401 interceptor', () => {
       unauthorizedError,
     );
     expect(mockInstance.request).not.toHaveBeenCalled();
-  });
-
-  it('does not refresh the BFF session on a 401 from API_BASE_URL (Directus)', async () => {
-    await Keychain.setGenericPassword('refreshToken', 'refresh-old', {
-      service: 'huemaps-refresh-token',
-    });
-    const directusError = {
-      isAxiosError: true,
-      config: { url: 'https://dcu.huecity.vn/items/bts', headers: {} },
-      response: { status: 401 },
-    };
-
-    await expect(responseErrorHandler(directusError)).rejects.toBe(
-      directusError,
-    );
     expect(mockedAxios.post).not.toHaveBeenCalled();
-    expect(mockInstance.request).not.toHaveBeenCalled();
   });
 
   it('does not retry a request that was already retried once', async () => {
     const alreadyRetriedError = {
-      isAxiosError: true,
-      config: { url: '/items/thua_dat', headers: {}, _dcuRetried: true },
+      config: {
+        url: 'https://bff.test/api/v1/x',
+        headers: {},
+        _dcuRetried: true,
+      },
       response: { status: 401 },
     };
 

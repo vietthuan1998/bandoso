@@ -1,13 +1,6 @@
 import axios, { type AxiosRequestConfig } from 'axios';
-import { isApiBaseUrl } from '../../config/apiAccessToken';
 import { getAccessToken, refreshAccessToken } from '../auth/authClient';
-import { TIMEOUT } from '../../constants/url';
-import { MVT_TILE_HOST } from '../map/mvtLayers';
-import {
-  directusRequestCredential,
-  getSessionTokenAcceptance,
-  setSessionTokenAcceptance,
-} from './directusAuth';
+import { DIRECTUS_BASE_URL, TIMEOUT } from '../../constants/url';
 
 export const dcuAxios = axios.create({ timeout: TIMEOUT });
 
@@ -16,74 +9,50 @@ export function dcuHeaders(): { Authorization: string } | undefined {
   return accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined;
 }
 
-type RetriableConfig = AxiosRequestConfig & {
-  _dcuRetried?: boolean;
-  /** Đang thử lại request Directus bằng token tĩnh sau 401 với accessToken. */
-  _dcuStaticFallback?: boolean;
-  /** Loại token interceptor đã gắn cho request Directus. */
-  _dcuCredential?: 'session' | 'static';
-};
+/** Directus đi qua BFF: BASE_URL + "/directus/items/{collection}". */
+export function dcuItemsUrl(collection: string): string {
+  return `${DIRECTUS_BASE_URL}/items/${collection}`;
+}
+
+/** true nếu `url` là request Directus (so tiền tố có "/" để tránh nhầm host). */
+export function isDirectusUrl(url: string | undefined): boolean {
+  return !!url && url.startsWith(`${DIRECTUS_BASE_URL}/`);
+}
+
+type RetriableConfig = AxiosRequestConfig & { _dcuRetried?: boolean };
 
 /**
- * Request tới API_BASE_URL (Directus dcu.huecity.vn): ưu tiên accessToken của
- * phiên đăng nhập, token tĩnh chỉ là dự phòng (xem directusAuth.ts). Không có
- * token nào -> bỏ header (403 như khách). Request tới host khác (BFF) giữ nguyên.
+ * Request Directus (proxy BFF): gửi accessToken của phiên nếu đã đăng nhập,
+ * chưa đăng nhập thì không gửi gì — BFF tự gắn xác thực phía server, client
+ * không giữ token tĩnh nào (tài liệu mục 5). Luôn lấy token mới nhất lúc gửi
+ * để request thử lại sau refresh không mang token cũ.
  */
 dcuAxios.interceptors.request.use(config => {
-  if (!isApiBaseUrl(config.url)) return config;
-  const retriable = config as typeof config & RetriableConfig;
-  const credential = directusRequestCredential(!retriable._dcuStaticFallback);
-  if (credential) {
-    config.headers.Authorization = `Bearer ${credential.token}`;
-    retriable._dcuCredential = credential.kind;
+  if (!isDirectusUrl(config.url)) return config;
+  const accessToken = getAccessToken();
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
   } else {
     delete config.headers.Authorization;
-    retriable._dcuCredential = undefined;
   }
   return config;
 });
 
 /**
- * Directus: 2xx với accessToken -> ghi nhận host nhận token phiên (tile cũng
- * chuyển sang dùng nó); 401 với accessToken -> ghi nhận không nhận, thử lại
- * đúng một lần bằng token tĩnh.
- *
- * BFF: (D4) bắt 401 -> refresh (đã gộp concurrent trong authClient.ts) -> thử
- * lại request gốc đúng một lần. Refresh thất bại thì để lỗi gốc đi tiếp —
+ * (D4) Bắt 401 -> refresh (đã gộp concurrent trong authClient.ts) -> thử lại
+ * request gốc đúng một lần. Refresh thất bại thì để lỗi gốc đi tiếp —
  * subscribeToSessionExpiry (authClient.ts) lo việc chuyển về màn đăng nhập.
+ * Không có refresh token (khách) thì refreshAccessToken thất bại ngay, không
+ * gọi mạng.
  */
 dcuAxios.interceptors.response.use(
-  response => {
-    const config = response?.config as RetriableConfig | undefined;
-    if (
-      config?._dcuCredential === 'session' &&
-      getSessionTokenAcceptance() === 'unknown'
-    ) {
-      setSessionTokenAcceptance('accepted');
-    }
-    return response;
-  },
+  response => response,
   async error => {
     const config = error?.config as RetriableConfig | undefined;
     const status = error?.response?.status;
-    if (!config || status !== 401) return Promise.reject(error);
-
-    if (isApiBaseUrl(config.url)) {
-      // 401 từ Directus không liên quan phiên BFF — refresh không giúp gì mà
-      // còn tiêu refresh token xoay vòng.
-      if (config._dcuCredential !== 'session' || config._dcuStaticFallback) {
-        return Promise.reject(error);
-      }
-      setSessionTokenAcceptance('rejected');
-      const fallback = directusRequestCredential(false);
-      if (!fallback) return Promise.reject(error);
-      return dcuAxios.request({
-        ...config,
-        _dcuStaticFallback: true,
-      } as RetriableConfig);
+    if (!config || status !== 401 || config._dcuRetried) {
+      return Promise.reject(error);
     }
-
-    if (config._dcuRetried) return Promise.reject(error);
     try {
       await refreshAccessToken();
     } catch {
@@ -97,7 +66,3 @@ dcuAxios.interceptors.response.use(
     return dcuAxios.request(retryConfig);
   },
 );
-
-export function dcuItemsUrl(collection: string): string {
-  return `https://${MVT_TILE_HOST}/items/${collection}`;
-}

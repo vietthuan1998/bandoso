@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { describeHttpError, httpClient } from '../services/api/httpClient';
+import { describeHttpError } from '../services/api/apiError';
+import {
+  fetchWardBoundaries,
+  type WardBoundaryCollection,
+} from '../services/api/catalogApi';
 import {
   CITY_BORDER_LAYER,
   CITY_FILL_LAYER,
   CITY_GEOJSON_URL,
   CITY_SOURCE_ID,
-  GEOJSON_URL,
   STYLE_URL,
   WARD_BORDER_LAYER,
   WARD_COLORS,
@@ -15,27 +18,13 @@ import {
   WARD_SOURCE_ID,
 } from '../constants/mapSources';
 import i18n from '../i18n';
-import {
-  INITIAL_PROJECT_CATEGORY_VISIBILITY,
-  PROJECT_CATEGORIES,
-} from '../services/map/projectLayers';
-import type {
-  ProjectCategory,
-  ProjectCategoryId,
-  ProjectProperties,
-  ProjectSearchItem,
-  SelectedProject,
-  Ward,
-  WardFeatureCollection,
-  WardProperties,
-} from '../types/map';
+import type { Ward, WardFeatureCollection, WardProperties } from '../types/map';
 
 export {
   CITY_BORDER_LAYER,
   CITY_FILL_LAYER,
   CITY_GEOJSON_URL,
   CITY_SOURCE_ID,
-  GEOJSON_URL,
   STYLE_URL,
   WARD_BORDER_LAYER,
   WARD_FILL_LAYER,
@@ -43,6 +32,48 @@ export {
   WARD_LABEL_LAYER,
   WARD_SOURCE_ID,
 };
+
+const WARD_TYPE_LABEL: Record<string, string> = {
+  phuong: 'Phường',
+  xa: 'Xã',
+  thi_tran: 'Thị trấn',
+};
+
+/**
+ * Ranh giới /catalog/wards/geojson (tài liệu mục 5) -> thuộc tính mà bản đồ,
+ * panel phường xã và ô tìm kiếm đang đọc. Mã ĐVHC (`code`) là khoá duy nhất;
+ * màu lấy `color` của server, chưa có thì xoay vòng bảng màu nền.
+ */
+export function toWardFeatureCollection(
+  source: WardBoundaryCollection,
+): WardFeatureCollection {
+  return {
+    type: 'FeatureCollection',
+    features: source.features.map((feature, index) => {
+      const props = feature.properties;
+      const wardCode = text(props.code ?? feature.id);
+      const properties: WardProperties = {
+        maDonViHanhChinh: wardCode,
+        diaDanh: props.name,
+        nhanBanDo: props.name,
+        danhTuChung: WARD_TYPE_LABEL[props.type] ?? '',
+        dienTich: props.areaKm2 ?? undefined,
+        quyMoDanSo: props.population ?? undefined,
+        viTriDiaLy: props.geographicPosition ?? undefined,
+        diaChiUB: props.officeAddress ?? undefined,
+        publicWardId: wardCode || String(index),
+        publicFillColor:
+          text(props.color) || WARD_COLORS[String((index % 4) + 1)],
+      };
+      return {
+        type: 'Feature',
+        id: wardCode || index,
+        geometry: feature.geometry,
+        properties,
+      };
+    }),
+  };
+}
 
 function text(value: unknown): string {
   return value === null ||
@@ -90,21 +121,6 @@ function normalizeWard(props: WardProperties): Ward {
   };
 }
 
-function normalizeProject(
-  category: ProjectCategory,
-  properties: ProjectProperties,
-): SelectedProject {
-  return {
-    id:
-      text(properties.OBJECTID) ||
-      `${category.id}-${text(properties.tenDuAn ?? properties.name)}`,
-    categoryId: category.id,
-    categoryAlias: category.alias,
-    color: category.color,
-    properties,
-  };
-}
-
 export function geometryBounds(
   geometry: unknown,
 ): [number, number, number, number] | null {
@@ -149,14 +165,6 @@ export function useHueMap() {
   );
   const [selectedWard, setSelectedWard] = useState<Ward | null>(null);
 
-  const [projectLayerVisible, setProjectLayerVisible] = useState(false);
-  const [projectCategoryVisibility, setProjectCategoryVisibility] = useState<
-    Record<ProjectCategoryId, boolean>
-  >(() => ({ ...INITIAL_PROJECT_CATEGORY_VISIBILITY }));
-  const [selectedProject, setSelectedProject] =
-    useState<SelectedProject | null>(null);
-  const [projects, setProjects] = useState<ProjectSearchItem[]>([]);
-
   const selectedWardIdRef = useRef<string | null>(null);
   selectedWardIdRef.current = selectedWard?.id ?? null;
 
@@ -165,18 +173,10 @@ export function useHueMap() {
     const load = async () => {
       setLoading(true);
       try {
-        const response = await httpClient.get<WardFeatureCollection>(
-          GEOJSON_URL,
-        );
-        const data = response.data;
+        // Cache file theo registryVersion; mất mạng thì dùng bản đã lưu.
+        const result = await fetchWardBoundaries();
         if (disposed) return;
-        data.features.forEach((feature, index) => {
-          const props = feature.properties;
-          const wardCode = code(props);
-          const name = text(props.nhanBanDo ?? props.diaDanh ?? props.Nhan);
-          props.publicWardId = wardCode || name || String(index);
-          props.publicFillColor = WARD_COLORS[text(props.fColor)] ?? '#D1D5DB';
-        });
+        const data = toWardFeatureCollection(result.data);
         wardDataRef.current = data;
         setWardData(data);
         setWards(
@@ -200,50 +200,6 @@ export function useHueMap() {
     };
   }, []);
 
-  useEffect(() => {
-    let disposed = false;
-    const loadProjectsForSearch = async () => {
-      try {
-        const categoryProjects = await Promise.all(
-          PROJECT_CATEGORIES.map(async category => {
-            const response = await httpClient.get<{
-              features?: Array<{
-                properties?: ProjectProperties | null;
-                geometry?: unknown;
-              }>;
-            }>(category.sourceUrl);
-            const data = response.data;
-            return (data.features ?? []).flatMap(feature => {
-              if (!feature.properties) return [];
-              const project = normalizeProject(category, feature.properties);
-              return [
-                {
-                  ...project,
-                  name:
-                    text(
-                      feature.properties.tenDuAn ?? feature.properties.name,
-                    ) || i18n.t('map.unnamedProject'),
-                  location: text(feature.properties.diaDiem),
-                  investor: text(
-                    feature.properties.nhaDauTu ?? feature.properties.chuDauTu,
-                  ),
-                  bounds: geometryBounds(feature.geometry),
-                },
-              ];
-            });
-          }),
-        );
-        if (!disposed) setProjects(categoryProjects.flat());
-      } catch {
-        if (!disposed) setProjects([]);
-      }
-    };
-    loadProjectsForSearch();
-    return () => {
-      disposed = true;
-    };
-  }, []);
-
   const toggleCity = useCallback((visible: boolean) => {
     setCityVisible(visible);
     if (!visible) setCitySelected(false);
@@ -251,7 +207,6 @@ export function useHueMap() {
   const selectCity = useCallback(() => {
     setCityVisible(true);
     setSelectedWard(null);
-    setSelectedProject(null);
     setCitySelected(true);
   }, []);
   const toggleAllWards = useCallback(
@@ -271,42 +226,11 @@ export function useHueMap() {
       return next;
     });
     setCitySelected(false);
-    setSelectedProject(null);
     setSelectedWard(ward);
-  }, []);
-  const toggleProjectLayer = useCallback((visible: boolean) => {
-    setProjectLayerVisible(visible);
-    if (!visible) setSelectedProject(null);
-  }, []);
-  const activateProjectLayer = useCallback(() => {
-    setProjectLayerVisible(true);
-    setCitySelected(false);
-    setSelectedWard(null);
-    setSelectedProject(null);
-  }, []);
-  const toggleProjectCategory = useCallback(
-    (id: ProjectCategoryId, visible: boolean) => {
-      setProjectCategoryVisibility(current => ({ ...current, [id]: visible }));
-      setSelectedProject(current =>
-        current?.categoryId === id && !visible ? null : current,
-      );
-    },
-    [],
-  );
-  const selectProject = useCallback((project: SelectedProject) => {
-    setProjectLayerVisible(true);
-    setProjectCategoryVisibility(current => ({
-      ...current,
-      [project.categoryId]: true,
-    }));
-    setCitySelected(false);
-    setSelectedWard(null);
-    setSelectedProject(project);
   }, []);
   const clearSelection = useCallback(() => {
     setSelectedWard(null);
     setCitySelected(false);
-    setSelectedProject(null);
   }, []);
 
   const wardBoundsById = useCallback(
@@ -328,21 +252,13 @@ export function useHueMap() {
     citySelected,
     hiddenWardIds,
     selectedWard,
-    projectLayerVisible,
-    projectCategoryVisibility,
-    selectedProject,
-    projects,
     toggleCity,
     selectCity,
     toggleAllWards,
     selectWard,
-    toggleProjectLayer,
-    activateProjectLayer,
-    toggleProjectCategory,
-    selectProject,
     clearSelection,
     wardBoundsById,
   };
 }
 
-export { normalizeWard, normalizeProject };
+export { normalizeWard };

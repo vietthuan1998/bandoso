@@ -30,21 +30,8 @@ import {
   getTileAuthRules,
   TILE_AUTH_RULE_IDS,
 } from '../../services/map/mapTileAuth';
-import { subscribeToAccessTokenChange } from '../../services/auth/authClient';
-import { subscribeToDirectusAuthChange } from '../../services/api/directusAuth';
 import { useMapRegistry } from '../../services/map/mapRegistry';
-import {
-  PROJECT_CATEGORIES,
-  projectBorderLayerId,
-  projectFillLayerId,
-  projectSourceId,
-} from '../../services/map/projectLayers';
-import type {
-  ProjectCategoryId,
-  ProjectProperties,
-  WardFeatureCollection,
-  WardProperties,
-} from '../../types/map';
+import type { WardFeatureCollection, WardProperties } from '../../types/map';
 import {
   mvtCircleLayerId,
   mvtFillLayerId,
@@ -75,10 +62,9 @@ const EMPTY_FEATURE_COLLECTION: GeoJSON.FeatureCollection = {
 };
 
 /**
- * Đăng ký lại header xác thực tile theo token hiện hành (mapTileAuth.ts).
+ * Đăng ký header xác thực cho request tải bản đồ (mapTileAuth.ts).
  * TransformRequestManager.addHeader cập nhật in-place theo id (giữ nguyên
- * thứ tự pipeline), nên gọi lại an toàn. Gọi lúc mount, khi accessToken đổi
- * (đăng nhập/refresh/đăng xuất) và khi biết host tile có nhận accessToken không.
+ * thứ tự pipeline), nên gọi lại an toàn. Gọi lúc mount bản đồ.
  */
 export function ensureTileAuthHeader() {
   const rules = getTileAuthRules();
@@ -90,24 +76,13 @@ export function ensureTileAuthHeader() {
       value: rule.headerValue,
     });
   });
-  // Luật không còn áp dụng (vd. đăng xuất khi không có token tĩnh) -> gỡ
-  // header cũ, tránh tiếp tục gửi token phiên đã bị thu hồi.
+  // Luật không còn áp dụng -> gỡ header cũ (vd. token Directus đăng ký từ
+  // phiên bản trước, khi tile còn gọi thẳng host Directus).
   const activeIds = new Set(rules.map(rule => rule.id));
   TILE_AUTH_RULE_IDS.filter(id => !activeIds.has(id)).forEach(id =>
     TransformRequestManager.removeHeader(id),
   );
 }
-
-// Đăng ký một lần ở module scope — sống suốt vòng đời app, cập nhật header
-// tile mỗi khi accessToken đổi (đăng nhập lần đầu hoặc refresh âm thầm),
-// kể cả khi không có màn hình bản đồ nào đang mount lúc đó xảy ra.
-subscribeToAccessTokenChange(() => {
-  ensureTileAuthHeader();
-});
-// Host tile vừa xác nhận nhận / không nhận accessToken (directusAuth.ts).
-subscribeToDirectusAuthChange(() => {
-  ensureTileAuthHeader();
-});
 
 export function MapCanvas({
   cameraRef,
@@ -116,11 +91,8 @@ export function MapCanvas({
   hiddenWardIds,
   selectedWardId,
   cityVisible,
-  projectLayerVisible,
-  projectCategoryVisibility,
   onWardPress,
   onCityPress,
-  onProjectPress,
   mvtLayersVisible,
   onMvtFeaturePress,
   highlightFeature,
@@ -135,14 +107,8 @@ export function MapCanvas({
   hiddenWardIds: ReadonlySet<string>;
   selectedWardId: string | null;
   cityVisible: boolean;
-  projectLayerVisible: boolean;
-  projectCategoryVisibility: Record<ProjectCategoryId, boolean>;
   onWardPress: (properties: WardProperties) => void;
   onCityPress: () => void;
-  onProjectPress: (
-    categoryId: ProjectCategoryId,
-    properties: ProjectProperties,
-  ) => void;
   mvtLayersVisible: Record<string, boolean>;
   onMvtFeaturePress: (
     layer: MvtLayerConfig,
@@ -352,43 +318,6 @@ export function MapCanvas({
           />
         </GeoJSONSource>
       ) : null}
-
-      {PROJECT_CATEGORIES.map(category => {
-        const visible =
-          projectLayerVisible && projectCategoryVisibility[category.id];
-        return (
-          <GeoJSONSource
-            key={category.id}
-            id={projectSourceId(category.id)}
-            data={category.sourceUrl}
-            hitbox={PRECISE_HITBOX}
-            onPress={(event: NativeSyntheticEvent<PressEventWithFeatures>) => {
-              if (!visible) return;
-              const properties = event.nativeEvent.features[0]?.properties as
-                | ProjectProperties
-                | undefined;
-              if (properties) onProjectPress(category.id, properties);
-            }}
-          >
-            <Layer
-              type="fill"
-              id={projectFillLayerId(category.id)}
-              source={projectSourceId(category.id)}
-              beforeId={POINTS_CEILING_LAYER}
-              layout={{ visibility: visible ? 'visible' : 'none' }}
-              paint={{ 'fill-color': category.color, 'fill-opacity': 0.32 }}
-            />
-            <Layer
-              type="line"
-              id={projectBorderLayerId(category.id)}
-              source={projectSourceId(category.id)}
-              beforeId={POINTS_CEILING_LAYER}
-              layout={{ visibility: visible ? 'visible' : 'none' }}
-              paint={{ 'line-color': category.color, 'line-width': 2 }}
-            />
-          </GeoJSONSource>
-        );
-      })}
 
       {mvtLayers.map(mvtLayer => {
         const visible = mvtLayersVisible[mvtLayer.id] ?? false;

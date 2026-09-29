@@ -62,7 +62,9 @@ export default function AppShell({ auth }: { auth: AuthGateState }) {
           {activeTab === 'data' ? (
             <DataScreen onLocateOnMap={requestMapFocus} />
           ) : null}
-          {activeTab === 'statistics' ? <StatisticsScreen /> : null}
+          {activeTab === 'statistics' ? (
+            <StatisticsScreen onRequestLogin={() => setActiveTab('profile')} />
+          ) : null}
           {activeTab === 'tracking' ? (
             <PlaceholderScreen icon="tracking" titleKey="tabs.tracking" />
           ) : null}

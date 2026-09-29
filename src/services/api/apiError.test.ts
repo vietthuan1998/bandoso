@@ -1,6 +1,7 @@
 import { AxiosError, AxiosHeaders } from 'axios';
 import {
   describeApiError,
+  describeHttpError,
   isForbidden,
   isUnauthorized,
   parseApiError,
@@ -76,5 +77,18 @@ describe('describeApiError', () => {
     expect(describeApiError(parseApiError(httpError(500)), 'Lỗi', withId)).toBe(
       'Lỗi',
     );
+  });
+});
+
+describe('describeHttpError', () => {
+  it('shows error.message of the BFF envelope with its requestId', () => {
+    const error = httpError(403, {
+      error: { code: 'FORBIDDEN', message: 'Thiếu quyền', requestId: 'r9' },
+    });
+    expect(describeHttpError(error)).toBe('Thiếu quyền (r9)');
+  });
+
+  it('falls back to the HTTP status', () => {
+    expect(describeHttpError(httpError(502))).toBe('HTTP 502');
   });
 });

@@ -47,7 +47,6 @@
     "ariaLabel": "フエ市行政地図",
     "loading": "地図データを読み込み中...",
     "loadError": "地図データを読み込めません",
-    "unnamedProject": "名称未設定のプロジェクト",
     "resetBearing": "地図を北向きに戻す",
     "locateMe": "現在地",
     "locationUnavailable": "現在地を取得できません",
@@ -55,17 +54,13 @@
   },
   "search": {
     "administrativeLayer": "行政境界",
-    "unitCode": "行政コード：{{code}}",
-    "projectLayer": "プロジェクト · {{category}}"
+    "unitCode": "行政コード：{{code}}"
   },
   "menu": {
     "title": "フエ市デジタル地図",
     "administrative": "行政境界",
     "city": "フエ市",
     "wards": "区・社",
-    "public": "公開情報",
-    "auction": "土地競売地図",
-    "investmentProjects": "投資誘致プロジェクト",
     "planning": "都市計画",
     "generalPlanning": "総合計画",
     "zoningPlanning": "区域計画",
@@ -79,8 +74,7 @@
     "technicalInfrastructure": "技術インフラ",
     "specialized": "専門データ",
     "environment": "天然資源・環境",
-    "cultureTourism": "文化・観光",
-    "updating": "データを更新中です"
+    "cultureTourism": "文化・観光"
   },
   "city": {
     "title": "フエ市概要",
@@ -99,29 +93,6 @@
     "geographicPosition": "地理的位置",
     "committeeAddress": "人民委員会住所",
     "note": "備考"
-  },
-  "project": {
-    "legendTitle": "投資プロジェクト分類",
-    "legendHint": "地図上のプロジェクトグループを表示・非表示",
-    "closeLayer": "プロジェクトレイヤーを閉じる",
-    "defaultTitle": "プロジェクト情報",
-    "location": "場所",
-    "area": "面積",
-    "totalInvestment": "総投資額",
-    "investor": "投資家",
-    "description": "説明",
-    "information": "情報",
-    "implementation": "実施状況",
-    "progress": "進捗",
-    "issues": "課題",
-    "proposal": "提案",
-    "note": "備考"
-  },
-  "projectCategories": {
-    "calling": "投資募集中のプロジェクト",
-    "selecting-investor": "基本承認済み・投資家選定中",
-    "constructing": "投資家承認済み・建設中",
-    "operating": "稼働中のプロジェクト"
   },
   "mvt": {
     "hint": "技術仕様の第8項に基づきdcu.huecity.vnから直接描画。破線＝定向（将来計画）レイヤー。",
@@ -172,7 +143,7 @@
     "title": "データ統計",
     "loading": "統計を読み込み中...",
     "error": "統計を読み込めませんでした。",
-    "needLogin": "統計を見るには「個人」タブでログインしてください。",
+    "needLogin": "統計を見るにはログインが必要です。",
     "forbidden": "このアカウントには統計の閲覧権限がありません。",
     "filters": {
       "allLayers": "すべてのレイヤー",
@@ -235,7 +206,8 @@
       "field": "フィールド: {{field}}",
       "empty": "集計データがありません",
       "error": "集計データを読み込めませんでした。"
-    }
+    },
+    "goToLogin": "ログインへ"
   },
   "dataScreen": {
     "title": "デジタル化データ",
@@ -245,7 +217,7 @@
     },
     "resultCount": "{{count}} 件",
     "loading": "データを読み込み中...",
-    "error": "Directusからデータを読み込めません。",
+    "error": "データを読み込めません。",
     "emptyTitle": "該当するデータがありません",
     "emptyMessage": "別のキーワードやフィルターをお試しください。",
     "loadMore": "もっと見る",
@@ -313,10 +285,6 @@
     "wards": "{{count}} 区・社"
   },
   "account": {
-    "fullName": "氏名",
-    "username": "ユーザー名",
-    "unit": "所属",
-    "roles": "役割",
     "scope": "データ範囲",
     "roleNames": {
       "guest": "ゲスト / 一般",
@@ -325,7 +293,10 @@
       "city_leader": "市指導部",
       "data_admin": "データ管理者",
       "system_admin": "システム管理者"
-    }
+    },
+    "accessTitle": "アクセス権",
+    "visibleLayers": "閲覧できるレイヤー",
+    "layerCount": "{{count}} レイヤー"
   },
   "filters": {
     "wardCount": "{{count}} 区・社",

@@ -47,7 +47,6 @@
     "ariaLabel": "후에시 행정 지도",
     "loading": "지도 데이터 불러오는 중...",
     "loadError": "지도 데이터를 불러올 수 없습니다",
-    "unnamedProject": "이름 없는 프로젝트",
     "resetBearing": "지도를 북쪽으로 재설정",
     "locateMe": "내 위치",
     "locationUnavailable": "현재 위치를 확인할 수 없습니다",
@@ -55,17 +54,13 @@
   },
   "search": {
     "administrativeLayer": "행정 경계",
-    "unitCode": "행정 코드: {{code}}",
-    "projectLayer": "프로젝트 · {{category}}"
+    "unitCode": "행정 코드: {{code}}"
   },
   "menu": {
     "title": "후에시 디지털 지도",
     "administrative": "행정 경계",
     "city": "후에시",
     "wards": "동·면",
-    "public": "공개 정보",
-    "auction": "토지 경매 지도",
-    "investmentProjects": "투자 유치 프로젝트",
     "planning": "도시 계획",
     "generalPlanning": "종합 계획",
     "zoningPlanning": "구역 계획",
@@ -79,8 +74,7 @@
     "technicalInfrastructure": "기술 인프라",
     "specialized": "전문 데이터",
     "environment": "천연자원 및 환경",
-    "cultureTourism": "문화 및 관광",
-    "updating": "데이터를 업데이트하고 있습니다"
+    "cultureTourism": "문화 및 관광"
   },
   "city": {
     "title": "후에시 개요",
@@ -99,29 +93,6 @@
     "geographicPosition": "지리적 위치",
     "committeeAddress": "인민위원회 주소",
     "note": "비고"
-  },
-  "project": {
-    "legendTitle": "투자 프로젝트 분류",
-    "legendHint": "지도에서 각 프로젝트 그룹 표시 또는 숨기기",
-    "closeLayer": "프로젝트 레이어 닫기",
-    "defaultTitle": "프로젝트 정보",
-    "location": "위치",
-    "area": "면적",
-    "totalInvestment": "총 투자액",
-    "investor": "투자자",
-    "description": "설명",
-    "information": "정보",
-    "implementation": "추진 현황",
-    "progress": "진행 상황",
-    "issues": "문제점",
-    "proposal": "제안",
-    "note": "비고"
-  },
-  "projectCategories": {
-    "calling": "투자 유치 중인 프로젝트",
-    "selecting-investor": "사업 방침 승인 및 투자자 선정 중",
-    "constructing": "투자자 승인 및 건설 중",
-    "operating": "운영 중인 프로젝트"
   },
   "mvt": {
     "hint": "기술 명세 8항에 따라 dcu.huecity.vn에서 직접 렌더링합니다. 점선 = 정향(향후 계획) 레이어.",
@@ -172,7 +143,7 @@
     "title": "데이터 통계",
     "loading": "통계를 불러오는 중...",
     "error": "통계를 불러오지 못했습니다.",
-    "needLogin": "통계를 보려면 개인 탭에서 로그인하세요.",
+    "needLogin": "통계를 보려면 로그인해야 합니다.",
     "forbidden": "이 계정은 통계 조회 권한이 없습니다.",
     "filters": {
       "allLayers": "모든 레이어",
@@ -235,7 +206,8 @@
       "field": "필드: {{field}}",
       "empty": "그룹 데이터가 없습니다",
       "error": "그룹 데이터를 불러오지 못했습니다."
-    }
+    },
+    "goToLogin": "로그인하러 가기"
   },
   "dataScreen": {
     "title": "디지털 데이터",
@@ -245,7 +217,7 @@
     },
     "resultCount": "{{count}}개 결과",
     "loading": "데이터를 불러오는 중...",
-    "error": "Directus에서 데이터를 불러올 수 없습니다.",
+    "error": "데이터를 불러올 수 없습니다.",
     "emptyTitle": "일치하는 데이터가 없습니다",
     "emptyMessage": "다른 키워드나 필터를 시도해 보세요.",
     "loadMore": "더 보기",
@@ -313,10 +285,6 @@
     "wards": "{{count}}개 동·사"
   },
   "account": {
-    "fullName": "이름",
-    "username": "사용자 이름",
-    "unit": "소속",
-    "roles": "역할",
     "scope": "데이터 범위",
     "roleNames": {
       "guest": "게스트 / 일반",
@@ -325,7 +293,10 @@
       "city_leader": "시 지도부",
       "data_admin": "데이터 관리자",
       "system_admin": "시스템 관리자"
-    }
+    },
+    "accessTitle": "접근 권한",
+    "visibleLayers": "볼 수 있는 레이어",
+    "layerCount": "{{count}}개 레이어"
   },
   "filters": {
     "wardCount": "{{count}}개 동·사",

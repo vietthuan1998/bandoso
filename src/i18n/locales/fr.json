@@ -47,7 +47,6 @@
     "ariaLabel": "Carte administrative de Hué",
     "loading": "Chargement de la carte...",
     "loadError": "Impossible de charger la carte",
-    "unnamedProject": "Projet sans nom",
     "resetBearing": "Réorienter la carte vers le nord",
     "locateMe": "Ma position",
     "locationUnavailable": "Impossible de déterminer votre position",
@@ -55,17 +54,13 @@
   },
   "search": {
     "administrativeLayer": "Limites administratives",
-    "unitCode": "Code administratif : {{code}}",
-    "projectLayer": "Projets · {{category}}"
+    "unitCode": "Code administratif : {{code}}"
   },
   "menu": {
     "title": "Carte numérique de Hué",
     "administrative": "Limites administratives",
     "city": "Ville de Hué",
     "wards": "Quartiers et communes",
-    "public": "Informations publiques",
-    "auction": "Carte des enchères foncières",
-    "investmentProjects": "Projets d'appel à l'investissement",
     "planning": "Planification",
     "generalPlanning": "Planification générale",
     "zoningPlanning": "Planification de zone",
@@ -79,8 +74,7 @@
     "technicalInfrastructure": "Infrastructures techniques",
     "specialized": "Données spécialisées",
     "environment": "Ressources naturelles et environnement",
-    "cultureTourism": "Culture et tourisme",
-    "updating": "Les données sont en cours de mise à jour"
+    "cultureTourism": "Culture et tourisme"
   },
   "city": {
     "title": "Présentation de la ville de Hué",
@@ -99,29 +93,6 @@
     "geographicPosition": "Situation géographique",
     "committeeAddress": "Adresse du Comité populaire",
     "note": "Remarques"
-  },
-  "project": {
-    "legendTitle": "Catégories de projets",
-    "legendHint": "Afficher ou masquer chaque groupe de projets",
-    "closeLayer": "Fermer la couche des projets",
-    "defaultTitle": "Informations sur le projet",
-    "location": "Lieu",
-    "area": "Superficie",
-    "totalInvestment": "Investissement total",
-    "investor": "Investisseur",
-    "description": "Description",
-    "information": "Informations",
-    "implementation": "État de mise en œuvre",
-    "progress": "Avancement",
-    "issues": "Difficultés",
-    "proposal": "Proposition",
-    "note": "Remarques"
-  },
-  "projectCategories": {
-    "calling": "Projets ouverts à l'investissement",
-    "selecting-investor": "Projet approuvé en principe, sélection de l'investisseur en cours",
-    "constructing": "Investisseur approuvé, construction en cours",
-    "operating": "Projets en activité"
   },
   "mvt": {
     "hint": "Rendu directement depuis dcu.huecity.vn selon la section 8 de la spécification. Pointillés = couche prévue (planification future).",
@@ -172,7 +143,7 @@
     "title": "Statistiques des données",
     "loading": "Chargement des statistiques...",
     "error": "Impossible de charger les statistiques.",
-    "needLogin": "Connectez-vous dans l’onglet Profil pour voir les statistiques.",
+    "needLogin": "Vous devez vous connecter pour voir les statistiques.",
     "forbidden": "Votre compte n’est pas autorisé à voir les statistiques.",
     "filters": {
       "allLayers": "Toutes les couches",
@@ -235,7 +206,8 @@
       "field": "Champ : {{field}}",
       "empty": "Aucune donnée groupée",
       "error": "Impossible de charger les regroupements."
-    }
+    },
+    "goToLogin": "Aller à la connexion"
   },
   "dataScreen": {
     "title": "Données numérisées",
@@ -245,7 +217,7 @@
     },
     "resultCount": "{{count}} résultats",
     "loading": "Chargement des données...",
-    "error": "Impossible de charger les données depuis Directus.",
+    "error": "Impossible de charger les données.",
     "emptyTitle": "Aucune donnée correspondante",
     "emptyMessage": "Essayez un autre mot-clé ou filtre.",
     "loadMore": "Charger plus",
@@ -313,10 +285,6 @@
     "wards": "{{count}} quartiers/communes"
   },
   "account": {
-    "fullName": "Nom complet",
-    "username": "Nom d'utilisateur",
-    "unit": "Unité",
-    "roles": "Rôles",
     "scope": "Périmètre des données",
     "roleNames": {
       "guest": "Invité / public",
@@ -325,7 +293,10 @@
       "city_leader": "Direction de la ville",
       "data_admin": "Administrateur des données",
       "system_admin": "Administrateur système"
-    }
+    },
+    "accessTitle": "Accès",
+    "visibleLayers": "Couches visibles",
+    "layerCount": "{{count}} couches"
   },
   "filters": {
     "wardCount": "{{count}} quartiers/communes",

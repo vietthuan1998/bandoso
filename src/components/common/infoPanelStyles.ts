@@ -48,14 +48,6 @@ export const infoPanelStyles = StyleSheet.create({
   listItemLabel: { fontSize: 12, fontWeight: '600', color: COLORS.textMuted },
   listItemValue: { fontSize: 12, color: COLORS.text, flexShrink: 1 },
 
-  legendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 6,
-  },
-  legendSwatch: { width: 12, height: 12, borderRadius: 3 },
-  legendLabel: { flex: 1, fontSize: 12, color: COLORS.text, lineHeight: 17 },
 
   notice: {
     flexDirection: 'row',

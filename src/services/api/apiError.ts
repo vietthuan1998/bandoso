@@ -107,3 +107,15 @@ export function describeApiError(
   const text = info.message ?? fallback;
   return info.requestId ? `${text} ${formatRequestId(info.requestId)}` : text;
 }
+
+/** Thông điệp lỗi ngắn: error.message của BFF kèm requestId, không thì HTTP status. */
+export function describeHttpError(error: unknown): string {
+  const info = parseApiError(error);
+  if (info.message) {
+    return info.requestId
+      ? `${info.message} (${info.requestId})`
+      : info.message;
+  }
+  if (info.status !== null) return `HTTP ${info.status}`;
+  return error instanceof Error ? error.message : String(error);
+}

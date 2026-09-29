@@ -47,7 +47,6 @@
     "ariaLabel": "顺化市行政地图",
     "loading": "正在加载地图数据...",
     "loadError": "无法加载地图数据",
-    "unnamedProject": "未命名项目",
     "resetBearing": "将地图重置为正北方向",
     "locateMe": "我的位置",
     "locationUnavailable": "无法确定您的位置",
@@ -55,17 +54,13 @@
   },
   "search": {
     "administrativeLayer": "行政边界",
-    "unitCode": "行政代码：{{code}}",
-    "projectLayer": "项目 · {{category}}"
+    "unitCode": "行政代码：{{code}}"
   },
   "menu": {
     "title": "顺化市数字地图",
     "administrative": "行政边界",
     "city": "顺化市",
     "wards": "坊、社",
-    "public": "公开信息",
-    "auction": "土地拍卖地图",
-    "investmentProjects": "招商引资项目",
     "planning": "规划",
     "generalPlanning": "总体规划",
     "zoningPlanning": "分区规划",
@@ -79,8 +74,7 @@
     "technicalInfrastructure": "技术基础设施",
     "specialized": "专业数据",
     "environment": "自然资源与环境",
-    "cultureTourism": "文化与旅游",
-    "updating": "数据正在更新中"
+    "cultureTourism": "文化与旅游"
   },
   "city": {
     "title": "顺化市概况",
@@ -99,29 +93,6 @@
     "geographicPosition": "地理位置",
     "committeeAddress": "人民委员会地址",
     "note": "备注"
-  },
-  "project": {
-    "legendTitle": "投资项目分类",
-    "legendHint": "在地图上显示或隐藏各项目组",
-    "closeLayer": "关闭项目图层",
-    "defaultTitle": "项目信息",
-    "location": "地点",
-    "area": "面积",
-    "totalInvestment": "总投资",
-    "investor": "投资者",
-    "description": "说明",
-    "information": "信息",
-    "implementation": "实施情况",
-    "progress": "进度",
-    "issues": "问题",
-    "proposal": "建议",
-    "note": "备注"
-  },
-  "projectCategories": {
-    "calling": "正在招商的项目",
-    "selecting-investor": "已批准投资方针，正在选择投资者",
-    "constructing": "投资者已获批准，正在建设",
-    "operating": "已投入运营的项目"
   },
   "mvt": {
     "hint": "按技术规范第 8 节直接从 dcu.huecity.vn 渲染。虚线 = 规划（未来）图层。",
@@ -172,7 +143,7 @@
     "title": "数据统计",
     "loading": "正在加载统计...",
     "error": "无法加载统计数据。",
-    "needLogin": "请在“个人”标签页登录后查看统计。",
+    "needLogin": "您需要登录才能查看统计数据。",
     "forbidden": "该账户没有查看统计的权限。",
     "filters": {
       "allLayers": "全部图层",
@@ -235,7 +206,8 @@
       "field": "字段：{{field}}",
       "empty": "暂无分组数据",
       "error": "无法加载分组数据。"
-    }
+    },
+    "goToLogin": "前往登录"
   },
   "dataScreen": {
     "title": "数字化数据",
@@ -245,7 +217,7 @@
     },
     "resultCount": "{{count}} 条结果",
     "loading": "正在加载数据...",
-    "error": "无法从 Directus 加载数据。",
+    "error": "无法加载数据。",
     "emptyTitle": "没有匹配的数据",
     "emptyMessage": "请尝试其他关键词或筛选条件。",
     "loadMore": "加载更多",
@@ -313,10 +285,6 @@
     "wards": "{{count}} 个坊/社"
   },
   "account": {
-    "fullName": "姓名",
-    "username": "用户名",
-    "unit": "单位",
-    "roles": "角色",
     "scope": "数据范围",
     "roleNames": {
       "guest": "访客 / 公众",
@@ -325,7 +293,10 @@
       "city_leader": "市领导",
       "data_admin": "数据管理员",
       "system_admin": "系统管理员"
-    }
+    },
+    "accessTitle": "访问权限",
+    "visibleLayers": "可查看的图层",
+    "layerCount": "{{count}} 个图层"
   },
   "filters": {
     "wardCount": "{{count}} 个坊/社",

@@ -1,4 +1,5 @@
 import type { IconName } from '../../components/common/Icon';
+import { DIRECTUS_BASE_URL } from '../../constants/url';
 
 export type MvtGeometryKind = 'polygon' | 'linestring' | 'point';
 
@@ -61,11 +62,22 @@ export type MvtGroupConfig = {
   icon: IconName;
 };
 
-// Host tile/items của DCU — cấu hình hạ tầng, không phải dữ liệu lớp.
-export const MVT_TILE_HOST = 'dcu.huecity.vn';
-
 export const mvtSourceId = (id: string) => `mvt-${id}-source`;
 export const mvtFillLayerId = (id: string) => `mvt-${id}-fill`;
 export const mvtOutlineLayerId = (id: string) => `mvt-${id}-outline`;
 export const mvtLineLayerId = (id: string) => `mvt-${id}-line`;
 export const mvtCircleLayerId = (id: string) => `mvt-${id}-circle`;
+
+const DIRECT_TILE_URL_RE = /^https?:\/\/[^/]+(\/mvt\/.*)$/;
+
+/**
+ * Registry trả tileUrl trỏ thẳng host Directus (vd. https://dcu.huecity.vn
+ * /mvt/{z}/{x}/{y}.mvt?collections=bts). Tile phải đi qua proxy BFF (tài liệu
+ * mục 5): chỉ thay phần origin bằng DIRECTUS_BASE_URL, giữ nguyên đường dẫn
+ * và query của registry — không tự ghép URL. tileUrl không có dạng /mvt/...
+ * ở gốc host (vd. đã trỏ sẵn về proxy) thì giữ nguyên.
+ */
+export function proxiedTileUrl(tileUrl: string): string {
+  const match = DIRECT_TILE_URL_RE.exec(tileUrl);
+  return match ? `${DIRECTUS_BASE_URL}${match[1]}` : tileUrl;
+}

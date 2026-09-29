@@ -107,7 +107,12 @@ type SummaryState =
   | { status: 'ready'; result: StatisticsSummaryResult }
   | { status: 'error'; kind: StatisticsErrorKind; info: ApiErrorInfo };
 
-export function StatisticsScreen() {
+export function StatisticsScreen({
+  onRequestLogin,
+}: {
+  /** Chuyển sang tab đăng nhập (tab Cá nhân) khi chưa đăng nhập. */
+  onRequestLogin?: () => void;
+} = {}) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const registry = useMapRegistry();
@@ -384,6 +389,7 @@ export function StatisticsScreen() {
           kind={summaryState.kind}
           info={summaryState.info}
           onRetry={() => setReloadToken(token => token + 1)}
+          onRequestLogin={onRequestLogin}
         />
       ) : !summary ? (
         <View style={styles.centerFill}>
@@ -573,34 +579,35 @@ export function StatisticsScreen() {
             </Section>
           ) : null}
 
-          <Section
-            title={t('statistics.trend.sectionTitle')}
-            action={
-              selectedLayerId
-                ? {
-                    label: t(`statistics.trend.${bucket}`),
-                    onPress: () => setBucketSheetOpen(true),
-                    icon: 'chevronDown',
-                  }
-                : undefined
-            }
-          >
-            {selectedLayerId && layerTrend.loading ? (
-              <View style={styles.trendLoading}>
-                <ActivityIndicator color={COLORS.primary} size="small" />
-              </View>
-            ) : selectedLayerId && layerTrend.failed ? (
-              <Text style={styles.emptyText}>{t('statistics.error')}</Text>
-            ) : trendPoints.length > 0 ? (
-              <TrendChart points={trendPoints} width={CHART_WIDTH} />
-            ) : (
-              <Text style={styles.emptyText}>
-                {selectedLayerId
-                  ? t('statistics.trend.empty')
-                  : t('statistics.trend.selectLayer')}
-              </Text>
-            )}
-          </Section>
+          {/* API trend lỗi -> ẩn hẳn khối xu hướng (tải lại khi đổi lớp/bộ lọc). */}
+          {selectedLayerId && layerTrend.failed ? null : (
+            <Section
+              title={t('statistics.trend.sectionTitle')}
+              action={
+                selectedLayerId
+                  ? {
+                      label: t(`statistics.trend.${bucket}`),
+                      onPress: () => setBucketSheetOpen(true),
+                      icon: 'chevronDown',
+                    }
+                  : undefined
+              }
+            >
+              {selectedLayerId && layerTrend.loading ? (
+                <View style={styles.trendLoading}>
+                  <ActivityIndicator color={COLORS.primary} size="small" />
+                </View>
+              ) : trendPoints.length > 0 ? (
+                <TrendChart points={trendPoints} width={CHART_WIDTH} />
+              ) : (
+                <Text style={styles.emptyText}>
+                  {selectedLayerId
+                    ? t('statistics.trend.empty')
+                    : t('statistics.trend.selectLayer')}
+                </Text>
+              )}
+            </Section>
+          )}
 
           {selectedLayer && selectedLayer.measureFields.length > 0 ? (
             <Section title={t('statistics.measures.sectionTitle')}>
@@ -719,10 +726,12 @@ function StatisticsError({
   kind,
   info,
   onRetry,
+  onRequestLogin,
 }: {
   kind: StatisticsErrorKind;
   info: ApiErrorInfo;
   onRetry: () => void;
+  onRequestLogin?: () => void;
 }) {
   const { t } = useTranslation();
   // Khách chưa đăng nhập: nhắc đăng nhập. Còn lại hiển thị thẳng thông điệp
@@ -745,9 +754,20 @@ function StatisticsError({
         color={kind === 'error' ? COLORS.critical : COLORS.textMuted}
       />
       <Text style={styles.errorText}>{message}</Text>
-      <Pressable onPress={onRetry} hitSlop={8} accessibilityRole="button">
-        <Text style={styles.retryText}>{t('common.retry')}</Text>
-      </Pressable>
+      {/* Chưa đăng nhập: thử lại vô ích — dẫn thẳng sang tab đăng nhập. */}
+      {kind === 'unauthorized' && onRequestLogin ? (
+        <Pressable
+          onPress={onRequestLogin}
+          hitSlop={8}
+          accessibilityRole="button"
+        >
+          <Text style={styles.retryText}>{t('statistics.goToLogin')}</Text>
+        </Pressable>
+      ) : (
+        <Pressable onPress={onRetry} hitSlop={8} accessibilityRole="button">
+          <Text style={styles.retryText}>{t('common.retry')}</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
